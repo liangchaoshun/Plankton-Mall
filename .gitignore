@@ -1,0 +1,28 @@
+# Gradle 构建输出
+*.iml
+.gradle
+build/
+app/build/
+captures/
+.externalNativeBuild
+.cxx
+local.properties
+
+# IDE 配置（每个人的 IDE 偏好不同，不建议共享）
+.idea/
+*.swp
+*~
+.~lock.*
+
+# Kotlin 编译缓存
+.kotlin/
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 签名文件（如果你的项目里有签名密钥，务必忽略）
+*.keystore
+*.jks
+key.properties
+google-services.json
