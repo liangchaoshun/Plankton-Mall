@@ -6,4 +6,4 @@
 
 #### 效果
 - 竖屏
-- ![screenshot_portrait](./app/src/main/res/drawable/screenshot_20260915_183337.png)
+- ![screenshot_portrait](./app/src/main/res/drawable/screenshot_20260915_185457.png)
