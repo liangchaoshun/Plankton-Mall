@@ -1,12 +1,12 @@
-package com.fuyouwentian.planktonmall.ui
+package com.fuyouwentian.planktonmall.ui.cart
 
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 
 @Composable
-fun OrderScreen(
+fun CartScreen(
     modifier: Modifier = Modifier
 ) {
-    Text("OrderScreen")
+    Text("CartScreen")
 }

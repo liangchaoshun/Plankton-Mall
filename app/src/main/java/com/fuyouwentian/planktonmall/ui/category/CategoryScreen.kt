@@ -1,12 +1,12 @@
-package com.fuyouwentian.planktonmall.ui
+package com.fuyouwentian.planktonmall.ui.category
 
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 
 @Composable
-fun FavorScreen(
+fun CategoryScreen(
     modifier: Modifier = Modifier
 ) {
-    Text("FavorScreen")
+    Text("CategoryScreen")
 }

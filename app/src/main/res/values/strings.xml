@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">蜉蝣商城</string>
-    <string name="home_label">Home</string>
-    <string name="category_label">Category</string>
-    <string name="cart_label">Cart</string>
-    <string name="profile_label">Profile</string>
+    <string name="home_label">主页</string>
+    <string name="category_label">分类</string>
+    <string name="cart_label">购物车</string>
+    <string name="profile_label">个人中心</string>
     <string name="home_route">home</string>
     <string name="category_route">category</string>
     <string name="cart_route">cart</string>

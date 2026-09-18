@@ -27,10 +27,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.fuyouwentian.planktonmall.ui.CartScreen
-import com.fuyouwentian.planktonmall.ui.CategoryScreen
-import com.fuyouwentian.planktonmall.ui.HomeScreen
-import com.fuyouwentian.planktonmall.ui.ProfileScreen
+import com.fuyouwentian.planktonmall.ui.cart.CartScreen
+import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
+import com.fuyouwentian.planktonmall.ui.home.HomeScreen
+import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 
 
 @Composable
