@@ -2,6 +2,7 @@ package com.fuyouwentian.planktonmall.data.repository
 
 import com.fuyouwentian.planktonmall.data.model.Product
 import com.fuyouwentian.planktonmall.data.remote.ApiService
+import com.fuyouwentian.planktonmall.data.remote.ProductsData
 import com.fuyouwentian.planktonmall.data.remote.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.repository.IProductRepository
 import javax.inject.Inject
@@ -11,7 +12,7 @@ import javax.inject.Singleton
 class ProductRepositoryImpl @Inject constructor(
     private val api: ApiService, // Hilt 会自动提供
 ) : IProductRepository {
-    override suspend fun getProducts(page: Int, pageSize: Int): List<Product> {
+    override suspend fun getProducts(page: Int, pageSize: Int): ProductsData {
         val response = api.getProducts(ProductsRequest(page_index = page, page_size = pageSize))
         return response.data
     }

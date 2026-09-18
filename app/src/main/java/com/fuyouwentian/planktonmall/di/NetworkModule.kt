@@ -14,6 +14,12 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
+// 1. 配置 Json 实例
+val json = Json {
+    ignoreUnknownKeys = true // 核心：遇到不认识的字段不报错，直接忽略
+    coerceInputValues = true // 可选：如果遇到 null 但非空字段，尝试给默认值
+}
+
 /**
  * Hilt 扫描所有 @Module，收集"如何创建依赖"的信息。查看 RepositoryModule
  */
@@ -33,9 +39,9 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit = Retrofit.Builder()
+    fun provideRetrofit(): Retrofit = Retrofit.Builder() // 2. 构建 Retrofit
         .baseUrl("https://liangchaoshun.site/api/client/")
-        .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
     @Provides

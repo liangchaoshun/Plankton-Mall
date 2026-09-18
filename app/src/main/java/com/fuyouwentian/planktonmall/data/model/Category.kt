@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Category(
     @SerialName("_id")
-    val id: Long
+    val id: String
 )

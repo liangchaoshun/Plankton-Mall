@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Series(
     @SerialName("_id")
-    val id: Long
+    val id: String
 )

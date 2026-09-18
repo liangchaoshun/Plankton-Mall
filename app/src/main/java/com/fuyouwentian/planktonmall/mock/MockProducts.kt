@@ -2,7 +2,7 @@ package com.fuyouwentian.planktonmall.mock
 
 import com.fuyouwentian.planktonmall.data.model.Product
 
-object MockProductList {
+object MockProducts {
     val allProducts = listOf(
         Product(
             id = "6a4c712e248d023644abb907",

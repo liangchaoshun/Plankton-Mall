@@ -1,8 +1,10 @@
 package com.fuyouwentian.planktonmall.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.domain.repository.IProductRepository
+import com.fuyouwentian.planktonmall.mock.MockProducts
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +23,8 @@ class HomeViewModel @Inject constructor(private val productRepository: IProductR
     }
 
     /*private fun initHandler() {
-        val productList = MockProductList.allProducts
-        _uiState.value = HomeUIState(
-            productList = productList,
+        _uiState.value = HomeUiState(
+            products = MockProducts.allProducts,
             loading = false
         )
     }*/
@@ -33,6 +34,8 @@ class HomeViewModel @Inject constructor(private val productRepository: IProductR
             val products = try {
                 productRepository.getProducts()
             } catch (e: Exception) {
+                e.printStackTrace() // 打印堆栈信息
+                Log.e("HomeViewModel", "请求失败: ${e.message}", e) // 打印日志
                 emptyList()
             }
             _uiState.value = HomeUiState(
