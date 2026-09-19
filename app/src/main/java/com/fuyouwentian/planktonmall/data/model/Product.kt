@@ -26,3 +26,23 @@ data class Product(
     val category_name_zh: String,
     val category_name_en: String
 )
+
+@Serializable
+data class ProductsRequest(
+    @SerialName("page_index")
+    val pageIndex: Int = 1,
+    @SerialName("page_size")
+    val pageSize: Int = 20,
+    val q: String? = ""
+    // 其他后端要求的字段
+)
+
+@Serializable
+data class ProductsData(
+    val data: List<Product>,
+    val total: Int,
+    @SerialName("page_index")
+    val pageIndex: Int,
+    @SerialName("page_size")
+    val pageSize: Int
+)

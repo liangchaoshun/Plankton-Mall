@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.home
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -7,9 +8,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,6 +32,17 @@ fun HomeScreen(
     // collectAsState: 前台/后台都收集
     // collectAsStateWithLifecycle: 后台自动停止收集，省电
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     // 这里根据 uiState 渲染 UI
     if (uiState.loading) {
@@ -49,7 +63,7 @@ fun HomeContent(
     uiState: HomeUiState,
     modifier: Modifier = Modifier,
 ) {
-    ProductGrid(uiState.products)
+    ProductGrid(uiState.productsData.data)
 }
 
 @Composable
