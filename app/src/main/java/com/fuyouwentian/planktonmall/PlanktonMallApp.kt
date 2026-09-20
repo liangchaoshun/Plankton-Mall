@@ -23,12 +23,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
+import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
 import com.fuyouwentian.planktonmall.ui.home.HomeScreen
 import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 
@@ -84,7 +87,8 @@ fun PlanktonMallApp(
                 HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(dimensionResource(R.dimen.padding_medium))
+                        .padding(dimensionResource(R.dimen.padding_medium)),
+                    onProductClick = { productId -> navController.navigate("detail/${productId}") }
                 )
             }
             composable(route = routes[1]) {
@@ -101,6 +105,13 @@ fun PlanktonMallApp(
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize()
                 )
+            }
+            composable(
+                route = "detail/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")
+                DetailScreen(id = id, modifier = Modifier.fillMaxSize())
             }
         }
     }

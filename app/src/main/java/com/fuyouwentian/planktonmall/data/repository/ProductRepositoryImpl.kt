@@ -1,5 +1,7 @@
 package com.fuyouwentian.planktonmall.data.repository
 
+import com.fuyouwentian.planktonmall.data.model.HomeProduct
+import com.fuyouwentian.planktonmall.data.model.HomeProductsRequest
 import com.fuyouwentian.planktonmall.data.model.Product
 import com.fuyouwentian.planktonmall.data.model.ProductsData
 import com.fuyouwentian.planktonmall.data.model.ProductsRequest
@@ -13,9 +15,17 @@ import javax.inject.Singleton
 class ProductRepositoryImpl @Inject constructor(
     private val apiService: ApiService, // Hilt 会自动提供
 ) : IProductRepository {
-    override suspend fun getProducts(request: ProductsRequest): ProductsData {
+    override suspend fun getProducts(request: ProductsRequest): ProductsData<HomeProduct> {
         // 🌟 直接用 safeApiCall 包起来，它会返回 ProductsData，或者抛出异常
         return safeApiCall { apiService.getProducts(request) }
+    }
+
+    override suspend fun getHomeBanner(): ProductsData<HomeProduct> {
+        return safeApiCall { apiService.getHomeBanner() }
+    }
+
+    override suspend fun getHomeProducts(request: HomeProductsRequest): ProductsData<HomeProduct> {
+        return safeApiCall { apiService.getHomeProducts(request) }
     }
 
     override suspend fun getProduct(id: String): Product? = try {

@@ -28,18 +28,39 @@ data class Product(
 )
 
 @Serializable
+data class HomeProduct(
+    @SerialName("_id")
+    val id: String,
+    val name_zh: String,
+    val name_en: String,
+    val cover: String,
+    val series_id: String,
+    val category_id: String
+)
+
+@Serializable
 data class ProductsRequest(
     @SerialName("page_index")
     val pageIndex: Int = 1,
     @SerialName("page_size")
-    val pageSize: Int = 20,
+    val pageSize: Int = 10,
     val q: String? = ""
     // 其他后端要求的字段
 )
 
 @Serializable
-data class ProductsData(
-    val data: List<Product>,
+data class HomeProductsRequest(
+    @SerialName("page_index")
+    val pageIndex: Int = 1,
+    @SerialName("page_size")
+    val pageSize: Int = 10,
+    // 其他后端要求的字段
+)
+
+
+@Serializable
+data class ProductsData<T>(
+    val data: List<T>,
     val total: Int,
     @SerialName("page_index")
     val pageIndex: Int,

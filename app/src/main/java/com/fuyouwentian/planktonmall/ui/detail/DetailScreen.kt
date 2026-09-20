@@ -6,7 +6,12 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun DetailScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    id: String? = null // 允许传入 null
 ) {
-    Text("DetailScreen")
+    if (id.isNullOrBlank()) {
+        Text("id is missing, please check the params")
+    } else {
+        Text("product id: $id")
+    }
 }

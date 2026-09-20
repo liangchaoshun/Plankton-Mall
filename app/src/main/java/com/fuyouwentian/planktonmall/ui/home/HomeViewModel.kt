@@ -2,7 +2,7 @@ package com.fuyouwentian.planktonmall.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.model.ProductsRequest
+import com.fuyouwentian.planktonmall.data.model.HomeProductsRequest
 import com.fuyouwentian.planktonmall.data.remote.ApiException
 import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
 import com.fuyouwentian.planktonmall.data.remote.NetworkException
@@ -45,7 +45,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = HomeUiState(loading = true)
             try {
-                val productsData = productRepository.getProducts(ProductsRequest())
+                val productsData = productRepository.getHomeProducts(HomeProductsRequest())
                 _uiState.value = HomeUiState(productsData = productsData, loading = false)
             } catch (e: ApiException) {
                 // 业务错误（status_code != 20000）

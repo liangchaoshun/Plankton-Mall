@@ -1,6 +1,8 @@
 package com.fuyouwentian.planktonmall.ui.home
 
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -26,6 +28,7 @@ import com.fuyouwentian.planktonmall.data.model.Product
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    onProductClick: (String) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     // 将 ViewModel 中的 StateFlow 转换为 Compose 可观察的 State
@@ -48,22 +51,16 @@ fun HomeScreen(
     if (uiState.loading) {
         Text("loading")
     } else {
-        HomeContent(
+        /*Carousel(
+            products: List<Product>,
+            modifier: Modifier = Modifier
+        )*/
+        ProductGrid(
             uiState = uiState,
             modifier = modifier,
+            onClickProduct = onProductClick
         )
     }
-}
-
-/**
- * 无状态版本（Stateless）：纯 UI，方便预览和测试
- */
-@Composable
-fun HomeContent(
-    uiState: HomeUiState,
-    modifier: Modifier = Modifier,
-) {
-    ProductGrid(uiState.productsData.data)
 }
 
 @Composable
@@ -74,11 +71,16 @@ fun Carousel(
     // TODO
 }
 
+/**
+ * 无状态版本（Stateless）：纯 UI，方便预览和测试
+ */
 @Composable
 fun ProductGrid(
-    products: List<Product>,
-    modifier: Modifier = Modifier
+    uiState: HomeUiState,
+    modifier: Modifier = Modifier,
+    onClickProduct: (String) -> Unit = { productId -> Log.i("Product_Click", productId) }
 ) {
+    val products = uiState.productsData.data
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
@@ -87,9 +89,11 @@ fun ProductGrid(
     ) {
         items(products) { product ->
             AsyncImage(
-                model = product.banner_url[0],
+                model = product.cover,
                 contentDescription = product.name_zh,
-                modifier = Modifier.aspectRatio(1f),
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .clickable { onClickProduct(product.id) },
                 contentScale = ContentScale.Crop
             )
         }
