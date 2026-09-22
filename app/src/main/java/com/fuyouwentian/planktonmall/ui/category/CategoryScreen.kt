@@ -1,7 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.category
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,8 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,27 +30,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.fuyouwentian.planktonmall.data.model.Series
-import com.fuyouwentian.planktonmall.ui.home.UiEvent
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import com.fuyouwentian.planktonmall.data.model.Category
+import com.fuyouwentian.planktonmall.data.model.Series
+import com.fuyouwentian.planktonmall.mock.MockCategories
 
 @Composable
 fun CategoryScreen(
     modifier: Modifier = Modifier,
     onSeriesClick: (String) -> Unit = {},
-    viewModel: CategoryViewModel = hiltViewModel()
+//    viewModel: CategoryViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+//    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var selectedIndex by rememberSaveable { mutableStateOf(0) }
-    val categories = uiState.categoryData.data
+    val categories = MockCategories.data
+//    val categories = uiState.categoryData.data
 
-    LaunchedEffect(Unit) {
+    /*LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
@@ -57,14 +55,14 @@ fun CategoryScreen(
                 }
             }
         }
-    }
+    }*/
     Row(modifier = Modifier.fillMaxSize()) {
-        LeftCategoryMenu(
+        CategoryMenu(
             categories = categories,
             selectedIndex = selectedIndex,
             onCategorySelected = { newIndex -> selectedIndex = newIndex }
         )
-        RightSeriesArea(
+        SeriesArea(
             series = categories[selectedIndex].series_data,
 //            onClickSeries = onSeriesClick
         )
@@ -72,7 +70,7 @@ fun CategoryScreen(
 }
 
 @Composable
-fun LeftCategoryMenu(
+fun CategoryMenu(
     categories: List<Category>,
     selectedIndex: Int,
     onCategorySelected: (Int) -> Unit
@@ -105,7 +103,7 @@ fun LeftCategoryMenu(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RightSeriesArea(
+fun SeriesArea(
     series: List<Series>,
     onClickSeries: (String) -> Unit = { seriesId -> Log.i("Series_Click", seriesId) }
 ) {

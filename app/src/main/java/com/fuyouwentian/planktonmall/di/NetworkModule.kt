@@ -53,9 +53,9 @@ object NetworkModule {
          * 注意：每次重启手机或拔掉 USB 后，都需要重新执行 adb -s VBJ0218804010364 reverse tcp:8068 tcp:8068）
          * 注意：本地后端服务器所监听的域名（hostname），需要修改为监听所有网卡：0.0.0.0
          */
-        .baseUrl("http://localhost:8068/api/client/") // ✅ 真机、模拟器使用 localhost 或 127.0.0.1 加上 adb reverse 可行
+//        .baseUrl("http://localhost:8068/api/client/") // ✅ 真机、模拟器使用 localhost 或 127.0.0.1 加上 adb reverse 可行
         // .baseUrl("http://10.0.2.2:8068/api/client/") // ❌ 真机、模拟器使用该地址不可行，再加上 adb reverse 也不可行
-//        .baseUrl("https://liangchaoshun.site/api/client/") // ✅ remote
+        .baseUrl("https://liangchaoshun.site/api/client/") // ✅ remote
         .client(okHttpClient) // 🌟 关键：把配置了日志拦截器的 OkHttpClient 传进去
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
