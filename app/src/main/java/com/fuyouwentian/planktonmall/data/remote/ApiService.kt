@@ -1,5 +1,7 @@
 package com.fuyouwentian.planktonmall.data.remote
 
+import com.fuyouwentian.planktonmall.data.model.Category
+import com.fuyouwentian.planktonmall.data.model.CategoryData
 import com.fuyouwentian.planktonmall.data.model.HomeProduct
 import com.fuyouwentian.planktonmall.data.model.HomeProductsRequest
 import com.fuyouwentian.planktonmall.data.model.Product
@@ -23,4 +25,7 @@ interface ApiService {
 
     @GET("goods/{id}")
     suspend fun getProduct(@Path("id") id: String): BaseResponse<Product>
+
+    @GET("category/list")
+    suspend fun getCategories(): BaseResponse<CategoryData<Category>>
 }

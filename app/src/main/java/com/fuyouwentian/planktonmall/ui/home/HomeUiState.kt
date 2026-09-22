@@ -3,7 +3,7 @@ package com.fuyouwentian.planktonmall.ui.home
 import com.fuyouwentian.planktonmall.data.model.HomeProduct
 import com.fuyouwentian.planktonmall.data.model.ProductsData
 
-val productsDataDefault = ProductsData<HomeProduct>(
+private val productsDataDefault = ProductsData<HomeProduct>(
     data = emptyList(),
     total = 0,
     pageIndex = 1,

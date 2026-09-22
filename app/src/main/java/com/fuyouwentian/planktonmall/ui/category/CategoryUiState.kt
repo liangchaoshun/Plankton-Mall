@@ -1,11 +1,15 @@
 package com.fuyouwentian.planktonmall.ui.category
 
 import com.fuyouwentian.planktonmall.data.model.Category
-import com.fuyouwentian.planktonmall.data.model.Series
+import com.fuyouwentian.planktonmall.data.model.CategoryData
+
+private val CategoryDataDefault = CategoryData<Category>(
+    data = emptyList(),
+    total = 0
+)
 
 data class CategoryUiState(
-    val categoryList: List<Category> = emptyList(),
-    val seriesList: List<Series> = emptyList(),
+    val categoryData: CategoryData<Category> = CategoryDataDefault,
     val loading: Boolean = false,
     val error: String? = null
 )

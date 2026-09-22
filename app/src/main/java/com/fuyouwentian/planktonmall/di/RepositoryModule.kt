@@ -1,6 +1,8 @@
 package com.fuyouwentian.planktonmall.di
 
+import com.fuyouwentian.planktonmall.data.repository.CategoryRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.ProductRepositoryImpl
+import com.fuyouwentian.planktonmall.domain.repository.ICategoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.IProductRepository
 import dagger.Binds
 import dagger.Module
@@ -33,4 +35,9 @@ abstract class RepositoryModule {
     abstract fun bindProductRepository(
         impl: ProductRepositoryImpl
     ): IProductRepository
+
+    @Binds
+    abstract fun bindCategoryRepository(
+        impl: CategoryRepositoryImpl
+    ): ICategoryRepository
 }
