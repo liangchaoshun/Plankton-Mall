@@ -21,7 +21,7 @@ object MockCategories {
                     desc = "电脑办公 > 笔记本",
                     no = 1,
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394601327_d76e5ef7-f86a-4d54-b577-00f352ace84f@笔记本.png",
+                        "https://liangchaoshun.site/api/static/files/1783394601327_d76e5ef7-f86a-4d54-b577-00f352ace84f@bijiben.png",
                     category_id = "613b1ee4ff64b12271bffdd3",
                     create_time = "2026-07-04T13:49:40.116Z",
                     update_time = "2026-07-04T13:49:45.963Z"
@@ -33,7 +33,7 @@ object MockCategories {
                     desc = "电脑办公 > 显卡",
                     no = 2,
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394601014_b05f8244-3e2d-4083-9681-8b10a7b2497f@显卡.jpg",
+                        "https://liangchaoshun.site/api/static/files/1783394601014_b05f8244-3e2d-4083-9681-8b10a7b2497f@xianka.jpg",
                     category_id = "613b1ee4ff64b12271bffdd3",
                     create_time = "2026-07-04T13:51:40.116Z",
                     update_time = "2026-07-04T13:51:45.963Z"
@@ -45,7 +45,7 @@ object MockCategories {
                     desc = "电脑办公 > 一体机",
                     no = 3,
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394600490_fbc29384-4a81-49ea-85bb-c0a47b2abd59@一体机.jpg",
+                        "https://liangchaoshun.site/api/static/files/1783394600490_fbc29384-4a81-49ea-85bb-c0a47b2abd59@yitiji.jpg",
                     category_id = "613b1ee4ff64b12271bffdd3",
                     create_time = "2026-07-04T13:52:15.116Z",
                     update_time = "2026-07-04T13:52:20.963Z"
@@ -68,7 +68,7 @@ object MockCategories {
                     desc = "家用电器 > 豆浆机",
                     no = 1,
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394602612_2aa33ead-e433-45f6-932f-e03e48c9650f@豆浆机.jpg",
+                        "https://liangchaoshun.site/api/static/files/1783394602612_2aa33ead-e433-45f6-932f-e03e48c9650f@doujiangji.jpg",
                     category_id = "613b1f67ff64b12271bffddc",
                     create_time = "2026-07-04T14:00:48.407Z",
                     update_time = "2026-07-04T14:00:48.488Z"
@@ -80,7 +80,7 @@ object MockCategories {
                     desc = "家用电器 > 微波炉",
                     no = 2,
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394602259_80327c10-fc9c-42b5-9e15-9a4b5677a9ca@微波炉.jpg",
+                        "https://liangchaoshun.site/api/static/files/1783394602259_80327c10-fc9c-42b5-9e15-9a4b5677a9ca@weibolu.jpg",
                     category_id = "613b1f67ff64b12271bffddc",
                     create_time = "2026-07-04T14:01:45.407Z",
                     update_time = "2026-07-04T14:01:45.488Z"
@@ -101,7 +101,7 @@ object MockCategories {
                     name_zh = "手机",
                     name_en = "Phone",
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394604119_309c3618-76d6-4399-8468-0723b0bf5bca@手机.jpg",
+                        "https://liangchaoshun.site/api/static/files/1783394604119_309c3618-76d6-4399-8468-0723b0bf5bca@shouji.jpg",
                     no = 1,
                     desc = "手机数码 > 手机",
                     category_id = "613cdc8491532a76854afa03",
@@ -113,7 +113,7 @@ object MockCategories {
                     name_zh = "无人机",
                     name_en = "Drone",
                     icon_url =
-                        "https://liangchaoshun.site/api/static/files/1783394604290_8cd997d8-6e5b-415c-ae0a-70998bbceeaf@无人机.jpg",
+                        "https://liangchaoshun.site/api/static/files/1783394604290_8cd997d8-6e5b-415c-ae0a-70998bbceeaf@wurenji.jpg",
                     no = 2,
                     desc = "手机数码 > 无人机",
                     category_id = "613cdc8491532a76854afa03",

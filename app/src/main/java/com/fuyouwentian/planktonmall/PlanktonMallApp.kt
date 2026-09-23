@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,7 @@ import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
 import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
 import com.fuyouwentian.planktonmall.ui.home.HomeScreen
+import com.fuyouwentian.planktonmall.ui.products.ProductsScreen
 import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 
 
@@ -56,10 +58,13 @@ fun PlanktonMallApp(
                     NavigationBarItem(
                         selected = currentRoute == route,
                         onClick = {
+                            Log.d("BottomNav", "navigate to: $route, currentRoute: $currentRoute")
+                            // TODO 从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
+                            //      后续再点击底部导航菜单，页面显示的是 ProductsScreen 而不是 CategoryScreen
                             navController.navigate(route) {
                                 // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
                                 // saveState：弹栈时保存 UI 状态（滚动位置、输入内容等）
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(routes[0]) { saveState = true }
                                 launchSingleTop = true // 避免栈顶重复：目标目的地已经在栈顶，就复用，不再压入新的实例
                                 restoreState = true // 恢复之前保存的状态，和 saveState 配套
                             }
@@ -93,7 +98,8 @@ fun PlanktonMallApp(
             }
             composable(route = routes[1]) {
                 CategoryScreen(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    onSeriesClick = { seriesId -> navController.navigate("products/$seriesId") }
                 )
             }
             composable(route = routes[2]) {
@@ -105,6 +111,13 @@ fun PlanktonMallApp(
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize()
                 )
+            }
+            composable(
+                route = "products/{q}",
+                arguments = listOf(navArgument("q") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val q = backStackEntry.arguments?.getString("q")
+                ProductsScreen(q = q, modifier = Modifier.fillMaxSize())
             }
             composable(
                 route = "detail/{id}",

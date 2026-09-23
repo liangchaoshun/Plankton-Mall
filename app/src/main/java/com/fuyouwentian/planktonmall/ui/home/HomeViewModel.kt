@@ -41,7 +41,7 @@ class HomeViewModel @Inject constructor(
         )
     }*/
 
-    private fun initHandler() {
+    fun initHandler() {
         viewModelScope.launch {
             _uiState.value = HomeUiState(loading = true)
             try {
