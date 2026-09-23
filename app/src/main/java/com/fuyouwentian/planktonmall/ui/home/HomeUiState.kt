@@ -1,7 +1,7 @@
 package com.fuyouwentian.planktonmall.ui.home
 
-import com.fuyouwentian.planktonmall.data.model.ProductLite
-import com.fuyouwentian.planktonmall.data.model.ProductsData
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
+import com.fuyouwentian.planktonmall.domain.model.ProductsData
 
 private val productsDataDefault = ProductsData<ProductLite>(
     data = emptyList(),

@@ -37,9 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.fuyouwentian.planktonmall.data.model.Category
-import com.fuyouwentian.planktonmall.data.model.Series
-import com.fuyouwentian.planktonmall.data.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.model.Category
+import com.fuyouwentian.planktonmall.domain.model.Series
+import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
 
 @Composable

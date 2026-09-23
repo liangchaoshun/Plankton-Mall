@@ -1,12 +1,12 @@
 package com.fuyouwentian.planktonmall.data.remote
 
-import com.fuyouwentian.planktonmall.data.model.Category
-import com.fuyouwentian.planktonmall.data.model.CategoryData
-import com.fuyouwentian.planktonmall.data.model.ProductLite
-import com.fuyouwentian.planktonmall.data.model.HomeProductsRequest
-import com.fuyouwentian.planktonmall.data.model.Product
-import com.fuyouwentian.planktonmall.data.model.ProductsData
-import com.fuyouwentian.planktonmall.data.model.ProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.Category
+import com.fuyouwentian.planktonmall.domain.model.CategoryData
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
+import com.fuyouwentian.planktonmall.domain.model.HomeProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductsData
+import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST

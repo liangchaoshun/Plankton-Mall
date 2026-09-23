@@ -1,4 +1,4 @@
-package com.fuyouwentian.planktonmall.data.model
+package com.fuyouwentian.planktonmall.domain.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

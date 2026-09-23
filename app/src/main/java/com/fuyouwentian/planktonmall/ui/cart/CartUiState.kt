@@ -1,6 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.cart
 
-import com.fuyouwentian.planktonmall.data.model.Product
+import com.fuyouwentian.planktonmall.domain.model.Product
 
 data class CartUiState(
     val cartList: List<Product> = emptyList(),

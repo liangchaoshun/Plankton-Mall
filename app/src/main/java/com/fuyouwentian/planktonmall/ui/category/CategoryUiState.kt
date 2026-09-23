@@ -1,7 +1,7 @@
 package com.fuyouwentian.planktonmall.ui.category
 
-import com.fuyouwentian.planktonmall.data.model.Category
-import com.fuyouwentian.planktonmall.data.model.CategoryData
+import com.fuyouwentian.planktonmall.domain.model.Category
+import com.fuyouwentian.planktonmall.domain.model.CategoryData
 
 private val CategoryDataDefault = CategoryData<Category>(
     data = emptyList(),

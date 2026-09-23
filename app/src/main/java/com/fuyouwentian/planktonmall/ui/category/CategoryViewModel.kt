@@ -2,11 +2,11 @@ package com.fuyouwentian.planktonmall.ui.category
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.data.remote.ApiException
 import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
 import com.fuyouwentian.planktonmall.data.remote.NetworkException
-import com.fuyouwentian.planktonmall.domain.repository.ICategoryRepository
+import com.fuyouwentian.planktonmall.domain.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
-    private val categoryRepository: ICategoryRepository
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(CategoryUiState(loading = true))

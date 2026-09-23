@@ -1,7 +1,7 @@
 package com.fuyouwentian.planktonmall.mock
 
-import com.fuyouwentian.planktonmall.data.model.Category
-import com.fuyouwentian.planktonmall.data.model.Series
+import com.fuyouwentian.planktonmall.domain.model.Category
+import com.fuyouwentian.planktonmall.domain.model.Series
 
 object MockCategories {
     val data: List<Category> = listOf(
