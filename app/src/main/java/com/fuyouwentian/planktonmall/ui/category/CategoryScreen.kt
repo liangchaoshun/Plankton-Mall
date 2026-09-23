@@ -39,7 +39,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.data.model.Category
 import com.fuyouwentian.planktonmall.data.model.Series
-import com.fuyouwentian.planktonmall.ui.home.UiEvent
+import com.fuyouwentian.planktonmall.data.model.UiEvent
+
 
 @Composable
 fun CategoryScreen(

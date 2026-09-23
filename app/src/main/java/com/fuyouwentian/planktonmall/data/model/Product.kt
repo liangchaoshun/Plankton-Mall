@@ -28,12 +28,13 @@ data class Product(
 )
 
 @Serializable
-data class HomeProduct(
+data class ProductLite(
     @SerialName("_id")
     val id: String,
     val name_zh: String,
     val name_en: String,
     val cover: String,
+    val icon_url: String,
     val series_id: String,
     val category_id: String
 )

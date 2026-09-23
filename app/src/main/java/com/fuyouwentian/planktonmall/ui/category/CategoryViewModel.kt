@@ -2,11 +2,11 @@ package com.fuyouwentian.planktonmall.ui.category
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fuyouwentian.planktonmall.data.model.UiEvent
 import com.fuyouwentian.planktonmall.data.remote.ApiException
 import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
 import com.fuyouwentian.planktonmall.data.remote.NetworkException
 import com.fuyouwentian.planktonmall.domain.repository.ICategoryRepository
-import com.fuyouwentian.planktonmall.ui.home.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -3,6 +3,7 @@ package com.fuyouwentian.planktonmall.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.model.HomeProductsRequest
+import com.fuyouwentian.planktonmall.data.model.UiEvent
 import com.fuyouwentian.planktonmall.data.remote.ApiException
 import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
 import com.fuyouwentian.planktonmall.data.remote.NetworkException
@@ -34,7 +35,7 @@ class HomeViewModel @Inject constructor(
         initHandler()
     }
 
-    /*private fun initHandler() {
+    /*fun initHandler() {
         _uiState.value = HomeUiState(
             products = MockProducts.allProducts,
             loading = false

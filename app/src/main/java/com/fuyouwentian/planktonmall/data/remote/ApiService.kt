@@ -2,7 +2,7 @@ package com.fuyouwentian.planktonmall.data.remote
 
 import com.fuyouwentian.planktonmall.data.model.Category
 import com.fuyouwentian.planktonmall.data.model.CategoryData
-import com.fuyouwentian.planktonmall.data.model.HomeProduct
+import com.fuyouwentian.planktonmall.data.model.ProductLite
 import com.fuyouwentian.planktonmall.data.model.HomeProductsRequest
 import com.fuyouwentian.planktonmall.data.model.Product
 import com.fuyouwentian.planktonmall.data.model.ProductsData
@@ -15,13 +15,13 @@ import retrofit2.http.Path
 interface ApiService {
 
     @GET("goods/banner")
-    suspend fun getHomeBanner(): BaseResponse<ProductsData<HomeProduct>>
+    suspend fun getHomeBanner(): BaseResponse<ProductsData<ProductLite>>
 
     @POST("goods/home")
-    suspend fun getHomeProducts(@Body request: HomeProductsRequest): BaseResponse<ProductsData<HomeProduct>>
+    suspend fun getHomeProducts(@Body request: HomeProductsRequest): BaseResponse<ProductsData<ProductLite>>
 
     @POST("goods/list")
-    suspend fun getProducts(@Body request: ProductsRequest): BaseResponse<ProductsData<HomeProduct>>
+    suspend fun getProducts(@Body request: ProductsRequest): BaseResponse<ProductsData<ProductLite>>
 
     @GET("goods/{id}")
     suspend fun getProduct(@Path("id") id: String): BaseResponse<Product>

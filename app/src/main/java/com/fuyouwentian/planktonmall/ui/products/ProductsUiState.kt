@@ -1,9 +1,17 @@
 package com.fuyouwentian.planktonmall.ui.products
 
-import com.fuyouwentian.planktonmall.data.model.Product
+import com.fuyouwentian.planktonmall.data.model.ProductLite
+import com.fuyouwentian.planktonmall.data.model.ProductsData
+
+private val productsDataDefault = ProductsData<ProductLite>(
+    data = emptyList(),
+    total = 0,
+    pageIndex = 1,
+    pageSize = 20
+)
 
 data class ProductsUiState(
-    val productsData: Product? = null,
+    val productsData: ProductsData<ProductLite> = productsDataDefault,
     val loading: Boolean = false,
     val error: String? = null
 )
