@@ -93,7 +93,12 @@ fun PlanktonMallApp(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_medium)),
-                    onProductClick = { productId -> navController.navigate("detail/${productId}") }
+                    onProductClick = { productId -> navController.navigate("detail/${productId}") },
+                    onHomeSearch = { str ->
+                        if (str.isNotBlank()) {
+                            navController.navigate("products/$str")
+                        }
+                    }
                 )
             }
             composable(route = routes[1]) {

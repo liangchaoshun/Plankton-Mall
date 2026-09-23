@@ -8,4 +8,5 @@
     <string name="category_route">category</string>
     <string name="cart_route">cart</string>
     <string name="profile_route">profile</string>
+    <string name="placeholder_search">Search</string>
 </resources>
