@@ -50,33 +50,41 @@ fun PlanktonMallApp(
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute: String = backStackEntry?.destination?.route ?: routes[0]
+    // 只有当前路由在底部导航的目的地里，才显示底部栏
+    val showBottomBar = currentRoute in routes
+
     Scaffold(
         bottomBar = {
-            NavigationBar(modifier = Modifier.fillMaxWidth()) {
-                NAVI_DEST.forEachIndexed { index, dest ->
-                    val route = routes[index]
-                    NavigationBarItem(
-                        selected = currentRoute == route,
-                        onClick = {
-                            Log.d("BottomNav", "navigate to: $route, currentRoute: $currentRoute")
-                            // TODO 从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
-                            //      后续再点击底部导航菜单，页面显示的是 ProductsScreen 而不是 CategoryScreen
-                            navController.navigate(route) {
-                                // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
-                                // saveState：弹栈时保存 UI 状态（滚动位置、输入内容等）
-                                popUpTo(routes[0]) { saveState = true }
-                                launchSingleTop = true // 避免栈顶重复：目标目的地已经在栈顶，就复用，不再压入新的实例
-                                restoreState = true // 恢复之前保存的状态，和 saveState 配套
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = if (currentRoute == route) dest.selectedIcon else dest.unselectedIcon,
-                                contentDescription = null
-                            )
-                        },
-                        label = { Text(stringResource(dest.iconTextId)) }
-                    )
+            if (showBottomBar) {
+                NavigationBar(modifier = Modifier.fillMaxWidth()) {
+                    NAVI_DEST.forEachIndexed { index, dest ->
+                        val route = routes[index]
+                        NavigationBarItem(
+                            selected = currentRoute == route,
+                            onClick = {
+                                Log.d(
+                                    "BottomNav",
+                                    "navigate to: $route, currentRoute: $currentRoute"
+                                )
+                                // TODO 从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
+                                //      后续再点击底部导航菜单，页面显示的是 ProductsScreen 而不是 CategoryScreen
+                                navController.navigate(route) {
+                                    // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
+                                    // saveState：弹栈时保存 UI 状态（滚动位置、输入内容等）
+                                    popUpTo(routes[0]) { saveState = true }
+                                    launchSingleTop = true // 避免栈顶重复：目标目的地已经在栈顶，就复用，不再压入新的实例
+                                    restoreState = true // 恢复之前保存的状态，和 saveState 配套
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (currentRoute == route) dest.selectedIcon else dest.unselectedIcon,
+                                    contentDescription = null
+                                )
+                            },
+                            label = { Text(stringResource(dest.iconTextId)) }
+                        )
+                    }
                 }
             }
         }
@@ -94,9 +102,9 @@ fun PlanktonMallApp(
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_medium)),
                     onProductClick = { productId -> navController.navigate("detail/${productId}") },
-                    onHomeSearch = { str ->
-                        if (str.isNotBlank()) {
-                            navController.navigate("products/$str")
+                    onHomeSearch = { qs ->
+                        if (qs.isNotBlank()) {
+                            navController.navigate("products/$qs")
                         }
                     }
                 )
@@ -122,14 +130,23 @@ fun PlanktonMallApp(
                 arguments = listOf(navArgument("q") { type = NavType.StringType })
             ) { backStackEntry ->
                 val q = backStackEntry.arguments?.getString("q")
-                ProductsScreen(q = q, modifier = Modifier.fillMaxSize())
+                ProductsScreen(
+                    q = q,
+                    modifier = Modifier.fillMaxSize(),
+                    onProductClick = { productId -> navController.navigate("detail/${productId}") },
+                    onBackClick = { navController.popBackStack() }
+                )
             }
             composable(
                 route = "detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id")
-                DetailScreen(id = id, modifier = Modifier.fillMaxSize())
+                DetailScreen(
+                    id = id,
+                    modifier = Modifier.fillMaxSize(),
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
     }

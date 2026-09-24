@@ -33,6 +33,7 @@ data class ProductLite(
     val id: String,
     val name_zh: String,
     val name_en: String,
+    val price: String,
     val cover: String,
     val icon_url: String,
     val series_id: String,

@@ -3,10 +3,10 @@
     <string name="home_label">主页</string>
     <string name="category_label">分类</string>
     <string name="cart_label">购物车</string>
-    <string name="profile_label">个人中心</string>
+    <string name="profile_label">我</string>
     <string name="home_route">home</string>
     <string name="category_route">category</string>
     <string name="cart_route">cart</string>
     <string name="profile_route">profile</string>
-    <string name="placeholder_search">Search</string>
+    <string name="placeholder_search">请输入搜索内容</string>
 </resources>

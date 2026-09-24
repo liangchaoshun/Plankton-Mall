@@ -66,6 +66,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
@@ -79,7 +80,7 @@ fun HomeScreen(
     HomeScreenContent(
         uiState = uiState,
         modifier = modifier,
-        onClickRetry = { viewModel.initHandler() },
+        onClickRetry = { viewModel.fetchDataHandler() },
         onHomeSearch = onHomeSearch,
         onClickProduct = onProductClick
     )
@@ -96,13 +97,13 @@ fun SearchBar(
     OutlinedTextField(
         value = query,
         onValueChange = { query = it },
-        leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = null)
-        },
+        leadingIcon = if (query.isEmpty()) {
+            { Icon(imageVector = Icons.Default.Search, contentDescription = null) }
+        } else null,
         trailingIcon = {
             if (query.isNotBlank()) {
                 IconButton(onClick = {
-                    onSearch(query)
+                    onSearch(query.trim())
                     keyboardController?.hide()
                 }) {
                     Icon(
@@ -176,16 +177,14 @@ fun HomeScreenContent(
         uiState.productsData.data.isEmpty() -> {
             // 请求成功但没有数据
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "暂无列表数据")
+                Text(text = "暂无数据")
             }
         }
 
         else -> {
             // 搜索栏：跨整行
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 10.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
                 SearchBar(
                     Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),

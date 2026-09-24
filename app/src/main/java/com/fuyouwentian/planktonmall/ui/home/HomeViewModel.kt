@@ -32,17 +32,10 @@ class HomeViewModel @Inject constructor(
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     init {
-        initHandler()
+        fetchDataHandler()
     }
 
-    /*fun initHandler() {
-        _uiState.value = HomeUiState(
-            products = MockProducts.allProducts,
-            loading = false
-        )
-    }*/
-
-    fun initHandler() {
+    fun fetchDataHandler() {
         viewModelScope.launch {
             _uiState.value = HomeUiState(loading = true)
             try {

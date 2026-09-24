@@ -31,22 +31,11 @@ class ProductsViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    init {
-        initHandler()
-    }
-
-    /*fun initHandler() {
-        _uiState.value = ProductsUiState(
-            products = MockProducts.allProducts,
-            loading = false
-        )
-    }*/
-
-    fun initHandler() {
+    fun fetchDataHandler(params: ProductsRequest = ProductsRequest()) {
         viewModelScope.launch {
             _uiState.value = ProductsUiState(loading = true)
             try {
-                val productsData = productRepository.getProducts(ProductsRequest())
+                val productsData = productRepository.getProducts(params)
                 _uiState.value = ProductsUiState(productsData = productsData, loading = false)
             } catch (e: ApiException) {
                 // 业务错误（status_code != 20000）

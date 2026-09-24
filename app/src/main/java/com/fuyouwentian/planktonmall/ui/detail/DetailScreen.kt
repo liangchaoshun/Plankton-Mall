@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 @Composable
 fun DetailScreen(
     modifier: Modifier = Modifier,
+    onBackClick: () -> Unit = {},
     id: String? = null // 允许传入 null
 ) {
     if (id.isNullOrBlank()) {
