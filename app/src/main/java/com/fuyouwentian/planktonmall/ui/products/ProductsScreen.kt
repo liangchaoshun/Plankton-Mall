@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,6 +58,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
+import com.fuyouwentian.planktonmall.common.Constants
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
@@ -64,18 +66,20 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 @Composable
 fun ProductsScreen(
     modifier: Modifier = Modifier,
-    q: String? = null, // 搜索条件，允许传入 null
+    q: String = "",
     onProductClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {},
     viewModel: ProductsViewModel = hiltViewModel()
 ) {
+    val isQId = Constants.OBJECT_ID_REGEX.matches(q)
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var searchQuery by rememberSaveable { mutableStateOf(if (!isQId) q else "") }
 
     // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
     LaunchedEffect(q) {
         // 页面初始化
-        viewModel.fetchDataHandler(ProductsRequest(q = q?.trim() ?: ""))
+        viewModel.fetchDataHandler(ProductsRequest(q = q.trim()))
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
@@ -108,10 +112,16 @@ fun ProductsScreen(
                     }
 
                     SearchBar(
+                        query = searchQuery,
                         modifier = Modifier.weight(1f),
+                        onChangeEvent = { searchQuery = it },
                         onSearch = { qs ->
                             viewModel.fetchDataHandler(
-                                ProductsRequest(pageIndex = 1, pageSize = 10, q = qs.trim())
+                                ProductsRequest(
+                                    pageIndex = 1,
+                                    pageSize = 10,
+                                    q = qs.trim()
+                                )
                             )
                         }
                     )
@@ -122,7 +132,16 @@ fun ProductsScreen(
         ProductsScreenContent(
             uiState = uiState,
             modifier = modifier.padding(padding),
-            onClickRetry = viewModel::fetchDataHandler, // TODO 需传入当前搜索参数
+            onClickRetry = {
+                val finalQuery = searchQuery.ifBlank { q } // 传入当前搜索参数
+                viewModel.fetchDataHandler(
+                    ProductsRequest(
+                        pageIndex = 1,
+                        pageSize = 10,
+                        q = finalQuery.trim()
+                    )
+                )
+            },
             onClickProduct = onProductClick
         )
     }
@@ -131,14 +150,15 @@ fun ProductsScreen(
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
+    query: String = "",
+    onChangeEvent: (String) -> Unit = {},
     onSearch: (String) -> Unit = {}
 ) {
-    var query by rememberSaveable { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     OutlinedTextField(
         value = query,
-        onValueChange = { query = it },
+        onValueChange = { str -> onChangeEvent(str.trim()) },
         leadingIcon = if (query.isEmpty()) {
             { Icon(imageVector = Icons.Default.Search, contentDescription = null) }
         } else null,

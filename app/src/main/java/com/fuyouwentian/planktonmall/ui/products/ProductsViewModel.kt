@@ -7,6 +7,8 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.data.remote.ApiException
 import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
 import com.fuyouwentian.planktonmall.data.remote.NetworkException
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
+import com.fuyouwentian.planktonmall.domain.model.ProductsData
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,6 +38,12 @@ class ProductsViewModel @Inject constructor(
             _uiState.value = ProductsUiState(loading = true)
             try {
                 val productsData = productRepository.getProducts(params)
+                /*val productsData = ProductsData<ProductLite>(
+                    data = emptyList(),
+                    total = 0,
+                    pageIndex = 1,
+                    pageSize = 10
+                )*/
                 _uiState.value = ProductsUiState(productsData = productsData, loading = false)
             } catch (e: ApiException) {
                 // 业务错误（status_code != 20000）

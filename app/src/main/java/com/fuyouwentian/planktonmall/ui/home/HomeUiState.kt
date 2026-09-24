@@ -7,7 +7,7 @@ private val productsDataDefault = ProductsData<ProductLite>(
     data = emptyList(),
     total = 0,
     pageIndex = 1,
-    pageSize = 20
+    pageSize = 10
 )
 
 data class HomeUiState(

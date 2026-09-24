@@ -129,7 +129,7 @@ fun PlanktonMallApp(
                 route = "products/{q}",
                 arguments = listOf(navArgument("q") { type = NavType.StringType })
             ) { backStackEntry ->
-                val q = backStackEntry.arguments?.getString("q")
+                val q = backStackEntry.arguments?.getString("q") ?: ""
                 ProductsScreen(
                     q = q,
                     modifier = Modifier.fillMaxSize(),
