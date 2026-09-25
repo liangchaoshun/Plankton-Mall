@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.products
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,8 +79,9 @@ fun ProductsScreen(
 
     // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
     LaunchedEffect(q) {
-        // 页面初始化
-        viewModel.fetchDataHandler(ProductsRequest(q = q.trim()))
+        // TODO 能否从路由判断是从哪个页面跳转而来？请求的 api 不对~，以系列id 查询其下的商品，有专用 api，
+        //  不过和“搜索框”统一使用 goods/list 也好，性能差了一些而已！
+        viewModel.fetchProductsData(ProductsRequest(q = q.trim())) // 页面初始化，加载列表数据。
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
@@ -116,7 +118,7 @@ fun ProductsScreen(
                         modifier = Modifier.weight(1f),
                         onChangeEvent = { searchQuery = it },
                         onSearch = { qs ->
-                            viewModel.fetchDataHandler(
+                            viewModel.fetchProductsData(
                                 ProductsRequest(
                                     pageIndex = 1,
                                     pageSize = 10,
@@ -134,7 +136,7 @@ fun ProductsScreen(
             modifier = modifier.padding(padding),
             onClickRetry = {
                 val finalQuery = searchQuery.ifBlank { q } // 传入当前搜索参数
-                viewModel.fetchDataHandler(
+                viewModel.fetchProductsData(
                     ProductsRequest(
                         pageIndex = 1,
                         pageSize = 10,
@@ -142,6 +144,7 @@ fun ProductsScreen(
                     )
                 )
             },
+            onLoadMore = viewModel::loadMore,
             onClickProduct = onProductClick
         )
     }
@@ -202,7 +205,8 @@ fun ProductsScreenContent(
     uiState: ProductsUiState,
     modifier: Modifier = Modifier,
     onClickRetry: () -> Unit = {},
-    onClickProduct: (String) -> Unit = { productId -> Log.i("Product_Click", productId) }
+    onLoadMore: () -> Unit = {},
+    onClickProduct: (String) -> Unit = { }
 ) {
     // 根据状态展示不同 UI
     when {
@@ -235,7 +239,25 @@ fun ProductsScreenContent(
         }
 
         else -> {
+            // 列表上滑加载更多 >> https://chat.deepseek.com/share/0xjyg6gtptec33rjt9
+            // LazyColumn 滚动状态控制器
+            val listState = rememberLazyListState()
+
+            // 监听滚动：当倒数第 3 项可见时预加载（类似 H5 的距底部 100px）
+            val shouldLoadMore by remember {
+                derivedStateOf {
+                    val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                    val total = listState.layoutInfo.totalItemsCount
+                    total > 0 && lastVisible >= total - 3
+                }
+            }
+            LaunchedEffect(shouldLoadMore, uiState.hasMore) {
+                if (shouldLoadMore && uiState.hasMore) {
+                    onLoadMore()
+                }
+            }
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                 modifier = modifier.padding(top = dimensionResource(R.dimen.padding_medium))
             ) {
@@ -277,8 +299,29 @@ fun ProductsScreenContent(
                         }
                     }
                 }
+                // 底部状态：加载更多 / 没有更多了
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            uiState.loadingMore -> CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+
+                            !uiState.hasMore -> Text(
+                                text = "没有更多了",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
-

@@ -1,12 +1,13 @@
 package com.fuyouwentian.planktonmall.data.repository
 
-import com.fuyouwentian.planktonmall.domain.model.ProductLite
+import com.fuyouwentian.planktonmall.data.remote.ApiService
+import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
+import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.HomeProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsData
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
-import com.fuyouwentian.planktonmall.data.remote.ApiService
-import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,8 +21,8 @@ class ProductRepositoryImpl @Inject constructor(
         return safeApiCall { apiService.getProducts(request) }
     }
 
-    override suspend fun getHomeBanner(): ProductsData<ProductLite> {
-        return safeApiCall { apiService.getHomeBanner() }
+    override suspend fun getHomeCarousel(): List<ProductLite> {
+        return safeApiCall { apiService.getHomeCarousel() }
     }
 
     override suspend fun getHomeProducts(request: HomeProductsRequest): ProductsData<ProductLite> {
@@ -30,7 +31,7 @@ class ProductRepositoryImpl @Inject constructor(
 
     override suspend fun getProduct(id: String): Product? = try {
         safeApiCall { apiService.getProduct(id) }
-    } catch (e: retrofit2.HttpException) {
-        if (e.code() == 404) null else throw e
+    } catch (e: HttpExceptionWrapper) {
+        if (e.code == 404) null else throw e
     }
 }

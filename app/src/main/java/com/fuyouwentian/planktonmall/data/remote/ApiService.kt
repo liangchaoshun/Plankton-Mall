@@ -14,8 +14,8 @@ import retrofit2.http.Path
 
 interface ApiService {
 
-    @GET("goods/banner")
-    suspend fun getHomeBanner(): BaseResponse<ProductsData<ProductLite>>
+    @GET("goods/carousel")
+    suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>>
 
     @POST("goods/home")
     suspend fun getHomeProducts(@Body request: HomeProductsRequest): BaseResponse<ProductsData<ProductLite>>

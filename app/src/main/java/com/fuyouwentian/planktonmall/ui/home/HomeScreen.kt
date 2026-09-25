@@ -1,11 +1,11 @@
 package com.fuyouwentian.planktonmall.ui.home
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,7 +53,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
-import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
 
@@ -68,6 +72,8 @@ fun HomeScreen(
 
     // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
     LaunchedEffect(Unit) {
+        viewModel.fetchCarouselData() // 页面初始化，加载轮播图数据
+        viewModel.fetchProductsData() // 页面初始化，加载列表数据
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
@@ -80,7 +86,7 @@ fun HomeScreen(
     HomeScreenContent(
         uiState = uiState,
         modifier = modifier,
-        onClickRetry = { viewModel.fetchDataHandler() },
+        onClickRetry = viewModel::fetchProductsData,
         onHomeSearch = onHomeSearch,
         onClickProduct = onProductClick
     )
@@ -135,12 +141,36 @@ fun SearchBar(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Carousel(
-    products: List<Product>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    uiState: HomeUiState,
+    onClickProduct: (String) -> Unit = {}
 ) {
-    // TODO
+    val carouselList = uiState.carouselData
+    HorizontalMultiBrowseCarousel(
+        state = rememberCarouselState { carouselList.count() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(top = 16.dp, bottom = 16.dp),
+        preferredItemWidth = 186.dp,
+        itemSpacing = 8.dp,
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) { i ->
+        val item = carouselList[i]
+        AsyncImage(
+            model = item.cover,
+            contentDescription = item.name_zh,
+            modifier = Modifier
+                .height(205.dp)
+                .maskClip(MaterialTheme.shapes.extraLarge)
+                // .aspectRatio(1f)
+                .clickable { onClickProduct(item.id) },
+            contentScale = ContentScale.Crop
+        )
+    }
 }
 
 @Composable
@@ -149,11 +179,11 @@ fun HomeScreenContent(
     modifier: Modifier = Modifier,
     onClickRetry: () -> Unit = {},
     onHomeSearch: (String) -> Unit = {},
-    onClickProduct: (String) -> Unit = { productId -> Log.i("Product_Click", productId) }
+    onClickProduct: (String) -> Unit = {}
 ) {
     // 根据状态展示不同 UI
     when {
-        uiState.loading -> {
+        uiState.loadingHomeList or uiState.loadingCarousel -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }

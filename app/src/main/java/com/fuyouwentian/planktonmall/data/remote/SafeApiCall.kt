@@ -1,15 +1,33 @@
 package com.fuyouwentian.planktonmall.data.remote
 
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
+
+interface FriendlyException {
+    val friendlyMessage: String
+}
 
 // 1. 业务异常（HTTP 200，但 status_code != 20000）
-class ApiException(val code: String, override val message: String) : Exception(message)
+class ApiException(val code: String, override val message: String) : Exception(message),
+    FriendlyException {
+    override val friendlyMessage: String get() = message
+}
+
 // 2. HTTP 协议异常（404, 500 等）
-class HttpExceptionWrapper(val code: Int, override val message: String) : Exception(message)
+class HttpExceptionWrapper(val code: Int, override val message: String) : Exception(message),
+    FriendlyException {
+    override val friendlyMessage: String get() = message
+}
+
 // 3. 网络连接异常（断网、超时）
-class NetworkException(override val message: String) : Exception(message)
+class NetworkException(override val message: String) : Exception(message),
+    FriendlyException {
+    override val friendlyMessage: String get() = message
+}
 
 // 统一的 API 调用包装器
 suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
@@ -23,17 +41,25 @@ suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
             // HTTP 成功，但业务失败
             throw ApiException(response.status_code, response.message)
         }
+    } catch (e: CancellationException) { // 协程
+        throw e
+    } catch (e: ApiException) {
+        throw e // 放行，不被下面的 Exception 吞掉
     } catch (e: HttpException) {
         // 捕获 401, 404, 500 等 HTTP 协议错误
         val errorMsg = when (e.code()) {
+            400 -> "参数错误，请检查"
             401 -> "登录已过期，请重新登录"
             404 -> "请求的资源不存在"
             500 -> "服务器开小差了，请稍后再试"
             else -> "网络请求错误: ${e.code()}"
         }
         throw HttpExceptionWrapper(e.code(), errorMsg)
+    } catch (e: SocketTimeoutException) {
+        throw NetworkException("请求超时，请稍后重试")
+    } catch (e: UnknownHostException) {
+        throw NetworkException("网络不可用，请检查网络连接")
     } catch (e: IOException) {
-        // 捕获断网、超时等底层 IO 错误
         throw NetworkException("网络连接失败，请检查网络设置")
     } catch (e: Exception) {
         // 捕获解析错误等其他异常
