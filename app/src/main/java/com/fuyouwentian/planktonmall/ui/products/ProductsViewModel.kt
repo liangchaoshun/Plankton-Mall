@@ -66,7 +66,7 @@ class ProductsViewModel @Inject constructor(
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
-                if (id == requestId) _uiState.update { it.copy(loading = false) }
+                _uiState.update { it.copy(loading = false) }
             }
         }
     }
@@ -81,6 +81,9 @@ class ProductsViewModel @Inject constructor(
             // 防止并发，上一次上滑请求返回的数据迟于当前下滑返回的数据导致数据错乱，
             // tryLock 非阻塞：拿不到锁说明已有加载在跑，直接返回
             if (!loadMoreMutex.tryLock()) return@launch
+            // 问题：if (id != requestId) return@launch 会跳过 finally 之后的 unlock()？
+            // 解答：不会 return@launch 会走 finally，unlock() 仍执行
+            // https://chat.deepseek.com/share/i6r9hu4f3prgksds4d
             val id = requestId
             try {
                 _uiState.update { it.copy(loadingMore = true) }
@@ -104,7 +107,8 @@ class ProductsViewModel @Inject constructor(
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
-                if (id == requestId) _uiState.update { it.copy(loadingMore = false) } // 统一清理
+                // 无条件清：避免过期请求把 loadingMore 挂住
+                _uiState.update { it.copy(loadingMore = false) } // 统一清理
                 loadMoreMutex.unlock()
             }
         }

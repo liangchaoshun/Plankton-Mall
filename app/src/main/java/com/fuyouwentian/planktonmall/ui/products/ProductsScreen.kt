@@ -216,7 +216,7 @@ fun ProductsScreenContent(
             }
         }
 
-        uiState.error != null -> {
+        !uiState.error.isNullOrBlank() -> {
             // 加载失败，显示错误提示和重试按钮
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(

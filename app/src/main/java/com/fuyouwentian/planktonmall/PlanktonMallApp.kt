@@ -17,8 +17,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
@@ -41,12 +39,10 @@ import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 @Composable
 fun PlanktonMallApp(
     modifier: Modifier = Modifier,
-    // viewModel: OrderViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     // 在 Composable 上下文中先取出字符串
     val routes = NAVI_DEST.map { stringResource(it.routeId) }
-    val selectedDestination = remember { mutableStateOf(routes[0]) }
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute: String = backStackEntry?.destination?.route ?: routes[0]
@@ -66,7 +62,7 @@ fun PlanktonMallApp(
                                     "BottomNav",
                                     "navigate to: $route, currentRoute: $currentRoute"
                                 )
-                                // TODO 从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
+                                // 注意：从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
                                 //      后续再点击底部导航菜单，页面显示的是 ProductsScreen 而不是 CategoryScreen
                                 navController.navigate(route) {
                                     // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
@@ -102,10 +98,8 @@ fun PlanktonMallApp(
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_medium)),
                     onProductClick = { productId -> navController.navigate("detail/${productId}") },
-                    onHomeSearch = { qs ->
-                        if (qs.isNotBlank()) {
-                            navController.navigate("products/$qs")
-                        }
+                    onSearch = { qs ->
+                        if (qs.isNotBlank()) navController.navigate("products/$qs")
                     }
                 )
             }
