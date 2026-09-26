@@ -3,6 +3,8 @@ setlocal enabledelayedexpansion
 
 REM Automatically obtain the currently connected emulator.
 REM If there are multiple emulators, obtain the last one.
+REM Once the simulator restarts, all these mappings will become invalid, and the process must be carried out again.
+REM https://chat.deepseek.com/share/tef2wziqksfx3eiazg
 
 set DEVICE=
 for /f "tokens=1" %%i in ('adb devices ^| findstr /r "emulator-" ^| findstr /r "device$"') do (
