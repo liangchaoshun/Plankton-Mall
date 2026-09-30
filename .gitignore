@@ -1,6 +1,6 @@
 # Gradle 构建输出
 *.iml
-.gradle
+.gradle/
 build/
 app/build/
 captures/

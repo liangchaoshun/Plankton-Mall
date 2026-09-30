@@ -135,10 +135,9 @@ fun PlanktonMallApp(
                 route = "detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
             ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("id")
+                val id = backStackEntry.arguments?.getString("id") ?: ""
                 DetailScreen(
                     id = id,
-                    modifier = Modifier.fillMaxSize(),
                     onBackClick = { navController.popBackStack() }
                 )
             }

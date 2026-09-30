@@ -20,11 +20,7 @@ data class Product(
     val desc_url: List<String>,
     val banner_url: List<String>,
     val create_time: String,
-    val update_time: String,
-    val series_name_zh: String,
-    val series_name_en: String,
-    val category_name_zh: String,
-    val category_name_en: String
+    val update_time: String
 )
 
 @Serializable
