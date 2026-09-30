@@ -62,16 +62,29 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 fun DetailScreen(
     modifier: Modifier = Modifier,
     id: String = "",
-    onBackClick: () -> Unit = {},
-    viewModel: DetailViewModel = hiltViewModel()
+    onBackClick: () -> Unit = {}
 ) {
     val isQId = Constants.OBJECT_ID_REGEX.matches(id)
     if (!isQId) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "参数错误")
         }
-        return
+    } else {
+        DetailContent(
+            modifier = modifier,
+            id = id,
+            onBackClick = onBackClick,
+        )
     }
+}
+
+@Composable
+fun DetailContent(
+    modifier: Modifier = Modifier,
+    id: String = "",
+    onBackClick: () -> Unit = {},
+    viewModel: DetailViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -92,7 +105,6 @@ fun DetailScreen(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             // 底部留出空间，防止内容被底部悬浮栏遮挡
@@ -124,7 +136,7 @@ fun DetailScreen(
             // 加载中和错误状态的处理
             if (uiState.loading || !uiState.error.isNullOrBlank()) {
                 item {
-                    ProductDescSection(
+                    ProductDescException(
                         uiState = uiState,
                         onClickRetry = { viewModel.fetchProductDetail(id) }
                     )
@@ -137,25 +149,25 @@ fun DetailScreen(
             onClick = onBackClick,
             modifier = Modifier
                 .statusBarsPadding()
-                .padding(16.dp)
+                .padding(start = 16.dp)
                 .align(Alignment.TopStart)
-                .background(Color.White.copy(alpha = 0.5f), CircleShape)
+                .background(Color.Gray.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
                 .size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "返回",
-                tint = Color.Black
+                tint = Color.White,
             )
         }
 
         // 底部操作栏
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            onCustomerServiceClick = { /* TODO: 客服 */ },
-            onCartClick = { /* TODO: 购物车 */ },
-            onAddToCartClick = { /* TODO: 加入购物车 */ },
-            onBuyNowClick = { /* TODO: 立即购买 */ }
+            onCustomerServiceClick = { },
+            onCartClick = { },
+            onAddToCartClick = { },
+            onBuyNowClick = { }
         )
     }
 }
@@ -172,7 +184,7 @@ fun CarouselSection(
 
     // 创建 PagerState
     val pagerState = rememberPagerState(pageCount = {
-        if (imageUrls.isEmpty()) 1 else imageUrls.size
+        if (imageUrls.isNotEmpty()) imageUrls.size else 1
     })
 
     Box(
@@ -236,18 +248,17 @@ fun ProductInfoSection(uiState: DetailUiState) {
             // 商品标题
             Text(
                 text = product.name_zh,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             // 价格显示
             Text(
                 text = "¥${product.price}",
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFF44336)
             )
@@ -257,9 +268,8 @@ fun ProductInfoSection(uiState: DetailUiState) {
     }
 }
 
-
 @Composable
-fun ProductDescSection(
+fun ProductDescException(
     uiState: DetailUiState,
     modifier: Modifier = Modifier,
     onClickRetry: () -> Unit = {},
@@ -272,23 +282,21 @@ fun ProductDescSection(
     ) {
         when {
             uiState.loading -> {
-                CircularProgressIndicator(color = Color.White)
+                CircularProgressIndicator()
             }
 
             !uiState.error.isNullOrBlank() -> {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = "加载失败: ${uiState.error}", color = Color.White)
+                    Text(text = "加载失败: ${uiState.error}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = onClickRetry) {
-                        Text("重试", color = Color.Yellow)
-                    }
+                    TextButton(onClick = onClickRetry) { Text("重试") }
                 }
             }
 
             else -> {
-                Text(text = "详情加载中...", color = Color.White)
+                Text(text = "详情加载中...")
             }
         }
     }
@@ -316,7 +324,7 @@ fun BottomActionBar(
         ) {
             Column(
                 modifier = Modifier
-                    .width(44.dp) // 给一个合适的固定宽度
+                    .width(44.dp)
                     .clickable { onCustomerServiceClick() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
