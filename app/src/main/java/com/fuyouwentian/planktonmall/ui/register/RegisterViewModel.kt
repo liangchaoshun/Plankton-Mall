@@ -1,13 +1,12 @@
-package com.fuyouwentian.planktonmall.ui.cart
+package com.fuyouwentian.planktonmall.ui.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
-import com.fuyouwentian.planktonmall.mock.MockProducts
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -17,45 +16,43 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 
 @HiltViewModel
-class CartViewModel @Inject constructor(
+class RegisterViewModel @Inject constructor(
     private val userRepo: UserRepository
 ) : ViewModel() {
     // UI 状态
-    private val _uiState = MutableStateFlow(CartUiState(loading = true))
-    val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(RegisterUiState(loading = true))
+    val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     // UI 事件（用于 Toast、导航等一次性动作）
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    // 防止竞态：fetchProductsData
-    private var requestId = 0
+    // TODO: onchange event
 
-    // 初始化加载/刷新（重置列表）
-    fun fetchCartData() {
-        // TODO 参数 user_id
-        val id = ++requestId
+    fun register() {
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true) }
+            _uiState.update { it.copy(loading = true, error = null) }
             try {
-//                val cartData = productRepository.getProducts(params)
-                // mock data
-                val cartData = MockProducts.CartProducts
-                if (id != requestId) return@launch // 已过期
-                _uiState.update { it.copy(cartData = cartData) }
+                val param = LoginRequest(
+                    account = _uiState.value.account,
+                    password = _uiState.value.password,
+                    rsaId = _uiState.value.rsaId
+                )
+                userRepo.login(param)
+                _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
-                if (id == requestId) handleError(e)
-            } finally {
                 _uiState.update { it.copy(loading = false) }
+                handleError(e)
             }
         }
     }
 
     private suspend fun handleError(e: Exception) {
-        if (e is CancellationException) throw e // 协程取消时会抛出
+        if (e is CancellationException) throw e // 协程取消时抛出
         val msg = when (e) {
             /**
              * 都一起了：
@@ -66,6 +63,7 @@ class CartViewModel @Inject constructor(
             is FriendlyException -> e.friendlyMessage
             else -> "未知错误：${e.message ?: "请稍后重试"}"
         }
+        _uiState.update { it.copy(error = msg) }
         _uiEvent.emit(UiEvent.ShowToast(msg))
     }
 }

@@ -1,9 +1,15 @@
 package com.fuyouwentian.planktonmall.di
 
+import com.fuyouwentian.planktonmall.data.repository.CartRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.CategoryRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.ProductRepositoryImpl
+import com.fuyouwentian.planktonmall.data.repository.TokenRepositoryImpl
+import com.fuyouwentian.planktonmall.data.repository.UserRepositoryImpl
+import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.CategoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
+import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
+import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -40,4 +46,19 @@ abstract class RepositoryModule {
     abstract fun bindCategoryRepository(
         impl: CategoryRepositoryImpl
     ): CategoryRepository
+
+    @Binds
+    abstract fun bindTokenRepository(
+        impl: TokenRepositoryImpl
+    ): TokenRepository
+
+    @Binds
+    abstract fun bindUserRepository(
+        impl: UserRepositoryImpl
+    ): UserRepository
+
+    @Binds
+    abstract fun bindCartRepository(
+        impl: CartRepositoryImpl
+    ): CartRepository
 }

@@ -7,6 +7,7 @@ import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -115,7 +116,7 @@ class ProductsViewModel @Inject constructor(
     }
 
     private suspend fun handleError(e: Exception) {
-        if (e is kotlinx.coroutines.CancellationException) throw e // 协程取消时会抛出
+        if (e is CancellationException) throw e // 协程取消时会抛出
         val msg = when (e) {
             /**
              * 都一起了：

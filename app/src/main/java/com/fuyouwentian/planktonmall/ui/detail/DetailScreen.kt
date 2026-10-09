@@ -26,8 +26,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -164,7 +164,7 @@ fun DetailContent(
         // 底部操作栏
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            onCustomerServiceClick = { },
+            onFavorClick = { },
             onCartClick = { },
             onAddToCartClick = { },
             onBuyNowClick = { }
@@ -305,7 +305,7 @@ fun ProductDescException(
 @Composable
 fun BottomActionBar(
     modifier: Modifier = Modifier,
-    onCustomerServiceClick: () -> Unit,
+    onFavorClick: () -> Unit,
     onCartClick: () -> Unit,
     onAddToCartClick: () -> Unit,
     onBuyNowClick: () -> Unit
@@ -325,17 +325,16 @@ fun BottomActionBar(
             Column(
                 modifier = Modifier
                     .width(44.dp)
-                    .clickable { onCustomerServiceClick() },
+                    .clickable { onFavorClick() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Default.AccessTime,
-                    contentDescription = "客服",
-                    tint = Color.Black,
+                    imageVector = Icons.Outlined.Star,
+                    contentDescription = "收藏",
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = "客服",
+                    text = "收藏",
                     fontSize = 10.sp,
                     color = Color.Black
                 )
@@ -347,9 +346,8 @@ fun BottomActionBar(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Default.ShoppingCart,
+                    imageVector = Icons.Outlined.ShoppingCart,
                     contentDescription = "购物车",
-                    tint = Color.Black,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(

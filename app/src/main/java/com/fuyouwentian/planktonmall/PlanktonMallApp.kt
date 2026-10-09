@@ -32,8 +32,10 @@ import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
 import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
 import com.fuyouwentian.planktonmall.ui.home.HomeScreen
+import com.fuyouwentian.planktonmall.ui.login.LoginScreen
 import com.fuyouwentian.planktonmall.ui.products.ProductsScreen
 import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
+import com.fuyouwentian.planktonmall.ui.register.RegisterScreen
 
 
 @Composable
@@ -87,7 +89,8 @@ fun PlanktonMallApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = routes[0],
+//            startDestination = routes[0],
+            startDestination = "login",
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -111,11 +114,22 @@ fun PlanktonMallApp(
             }
             composable(route = routes[2]) {
                 CartScreen(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    onProductClick = { productId -> navController.navigate("detail/${productId}") },
                 )
             }
             composable(route = routes[3]) {
                 ProfileScreen(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            composable(route = "login") {
+                LoginScreen(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            composable(route = "register") {
+                RegisterScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }

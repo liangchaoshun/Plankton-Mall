@@ -1,10 +1,11 @@
 package com.fuyouwentian.planktonmall.mock
 
+import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 
 object MockProducts {
-    val allProducts = listOf(
+    val Products = listOf(
         ProductLite(
             id = "6aab47cb2f18a7cf3d684206",
             name_zh = "浪琴（LONGINES）瑞士手表 名匠系列月相腕表 男士皮带机械表L29194783",
@@ -63,5 +64,32 @@ object MockProducts {
         ),
         create_time = "2026-09-17T01:52:00.401Z",
         update_time = "2026-09-17T01:52:00.401Z"
+    )
+
+    val CartProducts = listOf(
+        CartProduct(
+            id = "6aab47cb2f18a7cf3d684206",
+            userId = "6a47d470b27f8b44d68d002a",
+            goodsId = "6aab47cb2f18a7cf3d684206",
+            isValid = true,
+            checked = false,
+            quantity = 10,
+            price = "22200.00",
+            goodsNameZh = "浪琴（LONGINES）瑞士手表 名匠系列月相腕表 男士皮带机械表L29194783",
+            goodsNameEn = "English name",
+            goodsIcon = "https://liangchaoshun.site/api/static/files/1783394606367_b873295d-df72-4b68-99e5-f5ffd49dac63@icon.webp",
+        ),
+        CartProduct(
+            id = "6aab47c92f18a7cf3d6841fa",
+            userId = "6a47d470b27f8b44d68d002a",
+            goodsId = "6aab47c92f18a7cf3d6841fa",
+            isValid = true,
+            checked = false,
+            quantity = 5,
+            price = "54.09",
+            goodsNameZh = "程序员的自我修养 链接、装载与库",
+            goodsNameEn = "English name",
+            goodsIcon = "https://liangchaoshun.site/api/static/files/1783394605105_fe1a9d50-555f-420b-8ea6-0cbd9bbb9c31@icon.webp",
+        )
     )
 }

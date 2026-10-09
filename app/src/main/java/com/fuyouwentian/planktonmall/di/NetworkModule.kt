@@ -30,7 +30,12 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+    fun provideOkHttpClient(
+        tokenInterceptor: TokenInterceptor
+    ): OkHttpClient = OkHttpClient.Builder()
+        // TokenInterceptor 添加在 HttpLoggingInterceptor 之前，
+        // 这样日志里也能看到 Authorization 头，若不想日志里暴露 Token，则把顺序反过来
+        .addInterceptor(tokenInterceptor) // Token 业务鉴权
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })

@@ -3,6 +3,7 @@ package com.fuyouwentian.planktonmall.domain.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// Kotlin 序列化，默认会忽略掉数据类中没有的 JSON 字段
 @Serializable
 data class Product(
     @SerialName("_id")
@@ -34,6 +35,27 @@ data class ProductLite(
     val icon_url: String,
     val series_id: String,
     val category_id: String
+)
+
+@Serializable
+data class CartProduct(
+    @SerialName("_id")
+    val id: String,
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("goods_id")
+    val goodsId: String,
+    @SerialName("is_valid")
+    val isValid: Boolean,
+    val checked: Boolean,
+    val quantity: Int,
+    val price: String,
+    @SerialName("goods_name_zh")
+    val goodsNameZh: String,
+    @SerialName("goods_name_en")
+    val goodsNameEn: String,
+    @SerialName("goods_icon")
+    val goodsIcon: String,
 )
 
 @Serializable

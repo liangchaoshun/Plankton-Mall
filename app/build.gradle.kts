@@ -65,7 +65,14 @@ dependencies {
     implementation(libs.kotlinx.serialization.json) // 序列化库
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)   // 注意这里用 ksp() 而不是 kapt()
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Test
+
 }
