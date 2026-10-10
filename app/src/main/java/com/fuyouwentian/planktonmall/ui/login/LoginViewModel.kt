@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
@@ -24,16 +25,36 @@ class LoginViewModel @Inject constructor(
     private val userRepo: UserRepository
 ) : ViewModel() {
     // UI 状态
-    private val _uiState = MutableStateFlow(LoginUiState(loading = true))
+    private val _uiState = MutableStateFlow(LoginUiState(loading = false))
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     // UI 事件（用于 Toast、导航等一次性动作）
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    // TODO: onchange event
+    fun onAccountChange(acc: String) {
+        _uiState.update { it.copy(account = acc) }
+    }
+
+    fun onPasswordChange(password: String) {
+        _uiState.update { it.copy(password = password) }
+    }
+
+    fun switchRememberMe(bool: Boolean) {
+        Log.d("AA", "$bool")
+        _uiState.update { it.copy(rememberMe = bool) }
+    }
 
     fun login() {
+        // 空校验
+        if (_uiState.value.account.isBlank()) {
+            viewModelScope.launch { _uiEvent.emit(UiEvent.ShowToast("请输入账号")) }
+            return
+        }
+        if (_uiState.value.password.isBlank()) {
+            viewModelScope.launch { _uiEvent.emit(UiEvent.ShowToast("请输入密码")) }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = null) }
             try {
@@ -45,8 +66,9 @@ class LoginViewModel @Inject constructor(
                 userRepo.login(param)
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(loading = false) }
                 handleError(e)
+            } finally {
+                _uiState.update { it.copy(loading = false) }
             }
         }
     }
