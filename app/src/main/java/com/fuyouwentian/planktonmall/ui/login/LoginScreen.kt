@@ -2,6 +2,7 @@ package com.fuyouwentian.planktonmall.ui.login
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,18 +56,23 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel(),
     onNavigateToRegister: () -> Unit = {},
-    onLoginSuccess: () -> Unit = {} // 假设登录成功需要跳转
+    onLoginSuccess: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // 收集 Toast 事件
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
@@ -90,7 +96,7 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
-                .padding(top = 40.dp, bottom = 32.dp), // 调整顶部间距模拟状态栏下方
+                .padding(top = 40.dp, bottom = 32.dp),
             horizontalAlignment = Alignment.Start
         ) {
             // 标题
@@ -111,6 +117,7 @@ fun LoginScreen(
                 value = uiState.account,
                 onValueChange = viewModel::onAccountChange,
                 placeholder = "账号",
+                doLogin = viewModel::login
             )
             Spacer(modifier = Modifier.height(16.dp))
             // 密码
@@ -119,6 +126,7 @@ fun LoginScreen(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
                 placeholder = "密码",
+                doLogin = viewModel::login,
                 isPassword = true,
                 isPasswordVisible = passwordVisible,
                 onVisibilityChange = { passwordVisible = !passwordVisible }
@@ -155,7 +163,7 @@ fun LoginScreen(
             }
             Spacer(modifier = Modifier.height(32.dp))
             Button(
-                onClick = { viewModel.login() },
+                onClick = viewModel::login,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -195,21 +203,20 @@ fun LoginScreen(
                 HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
             }
 
-//            Spacer(modifier = Modifier.height(24.dp))
             Spacer(modifier = Modifier.weight(0.3f))
 
-            // 第三方图标
+            // 第三方登录
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                // QQ Icon
+                // QQ
                 SocialLoginIcon(
                     color = Color(0xFF4D96FF),
                     iconRes = R.drawable.ic_qq
                 )
                 Spacer(modifier = Modifier.width(32.dp))
-                // WeChat Icon
+                // WeChat
                 SocialLoginIcon(
                     color = Color(0xFF52C41A),
                     iconRes = R.drawable.ic_wechat
@@ -251,6 +258,7 @@ fun LoginTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
+    doLogin: () -> Unit,
     isPassword: Boolean = false,
     isPasswordVisible: Boolean = false,
     onVisibilityChange: (() -> Unit)? = null,
@@ -283,6 +291,13 @@ fun LoginTextField(
         singleLine = true,
         visualTransformation = if (isPassword && !isPasswordVisible)
             PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { doLogin() }
+        ),
         trailingIcon = if (isPassword) {
             {
                 IconButton(onClick = { onVisibilityChange?.invoke() }) {
@@ -300,13 +315,15 @@ fun LoginTextField(
 @Composable
 fun SocialLoginIcon(
     color: Color,
-    iconRes: Int // drawable 资源 id
+    iconRes: Int, // drawable 资源 id
+    onClickIcon: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(color),
+            .background(color)
+            .clickable { onClickIcon() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -318,11 +335,3 @@ fun SocialLoginIcon(
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    MaterialTheme {
-        LoginScreen()
-    }
-}

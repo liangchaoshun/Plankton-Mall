@@ -125,7 +125,9 @@ fun PlanktonMallApp(
             }
             composable(route = "login") {
                 LoginScreen(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    onNavigateToRegister = { navController.navigate("register") },
+                    onLoginSuccess = { navController.popBackStack() }
                 )
             }
             composable(route = "register") {

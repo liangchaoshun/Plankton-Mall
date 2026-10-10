@@ -5,13 +5,13 @@ import com.fuyouwentian.planktonmall.domain.model.Category
 import com.fuyouwentian.planktonmall.domain.model.CategoryData
 import com.fuyouwentian.planktonmall.domain.model.HomeProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
+import com.fuyouwentian.planktonmall.domain.model.LoginResponse
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsData
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
-import com.fuyouwentian.planktonmall.domain.model.UserPublicKey
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -36,11 +36,8 @@ interface ApiService {
     @GET("category/list")
     suspend fun getCategories(): BaseResponse<CategoryData<Category>>
 
-    @POST("auth/publickey")
-    suspend fun userGetPublicKey(): BaseResponse<UserPublicKey>
-
     @POST("auth/login")
-    suspend fun userLogin(param: LoginRequest): BaseResponse<Unit>
+    suspend fun userLogin(param: LoginRequest): BaseResponse<LoginResponse>
 
     @GET("auth/user/{id}")
     suspend fun userGetProfile(@Path("id") id: String): BaseResponse<UserProfile>

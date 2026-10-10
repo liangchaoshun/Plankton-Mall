@@ -41,12 +41,12 @@ class LoginViewModel @Inject constructor(
     }
 
     fun switchRememberMe(bool: Boolean) {
-        Log.d("AA", "$bool")
+        Log.d("RememberMe", "$bool")
         _uiState.update { it.copy(rememberMe = bool) }
     }
 
     fun login() {
-        // 空校验
+        // 非空校验
         if (_uiState.value.account.isBlank()) {
             viewModelScope.launch { _uiEvent.emit(UiEvent.ShowToast("请输入账号")) }
             return
@@ -61,9 +61,9 @@ class LoginViewModel @Inject constructor(
                 val param = LoginRequest(
                     account = _uiState.value.account,
                     password = _uiState.value.password,
-                    rsaId = _uiState.value.rsaId
                 )
-                userRepo.login(param)
+                val result = userRepo.login(param)
+                // TODO 缓存 用户信息 和 Token
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
                 handleError(e)

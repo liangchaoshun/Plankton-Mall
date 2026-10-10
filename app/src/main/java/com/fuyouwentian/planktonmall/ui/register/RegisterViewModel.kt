@@ -40,7 +40,6 @@ class RegisterViewModel @Inject constructor(
                 val param = LoginRequest(
                     account = _uiState.value.account,
                     password = _uiState.value.password,
-                    rsaId = _uiState.value.rsaId
                 )
                 userRepo.login(param)
                 _uiState.update { it.copy(error = null) }
