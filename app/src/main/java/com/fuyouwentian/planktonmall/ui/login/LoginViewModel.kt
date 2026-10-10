@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,7 +23,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val userRepo: UserRepository
+    private val userRepo: UserRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(LoginUiState(loading = false))
@@ -62,8 +63,7 @@ class LoginViewModel @Inject constructor(
                     account = _uiState.value.account,
                     password = _uiState.value.password,
                 )
-                val result = userRepo.login(param)
-                // TODO 缓存 用户信息 和 Token
+                userRepo.login(param)
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
                 handleError(e)

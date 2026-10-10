@@ -29,8 +29,8 @@ data class UserProfile(
     @SerialName("_id")
     val id: String,
     val account: String,
-    val nickname: String,
-    val password: String? = "",
+    val password: String,
+    val nickname: String? = null,
     val avatar: String? = null,
     val email: String? = null,
     val phone: String? = null,

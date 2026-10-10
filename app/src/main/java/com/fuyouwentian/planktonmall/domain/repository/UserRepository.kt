@@ -10,5 +10,4 @@ interface UserRepository {
     suspend fun register(param: RegisterRequest)
     suspend fun logout()
     suspend fun getUserProfile(id: String): UserProfile
-    suspend fun updateUserProfile()
 }

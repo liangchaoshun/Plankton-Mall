@@ -1,5 +1,7 @@
 package com.fuyouwentian.planktonmall.data.repository
 
+import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
+import com.fuyouwentian.planktonmall.data.local.profile.toEntity
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
@@ -14,10 +16,15 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val api: ApiService,
-    private val tokenRepo: TokenRepository
+    private val profileDao: ProfileDao,
+    private val tokenRepo: TokenRepository,
 ) : UserRepository {
     override suspend fun login(param: LoginRequest): LoginResponse {
-        return safeApiCall { api.userLogin(param) }
+        val response = safeApiCall { api.userLogin(param) }
+        // 缓存到本地
+        tokenRepo.saveToken(response.token)
+        profileDao.insertUserProfile(response.userInfo.toEntity())
+        return response
     }
 
     override suspend fun register(param: RegisterRequest) {
@@ -29,10 +36,8 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserProfile(id: String): UserProfile {
-        return safeApiCall { api.userGetProfile(id) }
-    }
-
-    override suspend fun updateUserProfile() {
-        TODO("Not yet implemented")
+        val result = safeApiCall { api.userGetProfile(id) }
+        profileDao.insertUserProfile(result.toEntity()) // 缓存到本地
+        return result
     }
 }
