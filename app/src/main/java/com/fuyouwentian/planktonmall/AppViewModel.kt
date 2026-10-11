@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    private val tokenRepo: TokenRepository
+    tokenRepo: TokenRepository
 ) : ViewModel() {
     val tokenUiEvent: SharedFlow<UiEvent> = tokenRepo.uiEvent
 }

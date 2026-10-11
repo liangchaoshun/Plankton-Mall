@@ -96,6 +96,7 @@ class LoginViewModel @Inject constructor(
             is FriendlyException -> e.friendlyMessage
             else -> "未知错误：${e.message ?: "请稍后重试"}"
         }
+        Log.d("HandleError", msg)
         _uiState.update { it.copy(error = msg) }
         _uiEvent.emit(UiEvent.ShowToast(msg))
     }

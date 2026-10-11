@@ -25,10 +25,10 @@ interface ApiService {
     suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>>
 
     @POST("goods/home")
-    suspend fun getHomeProducts(@Body request: HomeProductsRequest): BaseResponse<ProductsData<ProductLite>>
+    suspend fun getHomeProducts(@Body param: HomeProductsRequest): BaseResponse<ProductsData<ProductLite>>
 
     @POST("goods/list")
-    suspend fun getProducts(@Body request: ProductsRequest): BaseResponse<ProductsData<ProductLite>>
+    suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsData<ProductLite>>
 
     @GET("goods/{id}")
     suspend fun getProduct(@Path("id") id: String): BaseResponse<Product>
@@ -37,7 +37,7 @@ interface ApiService {
     suspend fun getCategories(): BaseResponse<CategoryData<Category>>
 
     @POST("auth/login")
-    suspend fun userLogin(param: LoginRequest): BaseResponse<LoginResponse>
+    suspend fun userLogin(@Body param: LoginRequest): BaseResponse<LoginResponse>
 
     @GET("auth/user/{id}")
     suspend fun userGetProfile(@Path("id") id: String): BaseResponse<UserProfile>
@@ -46,16 +46,16 @@ interface ApiService {
     suspend fun userLogout(): BaseResponse<Unit>
 
     @POST("auth/register")
-    suspend fun userRegister(param: RegisterRequest): BaseResponse<Unit>
+    suspend fun userRegister(@Body param: RegisterRequest): BaseResponse<Unit>
 
     @POST("cart/insert")
-    suspend fun cartInsert(param: CartProduct): BaseResponse<Unit>
+    suspend fun cartInsert(@Body param: CartProduct): BaseResponse<Unit>
 
     @DELETE("cart/delete")
-    suspend fun cartDelete(ids: List<String>): BaseResponse<Unit>
+    suspend fun cartDelete(@Body ids: List<String>): BaseResponse<Unit>
 
     @PUT("cart/update")
-    suspend fun cartUpdate(param: CartProduct): BaseResponse<Unit>
+    suspend fun cartUpdate(@Body param: CartProduct): BaseResponse<Unit>
 
     @POST("cart/list")
     suspend fun cartList(): BaseResponse<List<CartProduct>>

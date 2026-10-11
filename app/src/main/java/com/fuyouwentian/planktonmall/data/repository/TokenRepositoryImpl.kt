@@ -53,6 +53,7 @@ class TokenRepositoryImpl @Inject constructor(
 
     override suspend fun onUnauthorized() {
         clearToken()
+        _uiEvent.emit(UiEvent.ShowToast("登录已过期，请重新登录"))
         _uiEvent.emit(UiEvent.NavigateToLogin)
     }
 }

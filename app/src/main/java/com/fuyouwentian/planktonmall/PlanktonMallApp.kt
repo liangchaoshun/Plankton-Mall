@@ -51,9 +51,10 @@ fun PlanktonMallApp(
     val context = LocalContext.current
     // 在 Composable 上下文中先取出字符串
     val routes = NAVI_DEST.map { stringResource(it.routeId) }
+    val homeRoute = routes[0]
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute: String = backStackEntry?.destination?.route ?: routes[0]
+    val currentRoute: String = backStackEntry?.destination?.route ?: homeRoute
     // 只有当前路由在底部导航的目的地里，才显示底部栏
     val showBottomBar = currentRoute in routes
 
@@ -85,16 +86,13 @@ fun PlanktonMallApp(
                         NavigationBarItem(
                             selected = currentRoute == route,
                             onClick = {
-                                Log.d(
-                                    "BottomNav",
-                                    "navigate to: $route, currentRoute: $currentRoute"
-                                )
+                                Log.d("BottomNav", "from: $currentRoute, to: $route")
                                 // 注意：从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
                                 //      后续再点击底部导航菜单，页面显示的是 ProductsScreen 而不是 CategoryScreen
                                 navController.navigate(route) {
                                     // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
                                     // saveState：弹栈时保存 UI 状态（滚动位置、输入内容等）
-                                    popUpTo(routes[0]) { saveState = true }
+                                    popUpTo(homeRoute) { saveState = true }
                                     launchSingleTop = true // 避免栈顶重复：目标目的地已经在栈顶，就复用，不再压入新的实例
                                     restoreState = true // 恢复之前保存的状态，和 saveState 配套
                                 }
@@ -114,12 +112,12 @@ fun PlanktonMallApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = routes[3],
+            startDestination = homeRoute,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            composable(route = routes[0]) {
+            composable(route = homeRoute) {
                 HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -151,7 +149,14 @@ fun PlanktonMallApp(
                 LoginScreen(
                     modifier = Modifier.fillMaxSize(),
                     onNavigateToRegister = { navController.navigate("register") },
-                    onLoginSuccess = { navController.popBackStack() }
+                    onLoginSuccess = {
+                        /**
+                         * 401 保存跳转登录前的路由，登录后重新跳转到保存的路由，存在隐患
+                         * 因保存的路由对应页面的获取数据接口，可能对新登录的账号无权限，又返回 401，陷入无限死循环
+                         * 所以此处跳转固定的路由
+                         */
+                        navController.navigate(homeRoute)
+                    }
                 )
             }
             composable(route = "register") {

@@ -51,9 +51,10 @@ suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
         throw e // 放行，不然被下面的 Exception 吞掉
     } catch (e: HttpException) {
         Log.d("SafeApiCall", "HttpException ${e.code()}")
-        // 捕获 404, 500 等 HTTP 协议错误
+        // 捕获 401, 404, 500 等 HTTP 协议错误
         val errorMsg = when (e.code()) {
             400 -> "参数错误，请检查"
+            401 -> "登录已过期，请重新登录" // HttpInterceptor 已经拦截，此处仍会执行，但无需删除
             404 -> "请求的资源不存在"
             500 -> "服务器开小差了，请稍后再试"
             else -> "网络请求错误: ${e.code()}"
