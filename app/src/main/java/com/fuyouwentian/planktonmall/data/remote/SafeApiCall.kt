@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.data.remote
 
+import android.util.Log
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
@@ -39,30 +40,37 @@ suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
             response.data // 成功，返回真实数据
         } else {
             // HTTP 成功，但业务失败
+            Log.d("SafeApiCall", "HTTP 成功，但业务失败")
             throw ApiException(response.status_code, response.message)
         }
     } catch (e: CancellationException) { // 协程
+        Log.d("SafeApiCall", "CancellationException")
         throw e
     } catch (e: ApiException) {
-        throw e // 放行，不被下面的 Exception 吞掉
+        Log.d("SafeApiCall", "ApiException")
+        throw e // 放行，不然被下面的 Exception 吞掉
     } catch (e: HttpException) {
-        // 捕获 401, 404, 500 等 HTTP 协议错误
+        Log.d("SafeApiCall", "HttpException ${e.code()}")
+        // 捕获 404, 500 等 HTTP 协议错误
         val errorMsg = when (e.code()) {
             400 -> "参数错误，请检查"
-            401 -> "登录已过期，请重新登录"
             404 -> "请求的资源不存在"
             500 -> "服务器开小差了，请稍后再试"
             else -> "网络请求错误: ${e.code()}"
         }
         throw HttpExceptionWrapper(e.code(), errorMsg)
     } catch (e: SocketTimeoutException) {
+        Log.d("SafeApiCall", "SocketTimeoutException")
         throw NetworkException("请求超时，请稍后重试")
     } catch (e: UnknownHostException) {
+        Log.d("SafeApiCall", "UnknownHostException")
         throw NetworkException("网络不可用，请检查网络连接")
     } catch (e: IOException) {
+        Log.d("SafeApiCall", "IOException")
         throw NetworkException("网络连接失败，请检查网络设置")
     } catch (e: Exception) {
         // 捕获解析错误等其他异常
+        Log.d("SafeApiCall", "Exception")
         throw Exception("数据解析异常: ${e.message}")
     }
 }

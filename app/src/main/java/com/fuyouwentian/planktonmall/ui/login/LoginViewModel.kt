@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
-import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -64,11 +63,23 @@ class LoginViewModel @Inject constructor(
                     password = _uiState.value.password,
                 )
                 userRepo.login(param)
+                _uiEvent.emit(UiEvent.LoginSuccess)
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
                 handleError(e)
             } finally {
                 _uiState.update { it.copy(loading = false) }
+            }
+        }
+    }
+
+    // TEST
+    fun getUserProfile() {
+        viewModelScope.launch {
+            try {
+                userRepo.getUserProfile("6a4724d3603a5d3caeb2ed31")
+            } catch (e: Exception) {
+                handleError(e)
             }
         }
     }

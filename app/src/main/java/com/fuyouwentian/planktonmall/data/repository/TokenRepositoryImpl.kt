@@ -5,7 +5,11 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import com.fuyouwentian.planktonmall.data.local.PrefsKeys
+import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -17,6 +21,10 @@ import javax.inject.Singleton
 class TokenRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : TokenRepository {
+    // UI 事件（用于 Toast、导航等一次性动作）
+    private val _uiEvent = MutableSharedFlow<UiEvent>()
+    override val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
+
     override suspend fun saveToken(token: String) {
         dataStore.edit { prefs ->
             prefs[PrefsKeys.TOKEN] = token
@@ -41,5 +49,10 @@ class TokenRepositoryImpl @Inject constructor(
 
     override suspend fun isLoggedIn(): Boolean {
         return !getToken().isNullOrBlank()
+    }
+
+    override suspend fun onUnauthorized() {
+        clearToken()
+        _uiEvent.emit(UiEvent.NavigateToLogin)
     }
 }

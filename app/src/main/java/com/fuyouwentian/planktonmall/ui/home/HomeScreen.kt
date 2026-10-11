@@ -96,6 +96,8 @@ fun HomeScreen(
                         )
                         .show()
                 }
+
+                else -> {}
             }
         }
     }

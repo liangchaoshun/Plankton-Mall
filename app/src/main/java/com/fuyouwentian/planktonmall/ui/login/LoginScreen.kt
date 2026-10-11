@@ -73,13 +73,12 @@ fun LoginScreen(
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
-                    Toast
-                        .makeText(
-                            context, event.message,
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
+                is UiEvent.LoginSuccess -> {
+                    onLoginSuccess() // 登录成功
+                }
+                else -> {}
             }
         }
     }
@@ -158,6 +157,7 @@ fun LoginScreen(
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
+            // 登录按钮
             Button(
                 onClick = viewModel::login,
                 modifier = Modifier

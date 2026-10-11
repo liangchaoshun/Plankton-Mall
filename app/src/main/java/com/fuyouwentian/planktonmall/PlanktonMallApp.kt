@@ -1,6 +1,7 @@
 package com.fuyouwentian.planktonmall
 
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,11 +17,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,6 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
 import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
@@ -37,12 +42,13 @@ import com.fuyouwentian.planktonmall.ui.products.ProductsScreen
 import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 import com.fuyouwentian.planktonmall.ui.register.RegisterScreen
 
-
 @Composable
 fun PlanktonMallApp(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    viewModel: AppViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     // 在 Composable 上下文中先取出字符串
     val routes = NAVI_DEST.map { stringResource(it.routeId) }
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
@@ -50,6 +56,25 @@ fun PlanktonMallApp(
     val currentRoute: String = backStackEntry?.destination?.route ?: routes[0]
     // 只有当前路由在底部导航的目的地里，才显示底部栏
     val showBottomBar = currentRoute in routes
+
+    LaunchedEffect(Unit) {
+        viewModel.tokenUiEvent.collect { event ->
+            when (event) {
+                is UiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+
+                is UiEvent.NavigateToLogin -> {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true } // 清空整个回退栈
+                        launchSingleTop = true
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -89,8 +114,7 @@ fun PlanktonMallApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-//            startDestination = routes[0],
-            startDestination = "login",
+            startDestination = routes[3],
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

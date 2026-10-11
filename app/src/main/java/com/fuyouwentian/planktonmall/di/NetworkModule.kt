@@ -31,11 +31,11 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        tokenInterceptor: TokenInterceptor
+        httpInterceptor: HttpInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
-        // TokenInterceptor 添加在 HttpLoggingInterceptor 之前，
+        // HttpInterceptor 添加在 HttpLoggingInterceptor 之前，
         // 这样日志里也能看到 Authorization 头，若不想日志里暴露 Token，则把顺序反过来
-        .addInterceptor(tokenInterceptor) // Token 业务鉴权
+        .addInterceptor(httpInterceptor) // Token 业务鉴权
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })
@@ -60,7 +60,7 @@ object NetworkModule {
          */
         .baseUrl("http://localhost:8068/api/client/") // ✅ 真机、模拟器使用 localhost 或 127.0.0.1 加上 adb reverse 可行
         // .baseUrl("http://10.0.2.2:8068/api/client/") // ❌ 真机、模拟器使用该地址不可行，再加上 adb reverse 也不可行
-//        .baseUrl("https://liangchaoshun.site/api/client/") // ✅ remote
+//        .baseUrl("https://liangchaoshun.site/api/client/") // ✅ prod
         .client(okHttpClient) // 🌟 关键：把配置了日志拦截器的 OkHttpClient 传进去
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
