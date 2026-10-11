@@ -77,10 +77,10 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // 初始化加载
+    // 初始化
     LaunchedEffect(Unit) {
-        viewModel.fetchCarouselData() // 加载轮播图数据
-        viewModel.fetchProductsData() // 加载列表数据
+        viewModel.fetchCarouselData()
+        viewModel.fetchProductsData()
     }
 
     // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
@@ -199,7 +199,7 @@ fun CarouselSection(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "加载失败: ${uiState.carouselError}")
+                    Text(text = uiState.carouselError)
                     TextButton(onClick = onClickRetry) { Text("重试") }
                 }
             }
@@ -269,7 +269,7 @@ fun ProductGridSection(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = "加载失败: ${uiState.productsError}")
+                    Text(text = uiState.productsError)
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onClickRetry) { Text("重试") }
                 }

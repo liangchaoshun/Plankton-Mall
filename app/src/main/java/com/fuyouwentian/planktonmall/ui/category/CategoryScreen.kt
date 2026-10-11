@@ -76,10 +76,10 @@ fun CategoryScreen(
             }
         }
 
-        uiState.error != null -> {
+        !uiState.error.isNullOrBlank() -> {
             // 加载失败，显示错误提示和重试按钮
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "加载失败: ${uiState.error}")
+                Text(text = "${uiState.error}")
                 // 可以加一个重试按钮调用 viewModel.initHandler() 或重新请求 TODO
             }
         }

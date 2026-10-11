@@ -8,6 +8,7 @@ import com.fuyouwentian.planktonmall.domain.model.UserProfile
 interface UserRepository {
     suspend fun login(param: LoginRequest): LoginResponse
     suspend fun register(param: RegisterRequest)
-    suspend fun logout()
-    suspend fun getUserProfile(id: String): UserProfile
+    suspend fun logout(): Boolean
+    suspend fun getLocalUserProfile(): UserProfile?
+    suspend fun getRemoteUserProfile(id: String): UserProfile
 }

@@ -50,7 +50,10 @@ fun CartScreen(
     //val userId by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        // viewModel.fetchCartData() // TODO
+        viewModel.fetchCartData()
+    }
+
+    LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
@@ -81,7 +84,7 @@ fun CartScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(text = "加载失败: ${uiState.error}")
+                        Text(text = "${uiState.error}")
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(onClick = viewModel::fetchCartData) { Text("重试") }
                     }

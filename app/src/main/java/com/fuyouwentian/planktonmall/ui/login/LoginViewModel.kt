@@ -77,7 +77,7 @@ class LoginViewModel @Inject constructor(
     fun getUserProfile() {
         viewModelScope.launch {
             try {
-                userRepo.getUserProfile("6a4724d3603a5d3caeb2ed31")
+                userRepo.getRemoteUserProfile("6a4724d3603a5d3caeb2ed31")
             } catch (e: Exception) {
                 handleError(e)
             }

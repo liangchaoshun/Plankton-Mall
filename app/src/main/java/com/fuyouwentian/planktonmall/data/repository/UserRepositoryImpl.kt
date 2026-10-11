@@ -1,6 +1,7 @@
 package com.fuyouwentian.planktonmall.data.repository
 
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
+import com.fuyouwentian.planktonmall.data.local.profile.toDomain
 import com.fuyouwentian.planktonmall.data.local.profile.toEntity
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
@@ -31,13 +32,18 @@ class UserRepositoryImpl @Inject constructor(
         api.userRegister(param)
     }
 
-    override suspend fun logout() {
-        api.userLogout()
+    override suspend fun logout(): Boolean {
+        return safeApiCall { api.userLogout() }
     }
 
-    override suspend fun getUserProfile(id: String): UserProfile {
+    override suspend fun getLocalUserProfile(): UserProfile? {
+        return profileDao.getUserProfile()?.toDomain()
+    }
+
+    override suspend fun getRemoteUserProfile(id: String): UserProfile {
         val result = safeApiCall { api.userGetProfile(id) }
         profileDao.insertUserProfile(result.toEntity()) // 缓存到本地
         return result
     }
+
 }

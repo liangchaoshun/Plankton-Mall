@@ -226,7 +226,7 @@ fun ProductsScreenContent(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = "加载失败: ${uiState.error}")
+                    Text(text = uiState.error)
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onClickRetry) { Text("重试") }
                 }

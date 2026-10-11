@@ -7,8 +7,8 @@ import androidx.room.Query
 
 @Dao
 interface ProfileDao {
-    @Query("SELECT * FROM profile WHERE id = :id LIMIT 1")
-    suspend fun getUserProfile(id: String): ProfileEntity?
+    @Query("SELECT * FROM profile LIMIT 1")
+    suspend fun getUserProfile(): ProfileEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserProfile(item: ProfileEntity)

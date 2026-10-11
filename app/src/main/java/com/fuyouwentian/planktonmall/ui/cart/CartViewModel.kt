@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
-import com.fuyouwentian.planktonmall.mock.MockProducts
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,13 +21,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val userRepo: UserRepository
+    private val userRepo: UserRepository,
+    private val cartRepo: CartRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
     val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
 
-    // UI 事件（用于 Toast、导航等一次性动作）
+    // UI 事件
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
@@ -41,9 +42,11 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true) }
             try {
-//                val cartData = productRepository.getProducts(params)
+                val userId = userRepo.getLocalUserProfile()?.id ?: "pseudoId"
+                // pseudoId 说明没登录账号，服务端会先校验 token，返回后跳转到登录页
+                val cartData = cartRepo.fetchData(userId)
                 // mock data
-                val cartData = MockProducts.CartProducts
+//                val cartData = MockProducts.CartProducts
                 if (id != requestId) return@launch // 已过期
                 _uiState.update { it.copy(cartData = cartData) }
             } catch (e: Exception) {

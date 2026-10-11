@@ -29,9 +29,9 @@ class CartRepositoryImpl @Inject constructor(
         cartDao.update(param.toEntity())
     }
 
-    override suspend fun fetchData(): List<CartProduct> {
+    override suspend fun fetchData(userId: String): List<CartProduct> {
         // 网络优先：成功则写回到 Room 并返回
-        val remote = safeApiCall { api.cartList() }
+        val remote = safeApiCall { api.cartList(userId) }
         cartDao.clearAll()
         cartDao.insertAll(remote.map { it.toEntity() })
         return remote
