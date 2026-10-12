@@ -45,11 +45,10 @@ fun AppNavHost(
 ) {
     val context = LocalContext.current
     // 在 Composable 上下文中先取出字符串
-    val routes = NAVI_DEST.map { it.route }
-    val homeRoute = routes[0]
+    val routes: List<String> = NAVI_DEST.map { it.route }
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute: String = backStackEntry?.destination?.route ?: homeRoute
+    val currentRoute: String = backStackEntry?.destination?.route ?: Routes.HOME
     // 只有当前路由在底部导航的目的地里，才显示底部栏
     val showBottomBar = currentRoute in routes
 
@@ -61,7 +60,7 @@ fun AppNavHost(
                 }
 
                 is UiEvent.NavigateToLogin -> {
-                    navController.navigate("login") {
+                    navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true } // 清空整个回退栈
                         launchSingleTop = true
                     }
@@ -87,7 +86,7 @@ fun AppNavHost(
                                 navController.navigate(route) {
                                     // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
                                     // saveState：弹栈时保存 UI 状态（滚动位置、输入内容等）
-                                    popUpTo(homeRoute) { saveState = true }
+                                    popUpTo(Routes.HOME) { saveState = true }
                                     launchSingleTop = true // 避免栈顶重复：目标目的地已经在栈顶，就复用，不再压入新的实例
                                     restoreState = true // 恢复之前保存的状态，和 saveState 配套
                                 }
@@ -107,12 +106,12 @@ fun AppNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = homeRoute,
+            startDestination = Routes.HOME,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            composable(route = homeRoute) {
+            composable(route = Routes.HOME) {
                 HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -123,19 +122,20 @@ fun AppNavHost(
                     }
                 )
             }
-            composable(route = routes[1]) {
+            composable(route = Routes.CATEGORY) {
                 CategoryScreen(
                     modifier = Modifier.fillMaxSize(),
                     onSeriesClick = { seriesId -> navController.navigate("products/$seriesId") }
                 )
             }
-            composable(route = routes[2]) {
+            composable(route = Routes.CARt) {
                 CartScreen(
                     modifier = Modifier.fillMaxSize(),
                     onProductClick = { productId -> navController.navigate("detail/${productId}") },
+                    onSettleClick = { navController.navigate(Routes.CHECKOUT) }
                 )
             }
-            composable(route = routes[3]) {
+            composable(route = Routes.PROFILE) {
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize()
                 )
@@ -143,14 +143,14 @@ fun AppNavHost(
             composable(route = Routes.LOGIN) {
                 LoginScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onNavigateToRegister = { navController.navigate("register") },
+                    onNavigateToRegister = { navController.navigate(Routes.REGISTER) },
                     onLoginSuccess = {
                         /**
                          * 401 保存跳转登录前的路由，登录后重新跳转到保存的路由，存在隐患
                          * 因保存的路由对应页面的获取数据接口，可能对新登录的账号无权限，又返回 401，陷入无限死循环
                          * 所以此处跳转固定的路由
                          */
-                        navController.navigate(homeRoute)
+                        navController.navigate(Routes.HOME)
                     }
                 )
             }

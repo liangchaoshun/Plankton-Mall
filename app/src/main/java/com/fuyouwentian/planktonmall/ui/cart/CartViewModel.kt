@@ -38,7 +38,6 @@ class CartViewModel @Inject constructor(
 
     // 初始化加载/刷新（重置列表）
     fun fetchCartData() {
-        // TODO 参数 user_id
         val id = ++requestId
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true) }
@@ -56,6 +55,71 @@ class CartViewModel @Inject constructor(
                 _uiState.update { it.copy(loading = false) }
             }
         }
+    }
+
+    // 切换选中某项
+    fun toggleSelect(productId: String, bool: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                cartData = state.cartData.map { item ->
+                    if (item.id == productId) item.copy(checked = bool)
+                    else item
+                }
+            )
+        }
+        // TODO 更新 Room cart
+    }
+
+    // 切换全选/全不选
+    fun toggleSelectAll() {
+        val bool = !_uiState.value.allSelected // 只有两种可能：全选和全不选
+        _uiState.update { state ->
+            state.copy(
+                allSelected = bool,
+                cartData = state.cartData.map { it.copy(checked = bool) }
+            )
+        }
+        // TODO 更新 Room cart
+    }
+
+    // 更新数量
+    fun changeQuantity(productId: String, value: Int) {
+        if (value !in 1 until 1000) return
+        // 取旧值用于失败回滚
+        val legacyValue = _uiState.value.cartData
+            .firstOrNull { it.id == productId }?.quantity ?: return
+
+        if (legacyValue == value) return
+
+        // 乐观更新：立即改 UI
+        updateLocalQuantity(productId, value)
+        _uiState.update { it.copy(updatingIds = it.updatingIds + productId) }
+
+        // 提交服务端
+        viewModelScope.launch {
+            try {
+                // cartRepo.updateQuantity(productId, value) TODO: 更新
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                // 失败：回滚
+                updateLocalQuantity(productId, legacyValue)
+                handleError(e)
+            } finally {
+                _uiState.update { it.copy(updatingIds = it.updatingIds - productId) }
+            }
+        }
+    }
+
+    private fun updateLocalQuantity(productId: String, quantity: Int) {
+        _uiState.update { state ->
+            state.copy(
+                cartData = state.cartData.map { item ->
+                    if (item.id == productId) item.copy(quantity = quantity)
+                    else item
+                }
+            )
+        }
+        // TODO 更新 Room cart
     }
 
     private suspend fun handleError(e: Exception) {

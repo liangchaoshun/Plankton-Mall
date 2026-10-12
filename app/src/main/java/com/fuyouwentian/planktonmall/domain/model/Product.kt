@@ -2,6 +2,7 @@ package com.fuyouwentian.planktonmall.domain.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
 // Kotlin 序列化，默认会忽略掉数据类中没有的 JSON 字段
 @Serializable
@@ -46,10 +47,10 @@ data class CartProduct(
     @SerialName("goods_id")
     val goodsId: String,
     @SerialName("is_valid")
-    val isValid: Boolean,
-    val checked: Boolean,
     val quantity: Int,
     val price: String,
+    val isValid: Boolean,
+    val checked: Boolean,
     @SerialName("goods_name_zh")
     val goodsNameZh: String,
     @SerialName("goods_name_en")

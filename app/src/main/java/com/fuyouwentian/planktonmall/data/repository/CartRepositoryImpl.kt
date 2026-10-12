@@ -34,7 +34,7 @@ class CartRepositoryImpl @Inject constructor(
         // 网络优先：成功则写回到 Room 并返回
         val remote = safeApiCall { api.cartList(userId) }
         cartDao.clearAll()
-        cartDao.insertAll(remote.data.map { it.toEntity() })
+        cartDao.insertAll(remote.data.map { it.toEntity() }) // TODO 字段不匹配
         return remote
     }
 }

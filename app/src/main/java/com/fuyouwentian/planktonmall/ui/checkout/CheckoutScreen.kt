@@ -13,4 +13,5 @@ fun CheckoutScreen(
     viewModel: CheckoutViewModel = hiltViewModel()
 ) {
     Text("结算页")
+    // 页面初始化，从 Room 中获取勾选的数据结算
 }

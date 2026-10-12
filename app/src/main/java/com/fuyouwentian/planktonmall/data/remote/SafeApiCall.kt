@@ -12,19 +12,19 @@ interface FriendlyException {
     val friendlyMessage: String
 }
 
-// 1. 业务异常（HTTP 200，但 status_code != 20000）
+// 业务异常（HTTP 200，但 status_code != 20000）
 class ApiException(val code: String, override val message: String) : Exception(message),
     FriendlyException {
     override val friendlyMessage: String get() = message
 }
 
-// 2. HTTP 协议异常（404, 500 等）
+// HTTP 协议异常（404, 500 等）
 class HttpExceptionWrapper(val code: Int, override val message: String) : Exception(message),
     FriendlyException {
     override val friendlyMessage: String get() = message
 }
 
-// 3. 网络连接异常（断网、超时）
+// 网络连接异常（断网、超时）
 class NetworkException(override val message: String) : Exception(message),
     FriendlyException {
     override val friendlyMessage: String get() = message
@@ -65,13 +65,13 @@ suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
         throw NetworkException("请求超时，请稍后重试")
     } catch (e: UnknownHostException) {
         Log.d("SafeApiCall", "UnknownHostException")
-        throw NetworkException("网络不可用，请检查网络连接")
+        throw NetworkException("网络不可用，请检查网络")
     } catch (e: IOException) {
         Log.d("SafeApiCall", "IOException")
-        throw NetworkException("网络连接失败，请检查网络设置")
+        throw NetworkException("网络连接失败，请检查网络")
     } catch (e: Exception) {
         // 捕获解析错误等其他异常
         Log.d("SafeApiCall", "Exception")
-        throw Exception("数据解析异常: ${e.message}")
+        throw Exception("解析异常: ${e.message}")
     }
 }
