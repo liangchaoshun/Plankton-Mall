@@ -1,16 +1,10 @@
-package com.fuyouwentian.planktonmall
+package com.fuyouwentian.planktonmall.navigation
 
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -20,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -32,9 +25,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
+import com.fuyouwentian.planktonmall.ui.checkout.CheckoutScreen
 import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
 import com.fuyouwentian.planktonmall.ui.home.HomeScreen
 import com.fuyouwentian.planktonmall.ui.login.LoginScreen
@@ -43,14 +38,14 @@ import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 import com.fuyouwentian.planktonmall.ui.register.RegisterScreen
 
 @Composable
-fun PlanktonMallApp(
+fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    viewModel: AppViewModel = hiltViewModel(),
+    viewModel: AppNavHostViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     // 在 Composable 上下文中先取出字符串
-    val routes = NAVI_DEST.map { stringResource(it.routeId) }
+    val routes = NAVI_DEST.map { it.route }
     val homeRoute = routes[0]
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -145,7 +140,7 @@ fun PlanktonMallApp(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            composable(route = "login") {
+            composable(route = Routes.LOGIN) {
                 LoginScreen(
                     modifier = Modifier.fillMaxSize(),
                     onNavigateToRegister = { navController.navigate("register") },
@@ -159,13 +154,13 @@ fun PlanktonMallApp(
                     }
                 )
             }
-            composable(route = "register") {
+            composable(route = Routes.REGISTER) {
                 RegisterScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
             composable(
-                route = "products/{q}",
+                route = Routes.PRODUCTS,
                 arguments = listOf(navArgument("q") { type = NavType.StringType })
             ) { backStackEntry ->
                 val q = backStackEntry.arguments?.getString("q") ?: ""
@@ -177,7 +172,7 @@ fun PlanktonMallApp(
                 )
             }
             composable(
-                route = "detail/{id}",
+                route = Routes.DETAIL,
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id") ?: ""
@@ -186,40 +181,11 @@ fun PlanktonMallApp(
                     onBackClick = { navController.popBackStack() }
                 )
             }
+            composable(route = Routes.CHECKOUT) {
+                CheckoutScreen(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
-
-data class NavHostDest(
-    @StringRes val routeId: Int,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
-    @StringRes val iconTextId: Int
-)
-
-val NAVI_DEST = listOf(
-    NavHostDest(
-        routeId = R.string.home_route,
-        selectedIcon = Icons.Outlined.Home,
-        unselectedIcon = Icons.Outlined.Home,
-        iconTextId = R.string.home_label,
-    ),
-    NavHostDest(
-        routeId = R.string.category_route,
-        selectedIcon = Icons.Outlined.Category,
-        unselectedIcon = Icons.Outlined.Category,
-        iconTextId = R.string.category_label
-    ),
-    NavHostDest(
-        routeId = R.string.cart_route,
-        selectedIcon = Icons.Outlined.ShoppingCart,
-        unselectedIcon = Icons.Outlined.ShoppingCart,
-        iconTextId = R.string.cart_label,
-    ),
-    NavHostDest(
-        routeId = R.string.profile_route,
-        selectedIcon = Icons.Outlined.Person,
-        unselectedIcon = Icons.Outlined.Person,
-        iconTextId = R.string.profile_label,
-    )
-)

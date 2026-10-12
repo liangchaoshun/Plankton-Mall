@@ -11,4 +11,5 @@ interface UserRepository {
     suspend fun logout(): Boolean
     suspend fun getLocalUserProfile(): UserProfile?
     suspend fun getRemoteUserProfile(id: String): UserProfile
+    suspend fun isLoggedIn(): Boolean
 }

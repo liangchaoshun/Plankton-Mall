@@ -46,4 +46,10 @@ class UserRepositoryImpl @Inject constructor(
         return result
     }
 
+    override suspend fun isLoggedIn(): Boolean {
+        val hasToken = !tokenRepo.getToken().isNullOrBlank()
+        if (!hasToken) return false
+        return safeApiCall { api.userValidate() }
+    }
+
 }

@@ -69,7 +69,7 @@ class HomeViewModel @Inject constructor(
                 val productsData = productRepository.getHomeProducts(params)
                 if (id != requestId) return@launch // 过期则丢弃
                 /*// mock data
-                val productsData = ProductsData<ProductLite>(
+                val productsData = ProductsResponseData<ProductLite>(
                     data = emptyList(),
                     total = 0,
                     pageIndex = 1,

@@ -6,6 +6,7 @@ import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
+import com.fuyouwentian.planktonmall.mock.MockProducts
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,8 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val userRepo: UserRepository,
     private val cartRepo: CartRepository,
+    private val userRepo: UserRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
@@ -44,11 +45,11 @@ class CartViewModel @Inject constructor(
             try {
                 val userId = userRepo.getLocalUserProfile()?.id ?: "pseudoId"
                 // pseudoId 说明没登录账号，服务端会先校验 token，返回后跳转到登录页
-                val cartData = cartRepo.fetchData(userId)
+//                val cartData = cartRepo.fetchData(userId)
                 // mock data
-//                val cartData = MockProducts.CartProducts
+                val cartData = MockProducts.CartProducts
                 if (id != requestId) return@launch // 已过期
-                _uiState.update { it.copy(cartData = cartData) }
+                _uiState.update { it.copy(cartData = cartData.data) }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {

@@ -79,11 +79,17 @@ data class HomeProductsRequest(
 
 
 @Serializable
-data class ProductsData<T>(
+data class ProductsResponseData<T>(
     val data: List<T>,
     val total: Int,
     @SerialName("page_index")
     val pageIndex: Int,
     @SerialName("page_size")
     val pageSize: Int
+)
+
+@Serializable
+data class CartProductsResponseData<T>(
+    val data: List<T>,
+    val total: Int
 )

@@ -1,4 +1,4 @@
-package com.fuyouwentian.planktonmall
+package com.fuyouwentian.planktonmall.navigation
 
 import androidx.lifecycle.ViewModel
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class AppViewModel @Inject constructor(
+class AppNavHostViewModel @Inject constructor(
     tokenRepo: TokenRepository
 ) : ViewModel() {
     val tokenUiEvent: SharedFlow<UiEvent> = tokenRepo.uiEvent

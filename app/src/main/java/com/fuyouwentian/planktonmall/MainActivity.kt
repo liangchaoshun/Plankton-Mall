@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.fuyouwentian.planktonmall.navigation.AppNavHost
 import com.fuyouwentian.planktonmall.ui.theme.PlanktonMallTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,7 +19,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PlanktonMallTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    PlanktonMallApp()
+                    AppNavHost()
                 }
             }
         }

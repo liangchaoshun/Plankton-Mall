@@ -1,6 +1,7 @@
 package com.fuyouwentian.planktonmall.data.remote
 
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
+import com.fuyouwentian.planktonmall.domain.model.CartProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.Category
 import com.fuyouwentian.planktonmall.domain.model.CategoryData
 import com.fuyouwentian.planktonmall.domain.model.HomeProductsRequest
@@ -8,8 +9,8 @@ import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
-import com.fuyouwentian.planktonmall.domain.model.ProductsData
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 import retrofit2.http.Body
@@ -25,10 +26,10 @@ interface ApiService {
     suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>>
 
     @POST("goods/home")
-    suspend fun getHomeProducts(@Body param: HomeProductsRequest): BaseResponse<ProductsData<ProductLite>>
+    suspend fun getHomeProducts(@Body param: HomeProductsRequest): BaseResponse<ProductsResponseData<ProductLite>>
 
     @POST("goods/list")
-    suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsData<ProductLite>>
+    suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsResponseData<ProductLite>>
 
     @GET("goods/{id}")
     suspend fun getProduct(@Path("id") id: String): BaseResponse<Product>
@@ -61,5 +62,5 @@ interface ApiService {
     suspend fun cartUpdate(@Body param: CartProduct): BaseResponse<Unit>
 
     @GET("cart/list/{id}")
-    suspend fun cartList(@Path("id") id :String): BaseResponse<List<CartProduct>>
+    suspend fun cartList(@Path("id") id: String): BaseResponse<CartProductsResponseData<CartProduct>>
 }

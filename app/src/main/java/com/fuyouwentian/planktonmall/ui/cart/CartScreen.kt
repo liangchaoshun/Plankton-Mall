@@ -94,7 +94,7 @@ fun CartScreen(
             uiState.cartData.isEmpty() -> {
                 // 请求成功但没有数据
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "暂无数据")
+                    Text(text = "空空如也")
                 }
             }
 

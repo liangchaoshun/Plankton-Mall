@@ -5,6 +5,7 @@ import com.fuyouwentian.planktonmall.data.local.cart.toEntity
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
+import com.fuyouwentian.planktonmall.domain.model.CartProductsResponseData
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,11 +30,11 @@ class CartRepositoryImpl @Inject constructor(
         cartDao.update(param.toEntity())
     }
 
-    override suspend fun fetchData(userId: String): List<CartProduct> {
+    override suspend fun fetchData(userId: String): CartProductsResponseData<CartProduct> {
         // 网络优先：成功则写回到 Room 并返回
         val remote = safeApiCall { api.cartList(userId) }
         cartDao.clearAll()
-        cartDao.insertAll(remote.map { it.toEntity() })
+        cartDao.insertAll(remote.data.map { it.toEntity() })
         return remote
     }
 }

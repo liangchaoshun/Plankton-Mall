@@ -49,7 +49,7 @@ class ProductsViewModel @Inject constructor(
             try {
                 val productsData = productRepository.getProducts(params)
                 /*// mock data
-                val productsData = ProductsData<ProductLite>(
+                val productsData = ProductsResponseData<ProductLite>(
                     data = emptyList(),
                     total = 0,
                     pageIndex = 1,

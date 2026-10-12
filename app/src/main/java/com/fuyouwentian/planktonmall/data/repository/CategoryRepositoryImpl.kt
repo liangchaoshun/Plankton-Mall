@@ -13,7 +13,7 @@ class CategoryRepositoryImpl @Inject constructor(
     private val apiService: ApiService, // Hilt 会自动提供
 ) : CategoryRepository {
     override suspend fun getCategories(): CategoryData<Category> {
-        // 🌟 直接用 safeApiCall 包起来，它会返回 ProductsData，或者抛出异常
+        // 🌟 直接用 safeApiCall 包起来，它会返回 ProductsResponseData，或者抛出异常
         return safeApiCall { apiService.getCategories() }
     }
 }
