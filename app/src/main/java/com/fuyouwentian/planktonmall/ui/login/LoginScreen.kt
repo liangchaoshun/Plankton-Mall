@@ -1,6 +1,7 @@
 package com.fuyouwentian.planktonmall.ui.login
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +31,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -44,8 +44,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,18 +77,33 @@ fun LoginScreen(
                 is UiEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
+
                 is UiEvent.LoginSuccess -> {
                     onLoginSuccess() // 登录成功
                 }
+
                 else -> {}
             }
         }
     }
 
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = Color.White // background
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        // 背景图
+        Image(
+            painter = painterResource(id = R.drawable.login_register_bg),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(radius = 30.dp), // 模糊图片
+            contentScale = ContentScale.Crop
+        )
+
+        // 半透明遮罩
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x33FFFFFF))
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -167,9 +184,9 @@ fun LoginScreen(
                     containerColor = Color(0xFF5E5CE6)
                 ),
                 shape = RoundedCornerShape(8.dp),
-                enabled = !uiState.loading
+                enabled = !uiState.commiting
             ) {
-                if (uiState.loading) {
+                if (uiState.commiting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = Color.White,
@@ -228,7 +245,7 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "还没有账号？",
+                    text = "还没账号？",
                     fontSize = 14.sp,
                     color = Color(0xFF666666)
                 )
@@ -238,7 +255,7 @@ fun LoginScreen(
                     modifier = Modifier.height(24.dp)
                 ) {
                     Text(
-                        text = "注册",
+                        text = "去注册",
                         fontSize = 14.sp,
                         color = Color(0xFF5E5CE6),
                         fontWeight = FontWeight.Medium

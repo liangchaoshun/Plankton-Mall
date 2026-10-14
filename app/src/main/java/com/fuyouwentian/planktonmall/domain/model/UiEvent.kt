@@ -5,4 +5,6 @@ sealed class UiEvent {
     data class ShowToast(val message: String) : UiEvent()
     data object NavigateToLogin : UiEvent()
     data object LoginSuccess : UiEvent()
+    data object RegisterSuccess : UiEvent()
+    data object LogoutSuccess : UiEvent()
 }

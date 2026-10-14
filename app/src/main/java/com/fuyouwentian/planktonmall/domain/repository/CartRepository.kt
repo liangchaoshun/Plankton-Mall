@@ -8,5 +8,5 @@ interface CartRepository {
     suspend fun insert(param: CartProduct)
     suspend fun delete(ids: List<String>)
     suspend fun update(param: CartProduct)
-    suspend fun fetchData(userId: String): CartProductsResponseData<CartProduct>
+    suspend fun fetchData(userId: String): CartProductsResponseData<CartProduct>?
 }

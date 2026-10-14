@@ -14,7 +14,6 @@ object Routes {
     const val CATEGORY = "category"
     const val CARt = "cart"
     const val PROFILE = "profile"
-    const val CHECKOUT = "checkout" // 结算页面
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val DETAIL = "detail/{id}"

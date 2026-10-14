@@ -1,9 +1,10 @@
 package com.fuyouwentian.planktonmall.ui.register
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
-import com.fuyouwentian.planktonmall.domain.model.LoginRequest
+import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,27 +25,43 @@ class RegisterViewModel @Inject constructor(
     private val userRepo: UserRepository
 ) : ViewModel() {
     // UI 状态
-    private val _uiState = MutableStateFlow(RegisterUiState(loading = true))
+    private val _uiState = MutableStateFlow(RegisterUiState(commiting = false))
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
-    // UI 事件（用于 Toast、导航等一次性动作）
+    // UI 事件
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    // TODO: onchange event
+    fun onAccountChange(acc: String) {
+        _uiState.update { it.copy(account = acc) }
+    }
+
+    fun onPasswordChange(password: String) {
+        _uiState.update { it.copy(password = password) }
+    }
 
     fun register() {
+        // 非空校验
+        if (_uiState.value.account.isBlank()) {
+            viewModelScope.launch { _uiEvent.emit(UiEvent.ShowToast("请输入账号")) }
+            return
+        }
+        if (_uiState.value.password.isBlank()) {
+            viewModelScope.launch { _uiEvent.emit(UiEvent.ShowToast("请输入密码")) }
+            return
+        }
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
+            _uiState.update { it.copy(commiting = true, error = null) }
             try {
-                val param = LoginRequest(
+                val param = RegisterRequest(
                     account = _uiState.value.account,
                     password = _uiState.value.password,
                 )
-                userRepo.login(param)
+                val isOk = userRepo.register(param)
+                if (isOk == true) _uiEvent.emit(UiEvent.RegisterSuccess)
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(loading = false) }
+                _uiState.update { it.copy(commiting = false) }
                 handleError(e)
             }
         }
@@ -60,8 +77,9 @@ class RegisterViewModel @Inject constructor(
              * 网络错误（断网、超时）
              */
             is FriendlyException -> e.friendlyMessage
-            else -> "未知错误：${e.message ?: "请稍后重试"}"
+            else -> e.message ?: "请稍后重试"
         }
+        Log.d("HandleError", msg)
         _uiState.update { it.copy(error = msg) }
         _uiEvent.emit(UiEvent.ShowToast(msg))
     }

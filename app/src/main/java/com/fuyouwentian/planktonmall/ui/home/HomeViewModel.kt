@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
@@ -22,7 +23,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val productRepository: ProductRepository
+    private val productRepo: ProductRepository
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(HomeUiState(loadingHomeList = true))
@@ -43,18 +44,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(loadingCarousel = true, carouselError = null) }
             try {
-                val carouselData = productRepository.getHomeCarousel()
-                _uiState.update {
-                    it.copy(
-                        // carouselData = emptyList(),
-                        carouselData = carouselData,
-                        loadingCarousel = false,
-                        carouselError = null
-                    )
+                val carouselData = productRepo.getHomeCarousel()
+                carouselData?.let {
+                    _uiState.update {
+                        it.copy(carouselData = carouselData, carouselError = null)
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(loadingCarousel = false) }
                 handleError(e, isCarousel = true)
+            } finally {
+                _uiState.update { it.copy(loadingCarousel = false) }
             }
         }
     }
@@ -66,7 +65,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(loadingHomeList = true, productsError = null) }
             try {
-                val productsData = productRepository.getHomeProducts(params)
+                val productsData = productRepo.getHomeProducts(params)
                 if (id != requestId) return@launch // 过期则丢弃
                 /*// mock data
                 val productsData = ProductsResponseData<ProductLite>(
@@ -75,13 +74,15 @@ class HomeViewModel @Inject constructor(
                     pageIndex = 1,
                     pageSize = 10
                 )*/
-                _uiState.update {
-                    it.copy(
-                        productsData = productsData,
-                        loadingMore = false, // 顺带清掉可能残留的 loadMore 状态
-                        hasMore = productsData.data.size < productsData.total,
-                        productsError = null
-                    )
+                productsData?.let {
+                    _uiState.update {
+                        it.copy(
+                            productsData = productsData,
+                            loadingMore = false, // 顺带清掉可能残留的 loadMore 状态
+                            hasMore = productsData.data.size < productsData.total,
+                            productsError = null
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e, isCarousel = false)
@@ -107,19 +108,21 @@ class HomeViewModel @Inject constructor(
                 val latest = _uiState.value
                 val nextPage = latest.productsData.pageIndex + 1
                 val params = lastRequest.copy(pageIndex = nextPage)
-                val newData = productRepository.getHomeProducts(params)
+                val newData = productRepo.getHomeProducts(params)
                 if (id != requestId) return@launch // 期间刷新过，丢弃
-                _uiState.update { state ->
-                    val mergedList = state.productsData.data + newData.data
-                    state.copy(
-                        productsData = state.productsData.copy(
-                            data = mergedList,
-                            total = newData.total,
-                            pageIndex = newData.pageIndex,
-                            pageSize = newData.pageSize
-                        ),
-                        hasMore = mergedList.size < newData.total
-                    )
+                newData?.let {
+                    _uiState.update { state ->
+                        val mergedList = state.productsData.data + newData.data
+                        state.copy(
+                            productsData = state.productsData.copy(
+                                data = mergedList,
+                                total = newData.total,
+                                pageIndex = newData.pageIndex,
+                                pageSize = newData.pageSize
+                            ),
+                            hasMore = mergedList.size < newData.total
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e, isCarousel = false)
@@ -141,8 +144,9 @@ class HomeViewModel @Inject constructor(
              * 网络错误（断网、超时）
              */
             is FriendlyException -> e.friendlyMessage
-            else -> "未知错误：${e.message ?: "请稍后重试"}"
+            else -> e.message ?: "请稍后重试"
         }
+        Log.d("HandleError", msg)
         _uiState.update {
             if (isCarousel) it.copy(carouselError = msg) else it.copy(productsError = msg)
         }

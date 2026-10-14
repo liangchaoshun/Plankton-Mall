@@ -25,7 +25,7 @@ class LoginViewModel @Inject constructor(
     private val userRepo: UserRepository,
 ) : ViewModel() {
     // UI 状态
-    private val _uiState = MutableStateFlow(LoginUiState(loading = false))
+    private val _uiState = MutableStateFlow(LoginUiState(commiting = false))
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     // UI 事件（用于 Toast、导航等一次性动作）
@@ -56,30 +56,21 @@ class LoginViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
+            _uiState.update { it.copy(commiting = true, error = null) }
             try {
                 val param = LoginRequest(
                     account = _uiState.value.account,
                     password = _uiState.value.password,
                 )
-                userRepo.login(param)
-                _uiEvent.emit(UiEvent.LoginSuccess)
-                _uiState.update { it.copy(error = null) }
+                val response = userRepo.login(param)
+                response?.let {
+                    _uiEvent.emit(UiEvent.LoginSuccess)
+                    _uiState.update { it.copy(error = null) }
+                }
             } catch (e: Exception) {
                 handleError(e)
             } finally {
-                _uiState.update { it.copy(loading = false) }
-            }
-        }
-    }
-
-    // TEST
-    fun getUserProfile() {
-        viewModelScope.launch {
-            try {
-                userRepo.getRemoteUserProfile("6a4724d3603a5d3caeb2ed31")
-            } catch (e: Exception) {
-                handleError(e)
+                _uiState.update { it.copy(commiting = false) }
             }
         }
     }
@@ -94,7 +85,7 @@ class LoginViewModel @Inject constructor(
              * 网络错误（断网、超时）
              */
             is FriendlyException -> e.friendlyMessage
-            else -> "未知错误：${e.message ?: "请稍后重试"}"
+            else -> e.message ?: "请稍后重试"
         }
         Log.d("HandleError", msg)
         _uiState.update { it.copy(error = msg) }

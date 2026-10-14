@@ -31,17 +31,18 @@ class NetworkException(override val message: String) : Exception(message),
 }
 
 // 统一的 API 调用包装器
-suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
+suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T? {
     return try {
-        val response = call() // 这里可能抛出 HttpException 或 IOException
-
+        val responseResult = call() // 这里可能抛出 HttpException 或 IOException
+        // 注意，如果 HTTP 状态码不是 200，不往下执行了，从此处跳转到 catch 分支
         // 走到这里说明 HTTP 状态码是 200-299
-        if (response.status_code == "20000") {
-            response.data // 成功，返回真实数据
+        // Log.d("SafeApiCall", "responseResult: $responseResult")
+        if (responseResult.status_code == "20000") {
+            responseResult.data // 成功，返回真实数据
         } else {
             // HTTP 成功，但业务失败
-            Log.d("SafeApiCall", "HTTP 成功，但业务失败")
-            throw ApiException(response.status_code, response.message)
+            Log.d("SafeApiCall", "status_code: ${responseResult.status_code}")
+            throw ApiException(responseResult.status_code, responseResult.message)
         }
     } catch (e: CancellationException) { // 协程
         Log.d("SafeApiCall", "CancellationException")
@@ -54,7 +55,7 @@ suspend fun <T> safeApiCall(call: suspend () -> BaseResponse<T>): T {
         // 捕获 401, 404, 500 等 HTTP 协议错误
         val errorMsg = when (e.code()) {
             400 -> "参数错误，请检查"
-            401 -> "登录已过期，请重新登录" // HttpInterceptor 已经拦截，此处仍会执行，但无需删除
+            401 -> "登录已过期，请重新登录" // HttpInterceptor 已经拦截跳转，此处抛出错误信息
             404 -> "请求的资源不存在"
             500 -> "服务器开小差了，请稍后再试"
             else -> "网络请求错误: ${e.code()}"

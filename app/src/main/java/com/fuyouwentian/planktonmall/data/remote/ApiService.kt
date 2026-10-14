@@ -23,34 +23,34 @@ import retrofit2.http.Path
 interface ApiService {
 
     @GET("goods/carousel")
-    suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>>
+    suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>?>
 
     @POST("goods/home")
-    suspend fun getHomeProducts(@Body param: HomeProductsRequest): BaseResponse<ProductsResponseData<ProductLite>>
+    suspend fun getHomeProducts(@Body param: HomeProductsRequest): BaseResponse<ProductsResponseData<ProductLite>?>
 
     @POST("goods/list")
-    suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsResponseData<ProductLite>>
+    suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsResponseData<ProductLite>?>
 
     @GET("goods/{id}")
-    suspend fun getProduct(@Path("id") id: String): BaseResponse<Product>
+    suspend fun getProduct(@Path("id") id: String): BaseResponse<Product?>
 
     @GET("category/list")
-    suspend fun getCategories(): BaseResponse<CategoryData<Category>>
+    suspend fun getCategories(): BaseResponse<CategoryData<Category>?>
 
     @POST("auth/login")
-    suspend fun userLogin(@Body param: LoginRequest): BaseResponse<LoginResponse>
+    suspend fun userLogin(@Body param: LoginRequest): BaseResponse<LoginResponse?>
 
     @POST("auth/register")
-    suspend fun userRegister(@Body param: RegisterRequest): BaseResponse<Unit>
+    suspend fun userRegister(@Body param: RegisterRequest): BaseResponse<Boolean?>
 
-    @GET("auth/user/{id}")
-    suspend fun userGetProfile(@Path("id") id: String): BaseResponse<UserProfile>
+    @GET("user/profile/{id}")
+    suspend fun userGetProfile(@Path("id") id: String): BaseResponse<UserProfile?>
 
     @GET("auth/logout")
-    suspend fun userLogout(): BaseResponse<Boolean>
+    suspend fun userLogout(): BaseResponse<Boolean?>
 
     @GET("auth/validate")
-    suspend fun userValidate(): BaseResponse<Boolean>
+    suspend fun userValidate(): BaseResponse<Boolean?>
 
     @POST("cart/insert")
     suspend fun cartInsert(@Body param: CartProduct): BaseResponse<Unit>
@@ -62,5 +62,5 @@ interface ApiService {
     suspend fun cartUpdate(@Body param: CartProduct): BaseResponse<Unit>
 
     @GET("cart/list/{id}")
-    suspend fun cartList(@Path("id") id: String): BaseResponse<CartProductsResponseData<CartProduct>>
+    suspend fun cartList(@Path("id") id: String): BaseResponse<CartProductsResponseData<CartProduct>?>
 }
