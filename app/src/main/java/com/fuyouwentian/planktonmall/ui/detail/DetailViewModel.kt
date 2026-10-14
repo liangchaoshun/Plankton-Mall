@@ -1,6 +1,7 @@
 package com.fuyouwentian.planktonmall.ui.detail
 
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
@@ -21,7 +22,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    private val productRepository: ProductRepository
+    private val productRepo: ProductRepository
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(DetailUiState(loading = true))
@@ -48,9 +49,9 @@ class DetailViewModel @Inject constructor(
                 // mock data
                 //val product = null
                 //val product = MockProducts.ProductDetail
-                val product = productRepository.getProduct(pid)
+                val product = productRepo.getProduct(pid)
                 if (id != requestId) return@launch // 已过期
-                _uiState.update { it.copy(product = product, loading = false) }
+                product?.let { _uiState.update { it.copy(product = product, loading = false) } }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
@@ -69,8 +70,9 @@ class DetailViewModel @Inject constructor(
              * 网络错误（断网、超时）
              */
             is FriendlyException -> e.friendlyMessage
-            else -> "未知错误：${e.message ?: "请稍后重试"}"
+            else -> e.message ?: "请稍后重试"
         }
+        Log.d("HandleError", msg)
         _uiEvent.emit(UiEvent.ShowToast(msg))
     }
 }

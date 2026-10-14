@@ -146,7 +146,6 @@ fun CartScreen(
                         modifier = modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                     ) {
                         items(cartData, key = { it.id }) { product ->
                             Row(
@@ -253,12 +252,22 @@ fun CartScreen(
                             )
                             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
                             Button(
-                                onClick = onSettleClick,
+                                onClick = {
+                                    val hasAnyChecked = cartData.any { it.checked }
+                                    if (hasAnyChecked) {
+                                        onSettleClick()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "至少选中一件商品",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFFF40E21)
                                 ),
                                 shape = RoundedCornerShape(8.dp),
-                                enabled = someSelected
                             ) {
                                 Text(
                                     text = "去结算",

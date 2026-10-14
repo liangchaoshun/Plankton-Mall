@@ -29,7 +29,6 @@ import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
-import com.fuyouwentian.planktonmall.ui.checkout.CheckoutScreen
 import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
 import com.fuyouwentian.planktonmall.ui.home.HomeScreen
 import com.fuyouwentian.planktonmall.ui.login.LoginScreen
@@ -132,12 +131,13 @@ fun AppNavHost(
                 CartScreen(
                     modifier = Modifier.fillMaxSize(),
                     onProductClick = { productId -> navController.navigate("detail/${productId}") },
-                    onSettleClick = { navController.navigate(Routes.CHECKOUT) }
+                    onSettleClick = { navController.navigate(Routes.PROFILE) }
                 )
             }
             composable(route = Routes.PROFILE) {
                 ProfileScreen(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    onLogoutSuccess = { navController.navigate(Routes.HOME) }
                 )
             }
             composable(route = Routes.LOGIN) {
@@ -156,7 +156,9 @@ fun AppNavHost(
             }
             composable(route = Routes.REGISTER) {
                 RegisterScreen(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
+                    onRegisterSuccess = { navController.navigate(Routes.HOME) }
                 )
             }
             composable(
@@ -179,11 +181,6 @@ fun AppNavHost(
                 DetailScreen(
                     id = id,
                     onBackClick = { navController.popBackStack() }
-                )
-            }
-            composable(route = Routes.CHECKOUT) {
-                CheckoutScreen(
-                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

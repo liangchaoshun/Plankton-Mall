@@ -20,7 +20,7 @@ data class LoginResponse(
 data class RegisterRequest(
     val account: String,
     val password: String,
-    val nickname: String,
+    val nickname: String? = null,
     val avatar: String? = null
 )
 

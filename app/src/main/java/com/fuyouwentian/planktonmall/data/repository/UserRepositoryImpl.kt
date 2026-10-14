@@ -20,19 +20,21 @@ class UserRepositoryImpl @Inject constructor(
     private val profileDao: ProfileDao,
     private val tokenRepo: TokenRepository,
 ) : UserRepository {
-    override suspend fun login(param: LoginRequest): LoginResponse {
+    override suspend fun login(param: LoginRequest): LoginResponse? {
         val response = safeApiCall { api.userLogin(param) }
-        // 缓存到本地
-        tokenRepo.saveToken(response.token)
-        profileDao.insertUserProfile(response.userInfo.toEntity())
+        response?.let {
+            // 缓存到本地
+            tokenRepo.saveToken(response.token)
+            profileDao.insertUserProfile(response.userInfo.toEntity())
+        }
         return response
     }
 
-    override suspend fun register(param: RegisterRequest) {
-        api.userRegister(param)
+    override suspend fun register(param: RegisterRequest): Boolean? {
+        return safeApiCall { api.userRegister(param) }
     }
 
-    override suspend fun logout(): Boolean {
+    override suspend fun logout(): Boolean? {
         return safeApiCall { api.userLogout() }
     }
 
@@ -40,13 +42,15 @@ class UserRepositoryImpl @Inject constructor(
         return profileDao.getUserProfile()?.toDomain()
     }
 
-    override suspend fun getRemoteUserProfile(id: String): UserProfile {
+    override suspend fun getRemoteUserProfile(id: String): UserProfile? {
         val result = safeApiCall { api.userGetProfile(id) }
-        profileDao.insertUserProfile(result.toEntity()) // 缓存到本地
+        result?.let {
+            profileDao.insertUserProfile(result.toEntity()) // 缓存到本地
+        }
         return result
     }
 
-    override suspend fun isLoggedIn(): Boolean {
+    override suspend fun isLoggedIn(): Boolean? {
         val hasToken = !tokenRepo.getToken().isNullOrBlank()
         if (!hasToken) return false
         return safeApiCall { api.userValidate() }

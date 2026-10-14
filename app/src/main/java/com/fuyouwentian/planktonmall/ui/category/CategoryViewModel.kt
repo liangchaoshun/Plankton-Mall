@@ -1,11 +1,12 @@
 package com.fuyouwentian.planktonmall.ui.category
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.data.remote.ApiException
 import com.fuyouwentian.planktonmall.data.remote.HttpExceptionWrapper
 import com.fuyouwentian.planktonmall.data.remote.NetworkException
+import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,26 +38,27 @@ class CategoryViewModel @Inject constructor(
 
     private fun initHandler() {
         viewModelScope.launch {
-            _uiState.value = CategoryUiState(loading = true)
+            _uiState.update { it.copy(loading = true) }
             try {
                 val categoryData = categoryRepository.getCategories()
-                _uiState.value = CategoryUiState(categoryData = categoryData, loading = false)
+                categoryData?.let { _uiState.update { it.copy(categoryData = categoryData) } }
+                _uiState.update { it.copy(loading = false) }
             } catch (e: ApiException) {
                 // 业务错误（status_code != 20000）
-                _uiState.value = CategoryUiState(loading = false)
                 _uiEvent.emit(UiEvent.ShowToast(e.message))
             } catch (e: HttpExceptionWrapper) {
                 // HTTP 协议错误（404, 500 等）
-                _uiState.value = CategoryUiState(loading = false)
                 _uiEvent.emit(UiEvent.ShowToast(e.message))
             } catch (e: NetworkException) {
                 // 网络错误（断网、超时）
-                _uiState.value = CategoryUiState(loading = false)
                 _uiEvent.emit(UiEvent.ShowToast(e.message))
             } catch (e: Exception) {
                 // 其他未知错误
-                _uiState.value = CategoryUiState(loading = false)
-                _uiEvent.emit(UiEvent.ShowToast("未知错误: ${e.message ?: "请稍后重试"}"))
+                val msg = e.message ?: "请稍后重试"
+                Log.d("HandleError", msg)
+                _uiEvent.emit(UiEvent.ShowToast(msg))
+            } finally {
+                _uiState.update { it.copy(loading = false) }
             }
         }
     }

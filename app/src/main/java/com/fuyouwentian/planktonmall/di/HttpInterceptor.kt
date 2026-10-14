@@ -31,10 +31,22 @@ class HttpInterceptor @Inject constructor(
             .build()
 
         val response = chain.proceed(request)
-        /** 401 */
+        /**
+         * 拦截 401
+         * 只跳转，不提示
+         * 提示文案，safeApiCall 中将异常传到 *ViewModel 再到 Compose UI 弹出提示
+         */
         if (response.code == 401) {
-            Log.d("HttpInterceptor", "401 Unauthorized")
             scope.launch { tokenRepo.onUnauthorized() }
+        }
+        // 只有 200-299 且有 body 才尝试解析
+        if (response.code in 200..299) {
+            // peekBody 不会消耗原流
+            val bodyString = response.peekBody(100).string() // 100 字节数足够了
+            // Log.d("HttpInterceptor", "Response Body: $bodyString")
+            if (bodyString.contains("\"status_code\":\"40001\"")) {
+                scope.launch { tokenRepo.onUnauthorized() }
+            }
         }
 
         return response

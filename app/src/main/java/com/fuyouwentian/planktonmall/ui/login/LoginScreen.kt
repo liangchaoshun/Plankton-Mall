@@ -75,9 +75,11 @@ fun LoginScreen(
                 is UiEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
+
                 is UiEvent.LoginSuccess -> {
                     onLoginSuccess() // 登录成功
                 }
+
                 else -> {}
             }
         }
@@ -167,9 +169,9 @@ fun LoginScreen(
                     containerColor = Color(0xFF5E5CE6)
                 ),
                 shape = RoundedCornerShape(8.dp),
-                enabled = !uiState.loading
+                enabled = !uiState.commiting
             ) {
-                if (uiState.loading) {
+                if (uiState.commiting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = Color.White,
@@ -228,7 +230,7 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "还没有账号？",
+                    text = "还没账号？",
                     fontSize = 14.sp,
                     color = Color(0xFF666666)
                 )
@@ -238,7 +240,7 @@ fun LoginScreen(
                     modifier = Modifier.height(24.dp)
                 ) {
                     Text(
-                        text = "注册",
+                        text = "去注册",
                         fontSize = 14.sp,
                         color = Color(0xFF5E5CE6),
                         fontWeight = FontWeight.Medium

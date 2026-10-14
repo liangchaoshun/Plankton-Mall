@@ -1,12 +1,12 @@
 package com.fuyouwentian.planktonmall.ui.cart
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
-import com.fuyouwentian.planktonmall.mock.MockProducts
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,11 +44,11 @@ class CartViewModel @Inject constructor(
             try {
                 val userId = userRepo.getLocalUserProfile()?.id ?: "pseudoId"
                 // pseudoId 说明没登录账号，服务端会先校验 token，返回后跳转到登录页
-//                val cartData = cartRepo.fetchData(userId)
+                val cartData = cartRepo.fetchData(userId)
                 // mock data
-                val cartData = MockProducts.CartProducts
+//                val cartData = MockProducts.CartProducts
                 if (id != requestId) return@launch // 已过期
-                _uiState.update { it.copy(cartData = cartData.data) }
+                cartData?.let { _uiState.update { it.copy(cartData = cartData.data) } }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
@@ -132,8 +132,9 @@ class CartViewModel @Inject constructor(
              * 网络错误（断网、超时）
              */
             is FriendlyException -> e.friendlyMessage
-            else -> "未知错误：${e.message ?: "请稍后重试"}"
+            else -> e.message ?: "请稍后重试"
         }
+        Log.d("HandleError", msg)
         _uiEvent.emit(UiEvent.ShowToast(msg))
     }
 }
