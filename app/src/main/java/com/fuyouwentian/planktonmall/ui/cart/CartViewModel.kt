@@ -46,7 +46,7 @@ class CartViewModel @Inject constructor(
                 // pseudoId 说明没登录账号，服务端会先校验 token，返回后跳转到登录页
                 val cartData = cartRepo.fetchData(userId)
                 // mock data
-//                val cartData = MockProducts.CartProducts
+                // val cartData = MockProducts.CartProducts
                 if (id != requestId) return@launch // 已过期
                 cartData?.let { _uiState.update { it.copy(cartData = cartData.data) } }
             } catch (e: Exception) {
@@ -72,11 +72,16 @@ class CartViewModel @Inject constructor(
 
     // 切换全选/全不选
     fun toggleSelectAll() {
-        val bool = !_uiState.value.allSelected // 只有两种可能：全选和全不选
+        val target = !_uiState.value.allSelected // 只有两种可能：全选和全不选
         _uiState.update { state ->
             state.copy(
-                allSelected = bool,
-                cartData = state.cartData.map { it.copy(checked = bool) }
+                allSelected = target,
+                cartData = state.cartData
+                    .map {
+                        // 无效的商品不用处理
+                        val bool = if (it.isValid) target else it.checked
+                        it.copy(checked = bool)
+                    }
             )
         }
         // TODO 更新 Room cart
@@ -90,6 +95,8 @@ class CartViewModel @Inject constructor(
             .firstOrNull { it.id == productId }?.quantity ?: return
 
         if (legacyValue == value) return
+
+        toggleSelect(productId, true) // 改变数量，要求选中
 
         // 乐观更新：立即改 UI
         updateLocalQuantity(productId, value)

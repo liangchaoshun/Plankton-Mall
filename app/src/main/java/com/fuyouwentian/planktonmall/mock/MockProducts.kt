@@ -75,7 +75,7 @@ object MockProducts {
                 goodsId = "6aab47cb2f18a7cf3d684206",
                 quantity = 10,
                 price = "22200.00",
-                isValid = true,
+                isValid = false,
                 checked = false,
                 goodsNameZh = "浪琴（LONGINES）瑞士手表 名匠系列月相腕表 男士皮带机械表L29194783",
                 goodsNameEn = "English name",

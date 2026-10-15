@@ -278,7 +278,7 @@ fun ProductGridSection(
 
         uiState.productsData.data.isEmpty() -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "暂无商品")
+                Text(text = "暂无推荐商品")
             }
         }
 

@@ -127,7 +127,7 @@ fun AppNavHost(
                     onSeriesClick = { seriesId -> navController.navigate("products/$seriesId") }
                 )
             }
-            composable(route = Routes.CARt) {
+            composable(route = Routes.CART) {
                 CartScreen(
                     modifier = Modifier.fillMaxSize(),
                     onProductClick = { productId -> navController.navigate("detail/${productId}") },

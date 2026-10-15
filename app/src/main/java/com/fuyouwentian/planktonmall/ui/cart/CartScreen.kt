@@ -1,8 +1,19 @@
 package com.fuyouwentian.planktonmall.ui.cart
 
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,7 +37,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -46,10 +60,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.state.ToggleableState
@@ -58,15 +77,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
+import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.math.roundToInt
+
+// 定义滑动状态
+enum class DragValue {
+    Settled, // 初始状态，未露出按钮
+    Revealed // 露出按钮状态
+}
 
 @Composable
 fun CartScreen(
@@ -130,153 +158,49 @@ fun CartScreen(
 
             else -> {
                 val cartData = uiState.cartData
-                val allSelected = cartData.all { it.checked }
-                val someSelected = cartData.any { it.checked } && !allSelected
-                val grandTotal = cartData
-                    .filter { it.checked }
-                    .fold(BigDecimal.ZERO) { acc, product ->
-                        val price = product.price.toBigDecimalOrNull() ?: BigDecimal.ZERO
-                        acc + price * product.quantity.toBigDecimal()
-                    }
-                    .setScale(2, RoundingMode.HALF_UP)
-                    .toPlainString()
+                // 记录当前滑出的商品 ID
+                var revealedProductId by remember { mutableStateOf<String?>(null) }
+
                 Column(modifier = Modifier.fillMaxSize()) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                        modifier = modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        items(cartData, key = { it.id }) { product ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min) // 自动撑满最高子项
-                                    .clickable { onProductClick(product.id) }
-                                    .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
-                                    .background(Color.White)
-                                    .padding(vertical = dimensionResource(R.dimen.padding_medium))
-                                    .padding(
-                                        start = 0.dp,
-                                        end = dimensionResource(R.dimen.padding_medium)
-                                    ),
-                                verticalAlignment = Alignment.Top,
-                            ) {
-                                Checkbox(
-                                    checked = product.checked,
-                                    onCheckedChange = { viewModel.toggleSelect(product.id, it) },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = MaterialTheme.colorScheme.primary,
-                                        uncheckedColor = Color.Gray,
-                                        checkmarkColor = Color.White
-                                    )
-                                )
-                                AsyncImage(
-                                    model = product.goodsIcon,
-                                    contentDescription = product.goodsNameZh,
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
-                                Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxHeight(),
-                                    verticalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = product.goodsNameZh,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "¥${product.price}",
-                                            color = MaterialTheme.colorScheme.error,
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        NumberStepper(
-                                            value = product.quantity,
-                                            onChangeQuantity = { value ->
-                                                viewModel.changeQuantity(
-                                                    product.id,
-                                                    value
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
                     Box(
                         modifier = Modifier
+                            .weight(1f)
                             .fillMaxWidth()
-                            .heightIn(30.dp)
-                            .background(Color(0xFFDDE3E9))
+                            // 监听点击事件，清除滑出状态
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    revealedProductId = null
+                                }
+                            }
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(
-                                    start = 0.dp,
-                                    end = dimensionResource(R.dimen.padding_medium)
-                                )
-                                .padding(vertical = dimensionResource(R.dimen.padding_medium)),
-                            verticalAlignment = Alignment.CenterVertically
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+                            modifier = modifier.fillMaxSize()
                         ) {
-                            TriStateCheckbox(
-                                state = when {
-                                    allSelected -> ToggleableState.On
-                                    someSelected -> ToggleableState.Indeterminate
-                                    else -> ToggleableState.Off
-                                },
-                                onClick = viewModel::toggleSelectAll
-                            )
-                            Text(
-                                text = "全选",
-                                fontSize = 14.sp
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = "￥$grandTotal",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Red
-                            )
-                            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
-                            Button(
-                                onClick = {
-                                    val hasAnyChecked = cartData.any { it.checked }
-                                    if (hasAnyChecked) {
-                                        onSettleClick()
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "至少选中一件商品",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFF40E21)
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(
-                                    text = "去结算",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Medium
+                            items(cartData, key = { it.id }) { product ->
+                                SwipeableCartItem(
+                                    product = product,
+                                    isRevealed = revealedProductId == product.id,
+                                    onRevealedChange = { isRevealed ->
+                                        // Log.d("Cart", "$isRevealed")
+                                        revealedProductId = if (isRevealed) product.id else null
+                                    },
+                                    onProductClick = onProductClick,
+                                    onToggleSelect = viewModel::toggleSelect,
+                                    onQuantityChange = viewModel::changeQuantity,
+                                    onCollect = { value -> Log.d("Cart", "收藏") },
+                                    onDelete = { value -> Log.d("Cart", "删除") },
                                 )
                             }
                         }
                     }
+
+                    // 底部结算栏
+                    SettleColumn(
+                        cartData = cartData,
+                        onSettleBtnClick = onSettleClick,
+                        onToggleSelectAll = viewModel::toggleSelectAll
+                    )
                 }
             }
         }
@@ -287,7 +211,8 @@ fun CartScreen(
 fun NumberStepper(
     value: Int,
     onChangeQuantity: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isValid: Boolean = true,
 ) {
     var text by remember { mutableStateOf(value.toString()) }
     val focusManager = LocalFocusManager.current
@@ -313,7 +238,7 @@ fun NumberStepper(
             modifier = Modifier
                 .size(dimensionResource(R.dimen.padding_medium))
                 .clickable(
-                    enabled = value > 1,
+                    enabled = isValid && value > 1,
                     onClick = { onChangeQuantity(value - 1) }
                 )
         )
@@ -351,6 +276,7 @@ fun NumberStepper(
                 keyboardActions = KeyboardActions(
                     onDone = { focusManager.clearFocus() }
                 ),
+                enabled = isValid,
                 singleLine = true,
                 textStyle = TextStyle(
                     fontSize = 14.sp,
@@ -375,9 +301,314 @@ fun NumberStepper(
             modifier = Modifier
                 .size(dimensionResource(R.dimen.padding_medium))
                 .clickable(
-                    enabled = value < 1000,
+                    enabled = isValid && value < 1000,
                     onClick = { onChangeQuantity(value + 1) }
                 )
         )
+    }
+}
+
+@Composable
+fun SwipeableCartItem(
+    product: CartProduct,
+    isRevealed: Boolean,
+    onRevealedChange: (Boolean) -> Unit,
+    onProductClick: (String) -> Unit,
+    onToggleSelect: (String, Boolean) -> Unit,
+    onQuantityChange: (String, Int) -> Unit,
+    onCollect: (String) -> Unit,
+    onDelete: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+    val actionWidth = 120.dp // 按钮区域的总宽度（例如两个按钮，每个 60dp）
+    val actionWidthPx = with(density) { actionWidth.toPx() }
+
+    // 创建 AnchoredDraggableState
+    val state = remember {
+        AnchoredDraggableState(
+            initialValue = DragValue.Settled,
+            positionalThreshold = { distance -> distance * 0.5f }, // 滑动超过一半就触发
+            velocityThreshold = { with(density) { 100.dp.toPx() } },
+            snapAnimationSpec = spring(),
+            decayAnimationSpec = exponentialDecay()
+        )
+    }
+
+    // 设置锚点（Anchors），为何使用监听的方式：https://chat.deepseek.com/share/hv5sfio9udh1lzjygi
+    // Settled 对应 offset = 0，Revealed 对应 offset = -actionWidthPx
+    LaunchedEffect(actionWidthPx) {
+        // 设置两个槽点
+        state.updateAnchors(
+            DraggableAnchors {
+                DragValue.Settled at 0f
+                DragValue.Revealed at -actionWidthPx
+            }
+        )
+    }
+
+    // 监听外部传入的 isRevealed，如果为 false 且当前是 Revealed，则收起
+    LaunchedEffect(isRevealed) {
+        if (!isRevealed && state.currentValue == DragValue.Revealed) {
+            state.animateTo(DragValue.Settled)
+        }
+    }
+
+    // 监听内部滑动状态，通知外部
+    LaunchedEffect(state.currentValue) {
+        onRevealedChange(state.currentValue == DragValue.Revealed)
+    }
+
+    // 计算当前是否真的处于滑出状态（用于控制点击）
+    // 注意：这里用 targetValue 而不是 currentValue，因为动画过程中也要禁止点击
+    val isCurrentlyRevealed = state.targetValue == DragValue.Revealed
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        // 背景层（收藏和删除按钮）
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFFF5F6FA)),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 收藏按钮
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(60.dp)
+                    .background(Color(0xFFFFB800))
+                    .clickable(enabled = isRevealed) { onCollect(product.id) },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.StarBorder, contentDescription = "收藏", tint = Color.White)
+                    Text("收藏", color = Color.White, fontSize = 12.sp)
+                }
+            }
+            // 删除按钮
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(60.dp)
+                    .background(Color(0xFFF40E21))
+                    .clickable(enabled = isRevealed) { onDelete(product.id) },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.Delete, contentDescription = "删除", tint = Color.White)
+                    Text("删除", color = Color.White, fontSize = 12.sp)
+                }
+            }
+        }
+
+        // 前景层（商品内容），应用 anchoredDraggable
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .offset { // 根据偏移量移动
+                    // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
+                    val offset = if (state.anchors.size > 0) state.requireOffset() else 0f
+                    IntOffset(offset.roundToInt(), 0)
+                }
+                .anchoredDraggable(state, orientation = Orientation.Horizontal) // 应用拖拽
+                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
+                .background(Color.White)
+                // 如果已滑出，则收起
+                .clickable { onRevealedChange(false) }
+                .padding(vertical = dimensionResource(R.dimen.padding_medium))
+                .padding(start = 0.dp, end = dimensionResource(R.dimen.padding_medium))
+                // 无效商品蒙版和水印
+                .then(
+                    if (!product.isValid) {
+                        Modifier.drawWithContent {
+                            // 先绘制原本的内容
+                            drawContent()
+                            // 绘制半透明蒙版
+                            drawRect(color = Color.White.copy(alpha = 0.6f))
+                            // 绘制水印文字
+                            drawIntoCanvas { canvas ->
+                                val paint = Paint().apply {
+                                    color = android.graphics.Color.GRAY
+                                    textSize = 40.dp.toPx()
+                                    isAntiAlias = true
+                                    alpha = 150 // 半透明
+                                    textAlign =
+                                        Paint.Align.CENTER
+                                    typeface =
+                                        Typeface.DEFAULT_BOLD
+                                }
+                                val centerX = size.width / 2
+                                val centerY = size.height / 2
+                                // 旋转画布绘制倾斜水印
+                                canvas.nativeCanvas.save()
+                                canvas.nativeCanvas.rotate(
+                                    -30f,
+                                    centerX,
+                                    centerY
+                                )
+                                canvas.nativeCanvas.drawText(
+                                    "无效",
+                                    centerX,
+                                    centerY,
+                                    paint
+                                )
+                                canvas.nativeCanvas.restore()
+                            }
+                        }
+                    } else Modifier
+                ),
+        ) {
+
+            Checkbox(
+                checked = product.isValid && product.checked,
+                enabled = product.isValid && !isCurrentlyRevealed,
+                onCheckedChange = {
+                    onToggleSelect(
+                        product.id,
+                        it
+                    )
+                },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary,
+                    uncheckedColor = Color.Gray,
+                    checkmarkColor = Color.White
+                )
+            )
+            AsyncImage(
+                model = product.goodsIcon,
+                contentDescription = product.goodsNameZh,
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
+                    .clickable(enabled = product.isValid && !isCurrentlyRevealed) {
+                        onProductClick(product.id)
+                    },
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = product.goodsNameZh,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "¥${product.price}",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    NumberStepper(
+                        value = product.quantity,
+                        isValid = product.isValid && !isCurrentlyRevealed,
+                        onChangeQuantity = { value ->
+                            onRevealedChange(false)
+                            onQuantityChange(
+                                product.id,
+                                value
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettleColumn(
+    cartData: List<CartProduct>,
+    modifier: Modifier = Modifier,
+    onSettleBtnClick: () -> Unit = {},
+    onToggleSelectAll: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val allSelected = cartData.filter { it.isValid }.all { it.checked }
+    val anySelected = cartData.filter { it.isValid }.any { it.checked }
+    val someSelected = cartData.filter { it.isValid }.any { it.checked } && !allSelected
+    val grandTotal = cartData
+        .filter { it.isValid && it.checked }
+        .fold(BigDecimal.ZERO) { acc, product ->
+            val price = product.price.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            acc + price * product.quantity.toBigDecimal()
+        }
+        .setScale(2, RoundingMode.HALF_UP)
+        .toPlainString()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(30.dp)
+            .background(Color(0xFFDDE3E9))
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(
+                    start = 0.dp,
+                    end = dimensionResource(R.dimen.padding_medium)
+                )
+                .padding(vertical = dimensionResource(R.dimen.padding_medium)),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TriStateCheckbox(
+                state = when {
+                    allSelected -> ToggleableState.On
+                    someSelected -> ToggleableState.Indeterminate
+                    else -> ToggleableState.Off
+                },
+                onClick = onToggleSelectAll
+            )
+            Text(
+                text = "全选",
+                fontSize = 14.sp
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "￥$grandTotal",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Red
+            )
+            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+            Button(
+                onClick = {
+                    if (anySelected) {
+                        onSettleBtnClick()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "至少选择一件商品",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF40E21)
+                ),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(
+                    text = "去结算",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
     }
 }

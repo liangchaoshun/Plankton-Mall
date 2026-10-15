@@ -12,7 +12,7 @@ import com.fuyouwentian.planktonmall.R
 object Routes {
     const val HOME = "home"
     const val CATEGORY = "category"
-    const val CARt = "cart"
+    const val CART = "cart"
     const val PROFILE = "profile"
     const val LOGIN = "login"
     const val REGISTER = "register"
@@ -41,7 +41,7 @@ val NAVI_DEST = listOf(
         iconTextId = R.string.category_label
     ),
     NavHostDest(
-        route = Routes.CARt,
+        route = Routes.CART,
         selectedIcon = Icons.Outlined.ShoppingCart,
         unselectedIcon = Icons.Outlined.ShoppingCart,
         iconTextId = R.string.cart_label,

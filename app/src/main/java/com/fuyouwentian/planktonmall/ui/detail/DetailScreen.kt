@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,8 +25,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -150,8 +149,8 @@ fun DetailContent(
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
-                .statusBarsPadding()
-                .padding(start = 16.dp)
+                //.statusBarsPadding()
+                .padding(start = 16.dp, top = 16.dp)
                 .align(Alignment.TopStart)
                 .background(Color.Gray.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
                 .size(36.dp)
@@ -314,7 +313,8 @@ fun BottomActionBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color(0xFFF0F8FF),
+//        color = Color(0xFFF0F8FF),
+        color = Color.LightGray,
         shadowElevation = 8.dp
     ) {
         Row(
@@ -331,7 +331,7 @@ fun BottomActionBar(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Star,
+                    imageVector = Icons.Default.StarBorder,
                     contentDescription = "收藏",
                     modifier = Modifier.size(20.dp)
                 )
@@ -363,9 +363,7 @@ fun BottomActionBar(
                 onClick = onAddToCartClick,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(38.dp)
+                modifier = Modifier.height(38.dp)
             ) {
                 Text(text = "加入购物车", color = Color.White, fontSize = 13.sp)
             }
@@ -374,9 +372,7 @@ fun BottomActionBar(
                 onClick = onBuyNowClick,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(38.dp)
+                modifier = Modifier.height(38.dp)
             ) {
                 Text(text = "立即购买", color = Color.White, fontSize = 13.sp)
             }
