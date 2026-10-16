@@ -4,10 +4,10 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
@@ -188,8 +188,8 @@ fun CartScreen(
                                     onProductClick = onProductClick,
                                     onToggleSelect = viewModel::toggleSelect,
                                     onQuantityChange = viewModel::changeQuantity,
-                                    onCollect = { value -> Log.d("Cart", "收藏") },
-                                    onDelete = { value -> Log.d("Cart", "删除") },
+                                    onCollect = { value -> Log.d("Cart", "收藏: ${product.id}") },
+                                    onDelete = { value -> Log.d("Cart", "删除: ${product.id}") },
                                 )
                             }
                         }
@@ -325,15 +325,7 @@ fun SwipeableCartItem(
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
-    val state = remember {
-        AnchoredDraggableState(
-            initialValue = DragValue.Settled,
-            positionalThreshold = { distance -> distance * 0.5f }, // 滑动超过一半就触发
-            velocityThreshold = { with(density) { 100.dp.toPx() } },
-            snapAnimationSpec = spring(),
-            decayAnimationSpec = exponentialDecay()
-        )
-    }
+    val state = remember { AnchoredDraggableState(initialValue = DragValue.Settled) }
 
     // 设置锚点（Anchors），为何使用监听的方式：https://chat.deepseek.com/share/hv5sfio9udh1lzjygi
     // Settled 对应 offset = 0，Revealed 对应 offset = -actionWidthPx
@@ -417,7 +409,15 @@ fun SwipeableCartItem(
                     val offset = if (state.anchors.size > 0) state.requireOffset() else 0f
                     IntOffset(offset.roundToInt(), 0)
                 }
-                .anchoredDraggable(state, orientation = Orientation.Horizontal) // 应用拖拽
+                .anchoredDraggable(
+                    state = state,
+                    orientation = Orientation.Horizontal,
+                    flingBehavior = AnchoredDraggableDefaults.flingBehavior(
+                        state = state,
+                        positionalThreshold = { distance -> distance * 0.5f },
+                        animationSpec = spring()
+                    )
+                )
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                 .background(Color.White)
                 // 如果已滑出，则收起

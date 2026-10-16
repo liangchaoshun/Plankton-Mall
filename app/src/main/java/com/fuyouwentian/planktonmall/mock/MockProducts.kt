@@ -70,7 +70,19 @@ object MockProducts {
     val CartProducts = CartProductsResponseData(
         data = listOf(
             CartProduct(
-                id = "6aab47cb2f18a7cf3d684206",
+                id = "6ad1785d8878759325cc8701",
+                userId = "6a47d470b27f8b44d68d002a",
+                goodsId = "6aab47c02f18a7cf3d6841c4",
+                quantity = 1,
+                price = "10367.90",
+                isValid = true,
+                checked = false,
+                goodsNameZh = "影驰GeForce RTX 5080 金属大师 白 OC 16G GDDR7 DLSS 4.5 游戏设计OpenClaw部署NVIDIA英伟达显卡",
+                goodsNameEn = "English name",
+                goodsIcon = "http://localhost:8058/api/static/files/1789609920387_15c2196a-5e50-4f2b-adf3-892649c653f4@icon.webp",
+            ),
+            CartProduct(
+                id = "6ad178678878759325cc8702",
                 userId = "6a47d470b27f8b44d68d002a",
                 goodsId = "6aab47cb2f18a7cf3d684206",
                 quantity = 10,
@@ -82,7 +94,7 @@ object MockProducts {
                 goodsIcon = "https://liangchaoshun.site/api/static/files/1783394606367_b873295d-df72-4b68-99e5-f5ffd49dac63@icon.webp",
             ),
             CartProduct(
-                id = "6aab47c92f18a7cf3d6841fa",
+                id = "6ad1787a8878759325cc8703",
                 userId = "6a47d470b27f8b44d68d002a",
                 goodsId = "6aab47c92f18a7cf3d6841fa",
                 quantity = 5,

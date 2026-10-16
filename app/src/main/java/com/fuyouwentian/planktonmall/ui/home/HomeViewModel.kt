@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.HomeProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -132,6 +133,10 @@ class HomeViewModel @Inject constructor(
                 loadMoreMutex.unlock()
             }
         }
+    }
+
+    fun add2Cart(product: ProductLite) {
+        Log.d("add2Cart", "$product")
     }
 
     private suspend fun handleError(e: Exception, isCarousel: Boolean = false) {

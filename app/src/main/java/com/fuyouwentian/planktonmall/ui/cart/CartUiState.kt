@@ -10,5 +10,5 @@ data class CartUiState(
     val error: String? = null
 ) {
     val checkedItems: List<CartProduct>
-        get() = cartData.filter { it.checked }
+        get() = cartData.filter { it.isValid && it.checked }
 }
