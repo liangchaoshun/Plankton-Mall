@@ -167,7 +167,7 @@ fun DetailContent(
             modifier = Modifier.align(Alignment.BottomCenter),
             onFavorClick = { },
             onCartClick = { },
-            onAddToCartClick = { },
+            onClickAdd2Cart = { viewModel.add2Cart(id) },
             onBuyNowClick = { }
         )
     }
@@ -308,7 +308,7 @@ fun BottomActionBar(
     modifier: Modifier = Modifier,
     onFavorClick: () -> Unit,
     onCartClick: () -> Unit,
-    onAddToCartClick: () -> Unit,
+    onClickAdd2Cart: () -> Unit,
     onBuyNowClick: () -> Unit
 ) {
     Surface(
@@ -360,7 +360,7 @@ fun BottomActionBar(
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
-                onClick = onAddToCartClick,
+                onClick = onClickAdd2Cart,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(38.dp)

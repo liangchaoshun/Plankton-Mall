@@ -131,7 +131,8 @@ fun AppNavHost(
                 CartScreen(
                     modifier = Modifier.fillMaxSize(),
                     onProductClick = { productId -> navController.navigate("detail/${productId}") },
-                    onSettleClick = { navController.navigate(Routes.PROFILE) }
+                    onSettleClick = { navController.navigate(Routes.PROFILE) },
+                    onNavigate2Another = { route -> navController.navigate(route) }
                 )
             }
             composable(route = Routes.PROFILE) {

@@ -6,6 +6,7 @@ data class CartUiState(
     val cartData: List<CartProduct> = emptyList(),
     val updatingIds: Set<String> = emptySet(),  // 正在更新数量的商品 id
     val allSelected: Boolean = false,
+    val isLoggedIn: Boolean = false,
     val loading: Boolean = false,
     val error: String? = null
 ) {

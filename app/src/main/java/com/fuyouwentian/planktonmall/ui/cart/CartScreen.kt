@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -71,6 +73,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +89,7 @@ import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.navigation.Routes
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.roundToInt
@@ -101,6 +105,7 @@ fun CartScreen(
     modifier: Modifier = Modifier,
     onProductClick: (String) -> Unit = {},
     onSettleClick: () -> Unit = {},
+    onNavigate2Another: (String) -> Unit = {},
     viewModel: CartViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -124,7 +129,7 @@ fun CartScreen(
 
     Surface(
         modifier = modifier,
-        color = Color(0xFFF5F6FA) // background
+        color = if (uiState.cartData.isEmpty()) Color.White else Color(0xFFF5F6FA) // background
     ) {
         // 根据状态展示不同 UI
         when {
@@ -149,10 +154,41 @@ fun CartScreen(
                 }
             }
 
+            !uiState.isLoggedIn -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(text = "请先登录，以获取数据")
+                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                        Button(onClick = { onNavigate2Another(Routes.LOGIN) }) { Text("去登录") }
+                    }
+                }
+            }
+
             uiState.cartData.isEmpty() -> {
                 // 请求成功但没有数据
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "空空如也")
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.empty_cart),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f),
+                            contentScale = ContentScale.Crop
+                        )
+                        Text(text = "购物车空空如也")
+                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                        Button(onClick = { onNavigate2Another(Routes.HOME) }) { Text("去挑选") }
+                    }
                 }
             }
 

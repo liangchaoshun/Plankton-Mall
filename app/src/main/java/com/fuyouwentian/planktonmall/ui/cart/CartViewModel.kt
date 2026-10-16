@@ -42,13 +42,25 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true) }
             try {
-                val userId = userRepo.getLocalUserProfile()?.id ?: "pseudoId"
-                // pseudoId 说明没登录账号，服务端会先校验 token，返回后跳转到登录页
+                val isLoggedIn = userRepo.isLoggedIn() ?: false
+                _uiState.update { it.copy(isLoggedIn = isLoggedIn) }
+                if (!isLoggedIn) return@launch // 跳出
+
+                val localProfile = userRepo.getLocalUserProfile()
+                if (localProfile == null) {
+                    _uiState.update { it.copy(isLoggedIn = false, loading = false) }
+                    _uiEvent.emit(UiEvent.ShowToast("无法加载个人信息，请重新登录"))
+                    return@launch
+                }
+
+                val userId = localProfile.id
+                Log.d("Cart", "UserId: $userId")
                 val cartData = cartRepo.fetchData(userId)
                 // mock data
                 // val cartData = MockProducts.CartProducts
                 if (id != requestId) return@launch // 已过期
                 cartData?.let { _uiState.update { it.copy(cartData = cartData.data) } }
+                // TODO Room cart
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {

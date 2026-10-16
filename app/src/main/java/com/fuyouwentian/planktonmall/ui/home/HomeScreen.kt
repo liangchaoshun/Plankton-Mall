@@ -125,7 +125,7 @@ fun HomeScreen(
             onClickRetry = viewModel::fetchProductsData,
             onLoadMore = viewModel::loadMore,
             onClickProduct = onProductClick,
-            onAdd2Cart = viewModel::add2Cart
+            onClickAdd2Cart = viewModel::add2Cart
         )
     }
 }
@@ -264,7 +264,7 @@ fun ProductGridSection(
     onClickRetry: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onClickProduct: (String) -> Unit = {},
-    onAdd2Cart: (ProductLite) -> Unit = {}
+    onClickAdd2Cart: (String) -> Unit = {}
 ) {
     // 根据状态展示不同 UI
     when {
@@ -367,7 +367,7 @@ fun ProductGridSection(
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 IconButton(
-                                    onClick = { onAdd2Cart(product) },
+                                    onClick = { onClickAdd2Cart(product.id) },
                                     modifier = Modifier.size(32.dp) // 默认 48dp
                                 ) {
                                     Icon(

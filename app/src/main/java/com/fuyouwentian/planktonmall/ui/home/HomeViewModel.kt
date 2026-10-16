@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.HomeProductsRequest
-import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,9 +21,9 @@ import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    private val cartRepo: CartRepository,
     private val productRepo: ProductRepository
 ) : ViewModel() {
     // UI 状态
@@ -135,8 +135,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun add2Cart(product: ProductLite) {
-        Log.d("add2Cart", "$product")
+    fun add2Cart(productId: String) {
+        Log.d("Home", productId)
+        // TODO 操作 Room
     }
 
     private suspend fun handleError(e: Exception, isCarousel: Boolean = false) {

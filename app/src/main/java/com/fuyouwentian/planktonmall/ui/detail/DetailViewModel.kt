@@ -60,6 +60,11 @@ class DetailViewModel @Inject constructor(
         }
     }
 
+    fun add2Cart(productId: String) {
+        Log.d("Detail", productId)
+        // TODO 操作 Room
+    }
+
     private suspend fun handleError(e: Exception) {
         if (e is CancellationException) throw e // 协程取消时会抛出
         val msg = when (e) {
