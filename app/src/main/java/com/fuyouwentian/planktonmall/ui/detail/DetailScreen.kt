@@ -1,8 +1,10 @@
 package com.fuyouwentian.planktonmall.ui.detail
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,12 +35,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +58,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.common.Constants
+import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,7 +66,9 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 fun DetailScreen(
     modifier: Modifier = Modifier,
     id: String = "",
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onCartIconClick: () -> Unit = {},
+    onBuyNowClick: () -> Unit = {}
 ) {
     val isQId = Constants.OBJECT_ID_REGEX.matches(id)
     if (!isQId) {
@@ -73,6 +80,8 @@ fun DetailScreen(
             modifier = modifier,
             id = id,
             onBackClick = onBackClick,
+            onCartIconClick = onCartIconClick,
+            onBuyNowClick = onBuyNowClick
         )
     }
 }
@@ -82,6 +91,8 @@ fun DetailContent(
     modifier: Modifier = Modifier,
     id: String = "",
     onBackClick: () -> Unit = {},
+    onCartIconClick: () -> Unit = {},
+    onBuyNowClick: () -> Unit = {},
     viewModel: DetailViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -110,19 +121,13 @@ fun DetailContent(
             // 底部留出空间，防止内容被底部悬浮栏遮挡
             contentPadding = PaddingValues(bottom = 42.dp)
         ) {
-            // 轮播图
-            item {
-                CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList())
-            }
-
-            // 商品标题和描述
-            item {
-                ProductInfoSection(uiState = uiState)
-            }
-
             // 商品详情描述 (多张图片)
             // 使用 items 直接渲染图片列表，避免嵌套滚动冲突
             if (!uiState.loading && uiState.error.isNullOrBlank()) {
+                // 轮播图
+                item { CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList()) }
+                // 商品标题和描述
+                item { ProductInfoSection(product = uiState.product) }
                 items(uiState.product?.descUrl ?: emptyList()) { url ->
                     AsyncImage(
                         model = url,
@@ -144,6 +149,51 @@ fun DetailContent(
             }
         }
 
+        // 底部操作栏
+        BottomActionBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onFavorIconClick = {
+                if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
+                    viewModel.add2Favorites(uiState.product?.id ?: "")
+                }
+            },
+            onCartIconClick = onCartIconClick, // 跳转到购物车页面
+            onClickAdd2Cart = {
+                if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
+                    viewModel.add2Cart(uiState.product?.id ?: "")
+                }
+            },
+            onClickBuyNow = {
+                if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
+                    // TODO: 下单后再跳转
+                    val isMadeOrder = viewModel.madeAnOrder(uiState.product?.id ?: "", 1)
+                    if (isMadeOrder) onBuyNowClick() // 路由跳转
+                }
+            }
+        )
+
+        // 蒙版：商品被删除或下架了
+        uiState.product?.let { product ->
+            if (product.isInvalid) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White.copy(0.7f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // 去除波纹
+                        ) { Log.d("Detail", "click cover") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (product.isDeleted) "商品无效" else "商品已下架",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                }
+            }
+        }
+
         // 返回按钮
         IconButton(
             onClick = onBackClick,
@@ -160,17 +210,6 @@ fun DetailContent(
                 tint = Color.White,
             )
         }
-
-        // 底部操作栏
-        BottomActionBar(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            onFavorClick = { },
-            onCartClick = { },
-            onClickAdd2Cart = { viewModel.add2Cart(id) },
-            onBuyNowClick = { }
-        )
-        // TODO deleted on_sale 判断是否有效 和 下架，创建蒙版
-        // TODO product 为 null 时，显示未找到商品
     }
 }
 
@@ -236,9 +275,7 @@ fun CarouselSection(
 }
 
 @Composable
-fun ProductInfoSection(uiState: DetailUiState) {
-    val product = uiState.product
-
+fun ProductInfoSection(product: Product?) {
     Column(
         modifier = Modifier
             .heightIn(80.dp, 120.dp)
@@ -277,9 +314,9 @@ fun ProductDescException(
     onClickRetry: () -> Unit = {},
 ) {
     Box(
-        modifier = modifier
-            .height(400.dp)
-            .fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 300.dp),
         contentAlignment = Alignment.Center
     ) {
         when {
@@ -307,10 +344,10 @@ fun ProductDescException(
 @Composable
 fun BottomActionBar(
     modifier: Modifier = Modifier,
-    onFavorClick: () -> Unit,
-    onCartClick: () -> Unit,
+    onFavorIconClick: () -> Unit,
+    onCartIconClick: () -> Unit,
     onClickAdd2Cart: () -> Unit,
-    onBuyNowClick: () -> Unit
+    onClickBuyNow: () -> Unit
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -328,7 +365,7 @@ fun BottomActionBar(
             Column(
                 modifier = Modifier
                     .width(44.dp)
-                    .clickable { onFavorClick() },
+                    .clickable { onFavorIconClick() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -345,7 +382,7 @@ fun BottomActionBar(
             Column(
                 modifier = Modifier
                     .width(44.dp)
-                    .clickable { onCartClick() },
+                    .clickable { onCartIconClick() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -370,7 +407,7 @@ fun BottomActionBar(
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(
-                onClick = onBuyNowClick,
+                onClick = onClickBuyNow,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(38.dp)

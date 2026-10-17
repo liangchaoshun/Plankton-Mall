@@ -38,20 +38,19 @@ class DetailViewModel @Inject constructor(
     // 保存最后一次请求参数，供 loadMore 使用
     private var lastRequest: String = ""
 
-
     // 初始化加载/刷新
     fun fetchProductDetail(pid: String) {
         lastRequest = pid
         val id = ++requestId
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true) }
+            _uiState.update { it.copy(product = null, loading = true, error = null) }
             try {
                 // mock data
-                //val product = null
-                //val product = MockProducts.ProductDetail
+                // val product = null
+                // val product = MockProducts.ProductDetail
                 val product = productRepo.getProductDetail(pid)
                 if (id != requestId) return@launch // 已过期
-                product?.let { _uiState.update { it.copy(product = product) } }
+                product?.let { _uiState.update { it.copy(product = product, error = null) } }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
@@ -61,8 +60,19 @@ class DetailViewModel @Inject constructor(
     }
 
     fun add2Cart(productId: String) {
-        Log.d("Detail", productId)
-        // TODO 操作 Room
+        Log.d("Detail", "add2Cart: $productId")
+        // TODO: 弹框提示“加入购物车成功”
+    }
+
+    fun add2Favorites(productId: String) {
+        Log.d("Detail", "add2Favorites: $productId")
+        // TODO: 弹框提示“收藏成功”
+    }
+
+    fun madeAnOrder(productId: String, quantity: Int): Boolean {
+        Log.d("Detail", "immediately make an order: $productId")
+        // TODO 校验是否登录，返回创建订单是否成功
+        return true
     }
 
     private suspend fun handleError(e: Exception) {
@@ -78,6 +88,7 @@ class DetailViewModel @Inject constructor(
             else -> e.message ?: "请稍后重试"
         }
         Log.d("HandleError", msg)
+        _uiState.update { it.copy(error = msg) }
         _uiEvent.emit(UiEvent.ShowToast(msg))
     }
 }

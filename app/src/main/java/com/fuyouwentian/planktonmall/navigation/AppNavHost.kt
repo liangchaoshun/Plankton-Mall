@@ -181,7 +181,9 @@ fun AppNavHost(
                 val id = backStackEntry.arguments?.getString("id") ?: ""
                 DetailScreen(
                     id = id,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onCartIconClick = { navController.navigate(Routes.CART) },
+                    onBuyNowClick = { navController.navigate(Routes.PROFILE) },
                 )
             }
         }

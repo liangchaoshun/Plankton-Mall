@@ -102,7 +102,7 @@ fun CategoryScreen(
                 // 安全索引判断
                 val currentSafeIndex = if (selectedIndex in categories.indices) selectedIndex else 0
                 val currentSeries =
-                    categories.getOrNull(currentSafeIndex)?.series_data ?: emptyList()
+                    categories.getOrNull(currentSafeIndex)?.seriesData ?: emptyList()
 
                 SeriesArea(
                     series = currentSeries,
@@ -136,7 +136,7 @@ fun CategoryMenu(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = category.name_zh,
+                    text = category.nameZh,
                     color = if (isSelected) Color.Red else Color.Black
                 )
             }
@@ -165,15 +165,15 @@ fun SeriesArea(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AsyncImage(
-                    model = item.icon_url,
-                    contentDescription = item.name_zh,
+                    model = item.iconUrl,
+                    contentDescription = item.nameZh,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f),
                     contentScale = ContentScale.Crop
                 )
                 Text(
-                    text = item.name_zh,
+                    text = item.nameZh,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

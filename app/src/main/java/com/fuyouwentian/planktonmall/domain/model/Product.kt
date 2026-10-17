@@ -39,7 +39,16 @@ data class Product(
     val createTime: String,
     @SerialName("update_time")
     val updateTime: String
-)
+) {
+    // 计算属性：是否已删除
+    val isDeleted: Boolean get() = deleted == 1
+
+    // 计算属性：是否已下架 (0 代表下架, 1 表示在售)
+    val isOffShelf: Boolean get() = onSale == 0
+
+    // 综合判断：是否为无效商品（已删除 或 已下架）
+    val isInvalid: Boolean get() = isDeleted || isOffShelf
+}
 
 @Serializable
 data class ProductLite(

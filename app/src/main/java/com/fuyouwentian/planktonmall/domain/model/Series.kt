@@ -7,12 +7,18 @@ import kotlinx.serialization.Serializable
 data class Series(
     @SerialName("_id")
     val id: String,
-    val name_zh: String,
-    val name_en: String,
+    @SerialName("name_zh")
+    val nameZh: String,
+    @SerialName("name_en")
+    val nameEn: String,
     val desc: String,
     val no: Int,
-    val icon_url: String,
-    val category_id: String,
-    val create_time: String,
-    val update_time: String
+    @SerialName("icon_url")
+    val iconUrl: String,
+    @SerialName("category_id")
+    val categoryId: String,
+    @SerialName("create_time")
+    val createTime: String,
+    @SerialName("update_time")
+    val updateTime: String
 )

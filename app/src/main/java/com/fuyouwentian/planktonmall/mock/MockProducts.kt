@@ -69,7 +69,7 @@ object MockProducts {
             "http://localhost:8058/api/static/files/1789609920200_84cd0b77-f877-4d03-9943-84b8f12e1ae2@5.webp",
             "http://localhost:8058/api/static/files/1789609920199_518dfdbc-2141-46b6-a998-019c68322aa7@6.webp"
         ),
-        deleted = 0,
+        deleted = 1,
         createTime = "2026-09-17T01:52:00.401Z",
         updateTime = "2026-09-17T01:52:00.401Z"
     )

@@ -7,13 +7,18 @@ import kotlinx.serialization.Serializable
 data class Category(
     @SerialName("_id")
     val id: String,
-    val name_zh: String,
-    val name_en: String,
+    @SerialName("name_zh")
+    val nameZh: String,
+    @SerialName("name_en")
+    val nameEn: String,
     val desc: String,
     val no: Int,
-    val series_data: List<Series>,
-    val create_time: String,
-    val update_time: String
+    @SerialName("series_data")
+    val seriesData: List<Series>,
+    @SerialName("create_time")
+    val createTime: String,
+    @SerialName("update_time")
+    val updateTime: String
 )
 
 @Serializable
