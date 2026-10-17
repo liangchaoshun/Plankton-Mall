@@ -2,40 +2,64 @@ package com.fuyouwentian.planktonmall.domain.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.math.BigDecimal
 
 // Kotlin 序列化，默认会忽略掉数据类中没有的 JSON 字段
 @Serializable
 data class Product(
     @SerialName("_id")
     val id: String,
-    val name_zh: String,
-    val name_en: String,
+    @SerialName("name_zh")
+    val nameZh: String,
+    @SerialName("name_en")
+    val nameEn: String,
     val price: String,
-    val home_banner: Boolean,
-    val home_display: Boolean,
-    val icon_url: String,
-    val banner_video_url: String,
-    val banner_model_url: String,
-    val series_id: String,
-    val category_id: String,
-    val desc_url: List<String>,
-    val banner_url: List<String>,
-    val create_time: String,
-    val update_time: String
+    @SerialName("home_banner")
+    val homeBanner: Boolean,
+    @SerialName("home_display")
+    val homeDisplay: Boolean,
+    @SerialName("icon_url")
+    val iconUrl: String,
+    @SerialName("banner_video_url")
+    val bannerVideoUrl: String,
+    @SerialName("banner_model_url")
+    val bannerModelUrl: String,
+    @SerialName("series_id")
+    val seriesId: String,
+    @SerialName("category_id")
+    val categoryId: String,
+    @SerialName("on_sale")
+    val onSale: Int,
+    val stock: Int,
+    val deleted: Int,
+    @SerialName("desc_url")
+    val descUrl: List<String>,
+    @SerialName("banner_url")
+    val bannerUrl: List<String>,
+    @SerialName("create_time")
+    val createTime: String,
+    @SerialName("update_time")
+    val updateTime: String
 )
 
 @Serializable
 data class ProductLite(
     @SerialName("_id")
     val id: String,
-    val name_zh: String,
-    val name_en: String,
+    @SerialName("name_zh")
+    val nameZh: String,
+    @SerialName("name_en")
+    val nameEn: String,
     val price: String,
     val cover: String,
-    val icon_url: String,
-    val series_id: String,
-    val category_id: String
+    @SerialName("icon_url")
+    val iconUrl: String,
+    @SerialName("series_id")
+    val seriesId: String,
+    @SerialName("category_id")
+    val categoryId: String,
+    @SerialName("on_sale")
+    val onSale: Int,
+    val stock: Int
 )
 
 @Serializable
@@ -51,6 +75,10 @@ data class CartProduct(
     val price: String,
     val isValid: Boolean,
     val checked: Boolean,
+    @SerialName("goods_stock")
+    val goodsStock: Int,
+    @SerialName("goods_on_sale")
+    val goodsOnSale: Int,
     @SerialName("goods_name_zh")
     val goodsNameZh: String,
     @SerialName("goods_name_en")

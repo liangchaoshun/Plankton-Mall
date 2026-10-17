@@ -274,8 +274,8 @@ fun ProductsScreenContent(
                         verticalAlignment = Alignment.Top
                     ) {
                         AsyncImage(
-                            model = product.icon_url,
-                            contentDescription = product.name_zh,
+                            model = product.iconUrl,
+                            contentDescription = product.nameZh,
                             modifier = Modifier
                                 .size(120.dp)
                                 .clip(RoundedCornerShape(8.dp)),
@@ -288,7 +288,7 @@ fun ProductsScreenContent(
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = product.name_zh,
+                                text = product.nameZh,
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis

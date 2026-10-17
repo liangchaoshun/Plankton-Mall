@@ -32,7 +32,7 @@ interface ApiService {
     suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsResponseData<ProductLite>?>
 
     @GET("goods/{id}")
-    suspend fun getProduct(@Path("id") id: String): BaseResponse<Product?>
+    suspend fun getProductDetail(@Path("id") id: String): BaseResponse<Product?>
 
     @GET("category/list")
     suspend fun getCategories(): BaseResponse<CategoryData<Category>?>
@@ -43,8 +43,8 @@ interface ApiService {
     @POST("auth/register")
     suspend fun userRegister(@Body param: RegisterRequest): BaseResponse<Boolean?>
 
-    @GET("user/profile/{id}")
-    suspend fun userGetProfile(@Path("id") id: String): BaseResponse<UserProfile?>
+    @GET("user/profile")
+    suspend fun userGetProfile(): BaseResponse<UserProfile?>
 
     @GET("auth/logout")
     suspend fun userLogout(): BaseResponse<Boolean?>
@@ -61,6 +61,6 @@ interface ApiService {
     @PUT("cart/update")
     suspend fun cartUpdate(@Body param: CartProduct): BaseResponse<Unit>
 
-    @GET("cart/list/{id}")
-    suspend fun cartList(@Path("id") id: String): BaseResponse<CartProductsResponseData<CartProduct>?>
+    @GET("cart/list")
+    suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>
 }

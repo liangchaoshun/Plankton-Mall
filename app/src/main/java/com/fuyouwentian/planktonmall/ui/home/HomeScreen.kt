@@ -68,7 +68,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
-import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -244,7 +243,7 @@ fun CarouselSection(
                     val item = uiState.carouselData[i]
                     AsyncImage(
                         model = item.cover,
-                        contentDescription = item.name_zh,
+                        contentDescription = item.nameZh,
                         modifier = Modifier
                             .height(carouselHeight)
                             .clip(MaterialTheme.shapes.extraLarge)
@@ -335,7 +334,7 @@ fun ProductGridSection(
                     ) {
                         AsyncImage(
                             model = product.cover,
-                            contentDescription = product.name_zh,
+                            contentDescription = product.nameZh,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
@@ -345,7 +344,7 @@ fun ProductGridSection(
                         )
                         Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))) {
                             Text(
-                                text = product.name_zh,
+                                text = product.nameZh,
                                 style = MaterialTheme.typography.bodyMedium,
                                 lineHeight = 18.sp,
                                 fontWeight = FontWeight.Bold,
@@ -379,7 +378,6 @@ fun ProductGridSection(
                             }
                         }
                     }
-
                 }
 
                 if (uiState.loadingMore) {

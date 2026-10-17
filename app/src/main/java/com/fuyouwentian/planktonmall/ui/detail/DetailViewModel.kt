@@ -49,9 +49,9 @@ class DetailViewModel @Inject constructor(
                 // mock data
                 //val product = null
                 //val product = MockProducts.ProductDetail
-                val product = productRepo.getProduct(pid)
+                val product = productRepo.getProductDetail(pid)
                 if (id != requestId) return@launch // 已过期
-                product?.let { _uiState.update { it.copy(product = product, loading = false) } }
+                product?.let { _uiState.update { it.copy(product = product) } }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {

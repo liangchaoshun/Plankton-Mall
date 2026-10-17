@@ -25,7 +25,7 @@ object DatabaseModule {
                 "app_database"
             )
             // 🔥 注意：开发阶段可用，会清空数据；生产环境需手写 Migration
-            .fallbackToDestructiveMigration(false)
+            .fallbackToDestructiveMigration(true)
             .build()
     }
 

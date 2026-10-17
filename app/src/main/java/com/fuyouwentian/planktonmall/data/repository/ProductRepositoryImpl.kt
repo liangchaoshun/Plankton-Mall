@@ -28,7 +28,7 @@ class ProductRepositoryImpl @Inject constructor(
         return safeApiCall { apiService.getHomeProducts(request) }
     }
 
-    override suspend fun getProduct(id: String): Product? {
-        return safeApiCall { apiService.getProduct(id) }
+    override suspend fun getProductDetail(id: String): Product? {
+        return safeApiCall { apiService.getProductDetail(id) }
     }
 }

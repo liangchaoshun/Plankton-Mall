@@ -10,6 +10,6 @@ interface UserRepository {
     suspend fun register(param: RegisterRequest): Boolean?
     suspend fun logout(): Boolean?
     suspend fun getLocalUserProfile(): UserProfile?
-    suspend fun getRemoteUserProfile(id: String): UserProfile?
+    suspend fun getRemoteUserProfile(): UserProfile?
     suspend fun isLoggedIn(): Boolean?
 }

@@ -11,5 +11,5 @@ interface ProductRepository {
     suspend fun getProducts(request: ProductsRequest): ProductsResponseData<ProductLite>?
     suspend fun getHomeCarousel(): List<ProductLite>?
     suspend fun getHomeProducts(request: HomeProductsRequest): ProductsResponseData<ProductLite>?
-    suspend fun getProduct(id: String): Product?
+    suspend fun getProductDetail(id: String): Product?
 }

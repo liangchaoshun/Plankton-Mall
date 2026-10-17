@@ -13,6 +13,8 @@ data class CartEntity(
     val checked: Boolean,
     val quantity: Int,
     val price: String,
+    val goodsOnSale: Int,
+    val goodsStock: Int,
     val goodsNameZh: String,
     val goodsNameEn: String,
     val goodsIcon: String

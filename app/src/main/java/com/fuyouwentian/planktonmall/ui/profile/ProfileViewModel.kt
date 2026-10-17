@@ -41,7 +41,7 @@ class ProfileViewModel @Inject constructor(
     fun getUserProfile() {
         viewModelScope.launch {
             try {
-                val profile = userRepo.getRemoteUserProfile("6a4724d3603a5d3caeb2ed31")
+                val profile = userRepo.getRemoteUserProfile()
                 profile?.let {
                     Log.d("ProfileViewModel", "$profile")
                 }

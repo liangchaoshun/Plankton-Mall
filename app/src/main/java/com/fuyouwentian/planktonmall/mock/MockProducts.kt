@@ -9,39 +9,45 @@ object MockProducts {
     val Products = listOf(
         ProductLite(
             id = "6aab47cb2f18a7cf3d684206",
-            name_zh = "浪琴（LONGINES）瑞士手表 名匠系列月相腕表 男士皮带机械表L29194783",
-            name_en = "English name",
-            icon_url = "https://liangchaoshun.site/api/static/files/1783394606367_b873295d-df72-4b68-99e5-f5ffd49dac63@icon.webp",
-            series_id = "6a490daea4ccc46400d099b5",
-            category_id = "6228a9bc35966be24727af36",
+            nameZh = "浪琴（LONGINES）瑞士手表 名匠系列月相腕表 男士皮带机械表L29194783",
+            nameEn = "English name",
+            iconUrl = "https://liangchaoshun.site/api/static/files/1783394606367_b873295d-df72-4b68-99e5-f5ffd49dac63@icon.webp",
+            seriesId = "6a490daea4ccc46400d099b5",
+            categoryId = "6228a9bc35966be24727af36",
             price = "22200.00",
+            onSale = 1,
+            stock = 100,
             cover = "https://liangchaoshun.site/api/static/files/1783394606324_b3069490-2978-4f26-81c4-515cf0a024bc@1.webp",
         ),
         ProductLite(
             id = "6aab47c92f18a7cf3d6841fa",
-            name_zh = "程序员的自我修养 链接、装载与库",
-            name_en = "English name",
-            icon_url = "https://liangchaoshun.site/api/static/files/1783394605105_fe1a9d50-555f-420b-8ea6-0cbd9bbb9c31@icon.webp",
-            series_id = "6295a4e065ded7dc3d78dba2",
-            category_id = "6228a9bc35966be24727af34",
+            nameZh = "程序员的自我修养 链接、装载与库",
+            nameEn = "English name",
+            iconUrl = "https://liangchaoshun.site/api/static/files/1783394605105_fe1a9d50-555f-420b-8ea6-0cbd9bbb9c31@icon.webp",
+            seriesId = "6295a4e065ded7dc3d78dba2",
+            categoryId = "6228a9bc35966be24727af34",
             price = "54.09",
+            onSale = 1,
+            stock = 100,
             cover = "https://liangchaoshun.site/api/static/files/1783394605098_17a449ea-e645-4cae-b8f4-38b14be10808@1.webp",
         )
     )
 
     val ProductDetail = Product(
         id = "6aab47c02f18a7cf3d6841c4",
-        name_zh = "影驰GeForce RTX 5080 金属大师 白 OC 16G GDDR7 DLSS 4.5 游戏设计OpenClaw部署NVIDIA英伟达显卡",
-        name_en = "English name",
+        nameZh = "影驰GeForce RTX 5080 金属大师 白 OC 16G GDDR7 DLSS 4.5 游戏设计OpenClaw部署NVIDIA英伟达显卡",
+        nameEn = "English name",
         price = "10367.90",
-        home_banner = false,
-        home_display = true,
-        icon_url = "http://localhost:8058/api/static/files/1789609920387_15c2196a-5e50-4f2b-adf3-892649c653f4@icon.webp",
-        banner_video_url = "http://localhost:8058/api/static/files/1789609920279_de19743d-3f89-4c3e-8dc5-c6bcb71e9d63@1.mp4",
-        banner_model_url = "",
-        series_id = "613b3da66c6f0a5d68c2bc7f",
-        category_id = "613b1ee4ff64b12271bffdd3",
-        desc_url = listOf(
+        onSale = 1,
+        stock = 100,
+        homeBanner = false,
+        homeDisplay = true,
+        iconUrl = "http://localhost:8058/api/static/files/1789609920387_15c2196a-5e50-4f2b-adf3-892649c653f4@icon.webp",
+        bannerVideoUrl = "http://localhost:8058/api/static/files/1789609920279_de19743d-3f89-4c3e-8dc5-c6bcb71e9d63@1.mp4",
+        bannerModelUrl = "",
+        seriesId = "613b3da66c6f0a5d68c2bc7f",
+        categoryId = "613b1ee4ff64b12271bffdd3",
+        descUrl = listOf(
             "http://localhost:8058/api/static/files/1789609920338_2a0c0853-45a5-4828-852e-0c27a7e371b4@1.jpg",
             "http://localhost:8058/api/static/files/1789609920342_16cc8f98-e4da-454e-b4d3-873f014c7fa2@2.jpg",
             "http://localhost:8058/api/static/files/1789609920360_e0543fe8-961f-494b-a994-70369c2b3041@3.jpg",
@@ -55,7 +61,7 @@ object MockProducts {
             "http://localhost:8058/api/static/files/1789609920332_397eb80c-5683-488a-b8da-9513717a931b@11.jpg",
             "http://localhost:8058/api/static/files/1789609920343_bc5950a8-f84a-46d6-a20c-d47cd82667c6@12.jpg"
         ),
-        banner_url = listOf(
+        bannerUrl = listOf(
             "http://localhost:8058/api/static/files/1789609920200_964109fa-59b7-4733-8678-5c05cc0836dc@1.webp",
             "http://localhost:8058/api/static/files/1789609920192_9ceea86e-2e64-47fd-ad0a-9c313d15a87e@2.webp",
             "http://localhost:8058/api/static/files/1789609920199_c446d354-5b1c-4a07-a7b9-92e933dfb738@3.webp",
@@ -63,8 +69,9 @@ object MockProducts {
             "http://localhost:8058/api/static/files/1789609920200_84cd0b77-f877-4d03-9943-84b8f12e1ae2@5.webp",
             "http://localhost:8058/api/static/files/1789609920199_518dfdbc-2141-46b6-a998-019c68322aa7@6.webp"
         ),
-        create_time = "2026-09-17T01:52:00.401Z",
-        update_time = "2026-09-17T01:52:00.401Z"
+        deleted = 0,
+        createTime = "2026-09-17T01:52:00.401Z",
+        updateTime = "2026-09-17T01:52:00.401Z"
     )
 
     val CartProducts = CartProductsResponseData(
@@ -77,6 +84,8 @@ object MockProducts {
                 price = "10367.90",
                 isValid = true,
                 checked = false,
+                goodsOnSale = 1,
+                goodsStock = 100,
                 goodsNameZh = "影驰GeForce RTX 5080 金属大师 白 OC 16G GDDR7 DLSS 4.5 游戏设计OpenClaw部署NVIDIA英伟达显卡",
                 goodsNameEn = "English name",
                 goodsIcon = "http://localhost:8058/api/static/files/1789609920387_15c2196a-5e50-4f2b-adf3-892649c653f4@icon.webp",
@@ -89,6 +98,8 @@ object MockProducts {
                 price = "22200.00",
                 isValid = false,
                 checked = false,
+                goodsOnSale = 1,
+                goodsStock = 100,
                 goodsNameZh = "浪琴（LONGINES）瑞士手表 名匠系列月相腕表 男士皮带机械表L29194783",
                 goodsNameEn = "English name",
                 goodsIcon = "https://liangchaoshun.site/api/static/files/1783394606367_b873295d-df72-4b68-99e5-f5ffd49dac63@icon.webp",
@@ -101,11 +112,13 @@ object MockProducts {
                 price = "54.09",
                 isValid = true,
                 checked = false,
+                goodsOnSale = 1,
+                goodsStock = 100,
                 goodsNameZh = "程序员的自我修养 链接、装载与库",
                 goodsNameEn = "English name",
                 goodsIcon = "https://liangchaoshun.site/api/static/files/1783394605105_fe1a9d50-555f-420b-8ea6-0cbd9bbb9c31@icon.webp",
             )
         ),
-        total = 2
+        total = 3
     )
 }

@@ -100,7 +100,6 @@ fun DetailContent(
         }
     }
 
-    // 根布局使用 Box，实现悬浮效果
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -113,7 +112,7 @@ fun DetailContent(
         ) {
             // 轮播图
             item {
-                CarouselSection(imageUrls = uiState.product?.banner_url ?: emptyList())
+                CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList())
             }
 
             // 商品标题和描述
@@ -124,7 +123,7 @@ fun DetailContent(
             // 商品详情描述 (多张图片)
             // 使用 items 直接渲染图片列表，避免嵌套滚动冲突
             if (!uiState.loading && uiState.error.isNullOrBlank()) {
-                items(uiState.product?.desc_url ?: emptyList()) { url ->
+                items(uiState.product?.descUrl ?: emptyList()) { url ->
                     AsyncImage(
                         model = url,
                         contentDescription = "product desc",
@@ -170,6 +169,8 @@ fun DetailContent(
             onClickAdd2Cart = { viewModel.add2Cart(id) },
             onBuyNowClick = { }
         )
+        // TODO deleted on_sale 判断是否有效 和 下架，创建蒙版
+        // TODO product 为 null 时，显示未找到商品
     }
 }
 
@@ -248,7 +249,7 @@ fun ProductInfoSection(uiState: DetailUiState) {
         if (product != null) {
             // 商品标题
             Text(
-                text = product.name_zh,
+                text = product.nameZh,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,

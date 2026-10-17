@@ -42,8 +42,8 @@ class UserRepositoryImpl @Inject constructor(
         return profileDao.getUserProfile()?.toDomain()
     }
 
-    override suspend fun getRemoteUserProfile(id: String): UserProfile? {
-        val result = safeApiCall { api.userGetProfile(id) }
+    override suspend fun getRemoteUserProfile(): UserProfile? {
+        val result = safeApiCall { api.userGetProfile() }
         result?.let {
             profileDao.insertUserProfile(result.toEntity()) // 缓存到本地
         }
