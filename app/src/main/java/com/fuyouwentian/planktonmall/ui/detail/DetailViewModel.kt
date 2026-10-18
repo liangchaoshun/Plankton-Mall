@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.detail
 
-
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +8,7 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
@@ -69,10 +69,14 @@ class DetailViewModel @Inject constructor(
         // TODO: 弹框提示“收藏成功”
     }
 
-    fun madeAnOrder(productId: String, quantity: Int): Boolean {
+    fun madeAnOrder(productId: String, quantity: Int) {
         Log.d("Detail", "immediately make an order: $productId")
         // TODO 校验是否登录，返回创建订单是否成功
-        return true
+        _uiState.update { it.copy(isMadeOrder = false) }
+        viewModelScope.launch {
+            delay(5.seconds)
+            _uiState.update { it.copy(isMadeOrder = true) }
+        }
     }
 
     private suspend fun handleError(e: Exception) {

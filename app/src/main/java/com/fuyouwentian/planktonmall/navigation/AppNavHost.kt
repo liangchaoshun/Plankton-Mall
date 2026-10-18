@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -43,13 +44,11 @@ fun AppNavHost(
     viewModel: AppNavHostViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    // 在 Composable 上下文中先取出字符串
-    val routes: List<String> = NAVI_DEST.map { it.route }
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute: String = backStackEntry?.destination?.route ?: Routes.HOME
     // 只有当前路由在底部导航的目的地里，才显示底部栏
-    val showBottomBar = currentRoute in routes
+    val showBottomBar = currentRoute in NAVI_ROUTES
 
     LaunchedEffect(Unit) {
         viewModel.tokenUiEvent.collect { event ->
@@ -58,9 +57,12 @@ fun AppNavHost(
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
+                // 强制踢出到登录页，就必须清空栈
                 is UiEvent.NavigateToLogin -> {
                     navController.navigate(Routes.LOGIN) {
-                        popUpTo(0) { inclusive = true } // 清空整个回退栈
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            inclusive = true // 清空整个回退栈
+                        }
                         launchSingleTop = true
                     }
                 }
@@ -74,20 +76,16 @@ fun AppNavHost(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(modifier = Modifier.fillMaxWidth()) {
-                    NAVI_DEST.forEachIndexed { index, dest ->
-                        val route = routes[index]
+                    NAVI_DEST.forEach { dest ->
+                        val route = dest.route
                         NavigationBarItem(
                             selected = currentRoute == route,
                             onClick = {
-                                Log.d("BottomNav", "from: $currentRoute, to: $route")
-                                // 注意：从 CategoryScreen 页面中点击系列，进入 ProductsScreen 页面，
-                                //      后续再点击底部导航菜单，页面显示的是 ProductsScreen 而不是 CategoryScreen
-                                navController.navigate(route) {
-                                    // 把栈弹到只剩起始目的地（Home），然后再压入新的目的地
-                                    // saveState：弹栈时保存 UI 状态（滚动位置、输入内容等）
-                                    popUpTo(Routes.HOME) { saveState = true }
-                                    launchSingleTop = true // 避免栈顶重复：目标目的地已经在栈顶，就复用，不再压入新的实例
-                                    restoreState = true // 恢复之前保存的状态，和 saveState 配套
+                                Log.d("BottomNavigation", "from: $currentRoute, to: $route")
+                                if (currentRoute != route) {
+                                    navController.navigate2Tab(route)
+                                } else {
+                                    // 可实现滚动到当前页面最顶端
                                 }
                             },
                             icon = {
@@ -115,51 +113,52 @@ fun AppNavHost(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_medium)),
-                    onProductClick = { productId -> navController.navigate("detail/${productId}") },
+                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
                     onSearch = { qs ->
-                        if (qs.isNotBlank()) navController.navigate("products/$qs")
+                        if (qs.isNotBlank()) navController.navigate2Normal("products/$qs")
                     }
                 )
             }
             composable(route = Routes.CATEGORY) {
                 CategoryScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onSeriesClick = { seriesId -> navController.navigate("products/$seriesId") }
+                    onSeriesClick = { seriesId -> navController.navigate2Normal("products/$seriesId") }
                 )
             }
             composable(route = Routes.CART) {
                 CartScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onProductClick = { productId -> navController.navigate("detail/${productId}") },
-                    onSettleClick = { navController.navigate(Routes.PROFILE) },
-                    onNavigate2Another = { route -> navController.navigate(route) }
+                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
+                    onSettleClick = { navController.navigate2Tab(Routes.PROFILE) },
+                    onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
+                    onNavigate2Pickup = { navController.navigate2Tab(Routes.HOME) }
                 )
             }
             composable(route = Routes.PROFILE) {
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onLogoutSuccess = { navController.navigate(Routes.HOME) }
+                    onLogoutSuccess = { navController.navigate2HomeClearAll() }
                 )
             }
             composable(route = Routes.LOGIN) {
                 LoginScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onNavigateToRegister = { navController.navigate(Routes.REGISTER) },
+                    onNavigateToRegister = { navController.navigate2Normal(Routes.REGISTER) },
                     onLoginSuccess = {
                         /**
                          * 401 保存跳转登录前的路由，登录后重新跳转到保存的路由，存在隐患
                          * 因保存的路由对应页面的获取数据接口，可能对新登录的账号无权限，又返回 401，陷入无限死循环
                          * 所以此处跳转固定的路由
                          */
-                        navController.navigate(Routes.HOME)
+                        navController.navigate2HomeClearAll()
                     }
                 )
             }
             composable(route = Routes.REGISTER) {
                 RegisterScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
-                    onRegisterSuccess = { navController.navigate(Routes.HOME) }
+                    onNavigateToLogin = { navController.navigate2Normal(Routes.LOGIN) },
+                    onRegisterSuccess = { navController.navigate2HomeClearAll() }
                 )
             }
             composable(
@@ -170,7 +169,7 @@ fun AppNavHost(
                 ProductsScreen(
                     q = q,
                     modifier = Modifier.fillMaxSize(),
-                    onProductClick = { productId -> navController.navigate("detail/${productId}") },
+                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -182,8 +181,8 @@ fun AppNavHost(
                 DetailScreen(
                     id = id,
                     onBackClick = { navController.popBackStack() },
-                    onCartIconClick = { navController.navigate(Routes.CART) },
-                    onBuyNowClick = { navController.navigate(Routes.PROFILE) },
+                    onCartIconClick = { navController.navigate2Tab(Routes.CART) },
+                    onBuyNowClick = { navController.navigate2Tab(Routes.PROFILE) },
                 )
             }
         }

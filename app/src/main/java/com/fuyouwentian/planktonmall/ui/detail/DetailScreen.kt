@@ -98,6 +98,8 @@ fun DetailContent(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    Log.d("Detail", "isMadeOrder: ${uiState.isMadeOrder}")
+
     LaunchedEffect(id) {
         viewModel.fetchProductDetail(id.trim())
         viewModel.uiEvent.collect { event ->
@@ -166,8 +168,8 @@ fun DetailContent(
             onClickBuyNow = {
                 if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
                     // TODO: 下单后再跳转
-                    val isMadeOrder = viewModel.madeAnOrder(uiState.product?.id ?: "", 1)
-                    if (isMadeOrder) onBuyNowClick() // 路由跳转
+                    viewModel.madeAnOrder(uiState.product?.id ?: "", 1)
+                    if (uiState.isMadeOrder) onBuyNowClick() // 路由跳转
                 }
             }
         )

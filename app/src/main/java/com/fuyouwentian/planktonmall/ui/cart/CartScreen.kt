@@ -89,7 +89,6 @@ import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
-import com.fuyouwentian.planktonmall.navigation.Routes
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.roundToInt
@@ -105,7 +104,8 @@ fun CartScreen(
     modifier: Modifier = Modifier,
     onProductClick: (String) -> Unit = {},
     onSettleClick: () -> Unit = {},
-    onNavigate2Another: (String) -> Unit = {},
+    onNavigate2Login: () -> Unit = {},
+    onNavigate2Pickup: () -> Unit = {},
     viewModel: CartViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -163,7 +163,7 @@ fun CartScreen(
                     ) {
                         Text(text = "请先登录，以获取数据")
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        Button(onClick = { onNavigate2Another(Routes.LOGIN) }) { Text("去登录") }
+                        Button(onClick = { onNavigate2Login() }) { Text("去登录") }
                     }
                 }
             }
@@ -187,7 +187,7 @@ fun CartScreen(
                         )
                         Text(text = "购物车空空如也")
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        Button(onClick = { onNavigate2Another(Routes.HOME) }) { Text("去挑选") }
+                        Button(onClick = { onNavigate2Pickup() }) { Text("去挑选") }
                     }
                 }
             }
