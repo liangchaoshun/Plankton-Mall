@@ -40,6 +40,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Button
@@ -48,6 +49,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -163,7 +165,11 @@ fun CartScreen(
                     ) {
                         Text(text = "请先登录，以获取数据")
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        Button(onClick = { onNavigate2Login() }) { Text("去登录") }
+                        Button(
+                            onClick = { onNavigate2Login() },
+                            modifier = Modifier.width(100.dp),
+                            shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
+                        ) { Text("去登录") }
                     }
                 }
             }
@@ -187,7 +193,11 @@ fun CartScreen(
                         )
                         Text(text = "购物车空空如也")
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        Button(onClick = { onNavigate2Pickup() }) { Text("去挑选") }
+                        Button(
+                            onClick = { onNavigate2Pickup() },
+                            modifier = Modifier.width(100.dp),
+                            shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
+                        ) { Text("去挑选") }
                     }
                 }
             }
@@ -217,6 +227,7 @@ fun CartScreen(
                                 SwipeableCartItem(
                                     product = product,
                                     isRevealed = revealedProductId == product.id,
+                                    isSyncFiled = product.id in uiState.syncFailedIds,
                                     onRevealedChange = { isRevealed ->
                                         // Log.d("Cart", "$isRevealed")
                                         revealedProductId = if (isRevealed) product.id else null
@@ -226,6 +237,7 @@ fun CartScreen(
                                     onQuantityChange = viewModel::changeQuantity,
                                     onCollect = { value -> Log.d("Cart", "收藏: ${product.id}") },
                                     onDelete = { value -> Log.d("Cart", "删除: ${product.id}") },
+                                    onSyncClick = viewModel::syncData2Server
                                 )
                             }
                         }
@@ -354,7 +366,9 @@ fun SwipeableCartItem(
     onQuantityChange: (String, Int) -> Unit,
     onCollect: (String) -> Unit,
     onDelete: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onSyncClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    isSyncFiled: Boolean = false,
 ) {
     val density = LocalDensity.current
     val actionWidth = 120.dp // 按钮区域的总宽度（例如两个按钮，每个 60dp）
@@ -502,21 +516,37 @@ fun SwipeableCartItem(
                 ),
         ) {
 
-            Checkbox(
-                checked = product.isValid && product.checked,
-                enabled = product.isValid && !isCurrentlyRevealed,
-                onCheckedChange = {
-                    onToggleSelect(
-                        product.id,
-                        it
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Checkbox(
+                    checked = product.isValid && product.checked,
+                    enabled = product.isValid && !isCurrentlyRevealed,
+                    onCheckedChange = {
+                        onToggleSelect(
+                            product.id,
+                            it
+                        )
+                    },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = Color.Gray,
+                        checkmarkColor = Color.White
                     )
-                },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary,
-                    uncheckedColor = Color.Gray,
-                    checkmarkColor = Color.White
                 )
-            )
+                if (isSyncFiled) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { onSyncClick(product.id) }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "同步",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(dimensionResource(R.dimen.padding_medium))
+                        )
+                    }
+                }
+            }
             AsyncImage(
                 model = product.goodsIcon,
                 contentDescription = product.goodsNameZh,

@@ -11,6 +11,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.fuyouwentian.planktonmall.R
 
+// 底部导航栏对应一级页面（HOME, CATEGORY, CART, PROFILE）
 object Routes {
     const val HOME = "home"
     const val CATEGORY = "category"
@@ -59,7 +60,7 @@ val NAVI_DEST = listOf(
 // 取出底部导航栏的路由字符串
 val NAVI_ROUTES = NAVI_DEST.map { it.route }
 
-// 跳转到底部导航栏的一级页面（Home, Category, Cart, Profile）
+// 跳转到底部导航栏的页面（Home, Category, Cart, Profile）
 // ⚠ 无论是“手动点击底部导航栏”还是“从其他页面（编程）跳转到一级页面”都统一使用该方法
 fun NavHostController.navigate2Tab(route: String) {
     navigate(route) {

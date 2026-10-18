@@ -8,7 +8,9 @@ data class CartUiState(
     val allSelected: Boolean = false,
     val isLoggedIn: Boolean = false,
     val loading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    // 同步失败的条目，用于 UI 展示重试按钮
+    val syncFailedIds: Set<String> = emptySet()
 ) {
     val checkedItems: List<CartProduct>
         get() = cartData.filter { it.isValid && it.checked }

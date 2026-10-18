@@ -79,9 +79,9 @@ data class CartProduct(
     val userId: String,
     @SerialName("goods_id")
     val goodsId: String,
-    @SerialName("is_valid")
-    val quantity: Int,
     val price: String,
+    val quantity: Int,
+    @SerialName("is_valid")
     val isValid: Boolean,
     val checked: Boolean,
     @SerialName("goods_stock")
