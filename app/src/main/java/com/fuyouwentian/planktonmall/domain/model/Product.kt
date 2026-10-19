@@ -107,7 +107,7 @@ data class ProductsRequest(
 )
 
 @Serializable
-data class HomeProductsRequest(
+data class PaginationParamsRequest(
     @SerialName("page_index")
     val pageIndex: Int = 1,
     @SerialName("page_size")

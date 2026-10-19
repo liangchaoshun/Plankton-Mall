@@ -62,6 +62,14 @@ object NetworkModule {
         // .baseUrl("http://10.0.2.2:8068/api/client/") // ❌ 真机、模拟器使用该地址不可行，再加上 adb reverse 也不可行
 //        .baseUrl("https://liangchaoshun.site/api/client/") // ✅ prod
         .client(okHttpClient) // 🌟 关键：把配置了日志拦截器的 OkHttpClient 传进去
+        /**
+         * addConverterFactory 是转换器类型
+         * GsonConverterFactory：Gson，对应依赖：com.squareup.retrofit2:converter-gson
+         * MoshiConverterFactory：Moshi，对应依赖：com.squareup.retrofit2:converter-moshi
+         * Json.asConverterFactory(...)：Kotlinx Serialization，对应依赖：com.squareup.retrofit2:converter-kotlinx-serialization
+         * KotlinSerializationConverterFactory：Kotlinx Serialization，对应依赖：com.squareup.retrofit2:converter-kotlinx-serialization
+         * ScalarsConverterFactory：常用于把响应直接当作 String 或基本类型处理，而不是解析成对象
+         */
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 

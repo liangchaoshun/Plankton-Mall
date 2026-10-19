@@ -42,6 +42,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -68,11 +70,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -86,13 +90,14 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // 定义下拉刷新状态
+    val pullToRefreshState = rememberPullToRefreshState() // 实验性 API
+
     // 初始化
     LaunchedEffect(Unit) {
-        viewModel.fetchCarouselData()
-        viewModel.fetchProductsData()
+        viewModel.initFetchData()
     }
 
-    // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
     // 订阅事件
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
@@ -113,19 +118,44 @@ fun HomeScreen(
 
     Column(modifier = modifier.background(Color(0xFFF5F6FA))) {
         Searchbar(onSearch = onSearch)
-        CarouselSection(
-            uiState = uiState,
-            onClickRetry = viewModel::fetchCarouselData,
-            onClickProduct = onProductClick
-        )
-        ProductGridSection(
-            uiState = uiState,
-            modifier = modifier.weight(1f),
-            onClickRetry = viewModel::fetchProductsData,
-            onLoadMore = viewModel::loadMore,
-            onClickProduct = onProductClick,
-            onClickAdd2Cart = viewModel::add2Cart
-        )
+        when {
+            uiState.loading && uiState.recommendProducts.data.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            !uiState.exceptionInfo.isNullOrBlank() && uiState.recommendProducts.data.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(text = uiState.exceptionInfo!!)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = viewModel::initFetchData) { Text("重试") }
+                    }
+                }
+            }
+
+            else -> {
+                // 实验性 API
+                PullToRefreshBox(
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = { viewModel.initFetchData(isRefresh = true) },
+                    state = pullToRefreshState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    HomeContentGrid(
+                        uiState = uiState,
+                        onLoadMore = viewModel::loadMore,
+                        onClickProduct = onProductClick,
+                        onClickAdd2Cart = viewModel::add2Cart
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -181,9 +211,8 @@ fun Searchbar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarouselSection(
-    uiState: HomeUiState,
+    carouselData: List<ProductLite>,
     modifier: Modifier = Modifier,
-    onClickRetry: () -> Unit = {},
     onClickProduct: (String) -> Unit = {}
 ) {
     val carouselHeight = 150.dp
@@ -194,61 +223,85 @@ fun CarouselSection(
             .height(carouselHeight + 30.dp), // 内容高度 + 上下 padding
         contentAlignment = Alignment.Center
     ) {
-        when {
-            uiState.loadingCarousel -> {
-                CircularProgressIndicator()
-            }
+        HorizontalMultiBrowseCarousel(
+            state = rememberCarouselState { carouselData.count() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            preferredItemWidth = 150.dp,
+            itemSpacing = 8.dp,
+        ) { i ->
+            val item = carouselData[i]
+            AsyncImage(
+                model = item.cover,
+                contentDescription = item.nameZh,
+                modifier = Modifier
+                    .height(carouselHeight)
+                    .clip(MaterialTheme.shapes.extraLarge)
+                    .clickable { onClickProduct(item.id) },
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+}
 
-            !uiState.carouselError.isNullOrBlank() -> {
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant), // 淡灰，深色模式自动适配
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+@Composable
+fun ProductCard(
+    product: ProductLite,
+    onProductClick: (String) -> Unit = {},
+    onAdd2Cart: (String) -> Unit = {}
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp // 阴影
+        )
+    ) {
+        AsyncImage(
+            model = product.cover,
+            contentDescription = product.nameZh,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                .clickable { onProductClick(product.id) },
+            contentScale = ContentScale.Crop
+        )
+        Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))) {
+            Text(
+                text = product.nameZh,
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                color = Color(0xFF333333)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "￥${product.price}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(
+                    onClick = { onAdd2Cart(product.id) },
+                    modifier = Modifier.size(32.dp) // 默认 48dp
                 ) {
-                    Text(text = uiState.carouselError)
-                    TextButton(onClick = onClickRetry) { Text("重试") }
-                }
-            }
-
-            uiState.carouselData.isEmpty() -> {
-                // 空列表也占位，保持布局
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "暂无推荐",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            else -> {
-                HorizontalMultiBrowseCarousel(
-                    state = rememberCarouselState { uiState.carouselData.count() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    preferredItemWidth = 150.dp,
-                    itemSpacing = 8.dp,
-                ) { i ->
-                    val item = uiState.carouselData[i]
-                    AsyncImage(
-                        model = item.cover,
-                        contentDescription = item.nameZh,
-                        modifier = Modifier
-                            .height(carouselHeight)
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .clickable { onClickProduct(item.id) },
-                        contentScale = ContentScale.Crop
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "加入购物车",
+                        tint = Color.Red
                     )
                 }
             }
@@ -257,152 +310,93 @@ fun CarouselSection(
 }
 
 @Composable
-fun ProductGridSection(
+fun HomeContentGrid(
     uiState: HomeUiState,
-    modifier: Modifier = Modifier,
-    onClickRetry: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onClickProduct: (String) -> Unit = {},
     onClickAdd2Cart: (String) -> Unit = {}
 ) {
-    // 根据状态展示不同 UI
-    when {
-        uiState.loadingHomeList -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    val gridState = rememberLazyGridState()
+    // 触底加载更多
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val last = gridState.layoutInfo.visibleItemsInfo.lastOrNull()
+                ?: return@derivedStateOf false
+            val total = gridState.layoutInfo.totalItemsCount
+            total > 0 && last.index >= total - 3
+        }
+    }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { shouldLoadMore }
+            .distinctUntilChanged()
+            .filter { it }
+            .collect { onLoadMore() }
+    }
+
+    // LazyVerticalGrid 设计哲学是：一个可以按顺序添加无数块（item）的容器。
+    // item 是顺序的、平级的、不互斥
+    LazyVerticalGrid(
+        state = gridState,
+        columns = GridCells.Fixed(2),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+    ) {
+        // 轮播图
+        if (uiState.carouselData.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CarouselSection(
+                    carouselData = uiState.carouselData,
+                    onClickProduct = onClickProduct
+                )
             }
         }
 
-        !uiState.productsError.isNullOrBlank() -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
+        // 商品列表
+        if (uiState.recommendProducts.data.isEmpty()) {
+            // 👇 如果商品为空，占据一整行显示提示
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp), // 固定高度，避免下拉刷新时布局抖动
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = uiState.productsError)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = onClickRetry) { Text("重试") }
+                    Text(text = "暂无推荐商品", color = Color.Gray)
+                }
+            }
+        } else {
+            items(
+                items = uiState.recommendProducts.data,
+                key = { product -> product.id }
+            ) { product ->
+                ProductCard(product, onProductClick = onClickProduct, onAdd2Cart = onClickAdd2Cart)
+            }
+        }
+
+        // 底部加载更多（无论上面有没有数据，只要在加载就显示）
+        if (uiState.loadingMore) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "loading_more") {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        Modifier.height(24.dp),
+                        strokeWidth = 2.dp
+                    )
                 }
             }
         }
 
-        uiState.productsData.data.isEmpty() -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "暂无推荐商品")
-            }
-        }
-
-        else -> {
-            val gridState = rememberLazyGridState()
-            // 触底加载更多
-            val shouldLoadMore by remember {
-                derivedStateOf {
-                    val last = gridState.layoutInfo.visibleItemsInfo.lastOrNull()
-                        ?: return@derivedStateOf false
-                    val total = gridState.layoutInfo.totalItemsCount
-                    total > 0 && last.index >= total - 3
-                }
-            }
-
-            LaunchedEffect(gridState) {
-                snapshotFlow { shouldLoadMore }
-                    .distinctUntilChanged()
-                    .filter { it }
-                    .collect { onLoadMore() }
-            }
-
-            LazyVerticalGrid(
-                state = gridState,
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-            ) {
-                items(
-                    items = uiState.productsData.data,
-                    key = { product -> product.id }
-                ) { product ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
-                        ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 2.dp // 阴影
-                        )
-                    ) {
-                        AsyncImage(
-                            model = product.cover,
-                            contentDescription = product.nameZh,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                                .clickable { onClickProduct(product.id) },
-                            contentScale = ContentScale.Crop
-                        )
-                        Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))) {
-                            Text(
-                                text = product.nameZh,
-                                style = MaterialTheme.typography.bodyMedium,
-                                lineHeight = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                color = Color(0xFF333333)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "￥${product.price}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Red
-                                )
-                                Spacer(modifier = Modifier.weight(1f))
-                                IconButton(
-                                    onClick = { onClickAdd2Cart(product.id) },
-                                    modifier = Modifier.size(32.dp) // 默认 48dp
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "加入购物车",
-                                        tint = Color.Red
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (uiState.loadingMore) {
-                    item(span = { GridItemSpan(maxLineSpan) }, key = "loading_more") {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                Modifier.height(24.dp),
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    }
-                }
-
-                if (!uiState.hasMore && uiState.productsData.data.isNotEmpty()) {
-                    item(span = { GridItemSpan(maxLineSpan) }, key = "no_more") {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("没有更多了", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
+        // 到底了（放在最外层）
+        if (!uiState.hasMore && uiState.recommendProducts.data.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "no_more") {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("没有更多了", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

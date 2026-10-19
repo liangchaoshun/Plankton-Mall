@@ -18,7 +18,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -405,16 +404,12 @@ fun SwipeableCartItem(
     // 注意：这里用 targetValue 而不是 currentValue，因为动画过程中也要禁止点击
     val isCurrentlyRevealed = state.targetValue == DragValue.Revealed
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-    ) {
+    Box(modifier = modifier.fillMaxWidth()) {
         // 背景层（收藏和删除按钮）
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(8.dp))
+                .matchParentSize() // 不参与 Box 的高度测量，而是等前景层测量完，直接强行和前景层一样大
+                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                 .background(Color(0xFFF5F6FA)),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
@@ -453,7 +448,6 @@ fun SwipeableCartItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
                 .offset { // 根据偏移量移动
                     // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
                     val offset = if (state.anchors.size > 0) state.requireOffset() else 0f
@@ -551,7 +545,7 @@ fun SwipeableCartItem(
                 model = product.goodsIcon,
                 contentDescription = product.goodsNameZh,
                 modifier = Modifier
-                    .size(120.dp)
+                    .size(120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
                     .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                     .clickable(enabled = product.isValid && !isCurrentlyRevealed) {
                         onProductClick(product.id)
