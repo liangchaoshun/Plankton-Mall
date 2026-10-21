@@ -91,6 +91,20 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Medium
                 )
             }
+            Spacer(modifier = Modifier.height(30.dp))
+            Button(
+                onClick = viewModel::syncData2Server,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(
+                    text = "同步到服务器",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }

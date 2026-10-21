@@ -80,7 +80,8 @@ data class CartProduct(
     val userId: String,
     @SerialName("goods_id")
     val goodsId: String,
-    val price: String,
+    @SerialName("goods_price")
+    val goodsPrice: String,
     val quantity: Int,
     @SerialName("is_valid")
     val isValid: Boolean,

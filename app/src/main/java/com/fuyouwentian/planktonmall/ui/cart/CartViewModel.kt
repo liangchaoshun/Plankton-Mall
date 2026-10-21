@@ -130,7 +130,6 @@ class CartViewModel @Inject constructor(
             .firstOrNull { it.id == id }?.quantity ?: return
 
         if (legacyValue == value) return
-        toggleSelect(id, true) // 改变数量时，并将其选中
         viewModelScope.launch {
             try {
                 cartRepo.updateQuantity(id, value)
@@ -140,6 +139,19 @@ class CartViewModel @Inject constructor(
                 handleError(e)
             } finally {
                 _uiState.update { it.copy(updatingIds = it.updatingIds - id) }
+            }
+        }
+    }
+
+    // TODO 待完善，很多事件没有成功的提示文案
+    fun deleteCartItems(ids: List<String>) {
+        Log.d("CartViewModel", "deleteCartItems: $ids")
+        viewModelScope.launch {
+            try {
+                cartRepo.delete(ids)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                handleError(e)
             }
         }
     }

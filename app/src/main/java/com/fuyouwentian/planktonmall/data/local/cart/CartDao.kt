@@ -21,8 +21,12 @@ interface CartDao {
     @Query("SELECT * FROM cart")
     fun getAllItemFlow(): Flow<List<CartEntity>>
 
-    @Query("SELECT * FROM cart WHERE id = :id")
-    suspend fun getItemById(id: String): CartEntity?
+    @Query("SELECT id FROM cart")
+    // Room 官方原生也支持直接返回 Set，底层处理转换
+    fun getAllItemIds(): List<String>
+
+    @Query("SELECT * FROM cart WHERE goodsId = :productId")
+    suspend fun getItemByProductId(productId: String): CartEntity?
 
     @Query("SELECT * FROM cart WHERE id IN (:ids)")
     suspend fun getItemsByIds(ids: List<String>): List<CartEntity>
@@ -39,10 +43,10 @@ interface CartDao {
 
     /*@Query("DELETE FROM cart WHERE id = :id")
     suspend fun deleteById(id: String)
-
-    @Query("DELETE FROM cart WHERE id IN (:ids)")
-    suspend fun deleteByIds(ids: List<String>)
     */
+    @Query("DELETE FROM cart WHERE id IN (:ids)")
+    suspend fun deleteLocalItemsById(ids: List<String>)
+
 
     @Query("UPDATE cart SET syncState = 'PENDING_DELETE' WHERE id IN (:ids)")
     suspend fun markLocalItems2Deleted(ids: List<String>)
@@ -62,8 +66,8 @@ interface CartDao {
 
     @Transaction
     suspend fun syncRemoteData2Room(remote: List<CartProduct>) {
-        val ids = remote.map { it.id }
-        val pendingMap = getItemsByIds(ids).associateBy { it.id }
+        val remoteIds = remote.map { it.id }
+        val pendingMap = getItemsByIds(remoteIds).associateBy { it.id }
 
         // 先转成 Entity，再将 pending 中的字段：checked、quantity、syncState，覆盖 remote 中相同字段
         val mergedEntities = remote
@@ -82,5 +86,9 @@ interface CartDao {
             }
         // 统一插入/更新
         insertAll(mergedEntities)
+        // 删除掉多余的脏数据
+        val allLocalCartIds = getAllItemIds()
+        val dirtyIds = allLocalCartIds.filter { !remoteIds.contains(it) }
+        if (dirtyIds.isNotEmpty()) deleteLocalItemsById(dirtyIds)
     }
 }

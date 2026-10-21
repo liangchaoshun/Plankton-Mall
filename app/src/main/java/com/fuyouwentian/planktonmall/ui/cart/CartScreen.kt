@@ -235,7 +235,7 @@ fun CartScreen(
                                     onToggleSelect = viewModel::toggleSelect,
                                     onQuantityChange = viewModel::changeQuantity,
                                     onCollect = { value -> Log.d("Cart", "收藏: ${product.id}") },
-                                    onDelete = { value -> Log.d("Cart", "删除: ${product.id}") },
+                                    onDelete = viewModel::deleteCartItems,
                                     onSyncClick = viewModel::syncData2Server
                                 )
                             }
@@ -364,7 +364,7 @@ fun SwipeableCartItem(
     onToggleSelect: (String, Boolean) -> Unit,
     onQuantityChange: (String, Int) -> Unit,
     onCollect: (String) -> Unit,
-    onDelete: (String) -> Unit,
+    onDelete: (List<String>) -> Unit,
     onSyncClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     isSyncFiled: Boolean = false,
@@ -434,7 +434,7 @@ fun SwipeableCartItem(
                     .fillMaxHeight()
                     .width(60.dp)
                     .background(Color(0xFFF40E21))
-                    .clickable(enabled = isRevealed) { onDelete(product.id) },
+                    .clickable(enabled = isRevealed) { onDelete(listOf(product.id)) },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -509,7 +509,6 @@ fun SwipeableCartItem(
                     } else Modifier
                 ),
         ) {
-
             Column(
                 modifier = Modifier.fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -556,8 +555,8 @@ fun SwipeableCartItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .fillMaxHeight()
+                    .heightIn(min = 120.dp) // 设置最小高度，否则撑不开高度
             ) {
                 Text(
                     text = product.goodsNameZh,
@@ -565,13 +564,14 @@ fun SwipeableCartItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.weight(1f))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "¥${product.price}",
+                        text = "¥${product.goodsPrice}",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -606,7 +606,7 @@ fun SettleColumn(
     val grandTotal = cartItems
         .filter { it.isValid && it.checked }
         .fold(BigDecimal.ZERO) { acc, product ->
-            val price = product.price.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            val price = product.goodsPrice.toBigDecimalOrNull() ?: BigDecimal.ZERO
             acc + price * product.quantity.toBigDecimal()
         }
         .setScale(2, RoundingMode.HALF_UP)

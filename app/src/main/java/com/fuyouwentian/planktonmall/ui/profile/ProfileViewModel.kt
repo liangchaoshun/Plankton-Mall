@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.local.AppDatabase
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +28,8 @@ import kotlin.coroutines.cancellation.CancellationException
 class ProfileViewModel @Inject constructor(
     private val userRepo: UserRepository,
     private val tokenRepo: TokenRepository,
-    private val appDatabase: AppDatabase
+    private val appDatabase: AppDatabase,
+    private val cartRepo: CartRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(ProfileUiState(commiting = false))
@@ -64,6 +66,19 @@ class ProfileViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    // TEST
+    fun syncData2Server() {
+        Log.d("ProfileViewModel", "[syncData2Server]")
+        viewModelScope.launch {
+            try {
+                cartRepo.syncLocal2Server()
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 handleError(e)
             }
         }

@@ -8,6 +8,7 @@ data class ProfileEntity(
     @PrimaryKey
     val id: String,
     val account: String,
+    val password: String? = null,
     val nickname: String? = null,
     val avatar: String? = null,
     val email: String? = null,

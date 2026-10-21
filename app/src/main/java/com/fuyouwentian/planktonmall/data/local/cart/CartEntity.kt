@@ -12,7 +12,7 @@ data class CartEntity(
     val id: String,
     val userId: String,
     val goodsId: String,
-    val price: String,
+    val goodsPrice: String,
     val quantity: Int,
     val isValid: Boolean,
     val checked: Boolean,

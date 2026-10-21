@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.data.repository
 
-import android.util.Log
 import com.fuyouwentian.planktonmall.data.local.cart.CartDao
 import com.fuyouwentian.planktonmall.data.local.cart.SyncState
 import com.fuyouwentian.planktonmall.data.local.cart.toDomain
@@ -13,10 +12,8 @@ import com.fuyouwentian.planktonmall.domain.model.Add2CartParams
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.util.MongoIdGenerator
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,12 +28,13 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun syncLocal2Server() {
         val pendingItems = cartDao.getAllPendingSyncedItems().map { it.toDomain() }
-        Log.d("CartRepositoryImpl", "syncLocal2Server pendingItems: $pendingItems")
-        safeApiCall { api.cartSyncLocal2Server(pendingItems) }?.let { bool ->
-            Log.d("CartRepositoryImpl", "syncLocal2Server result: $bool")
-            if (bool) {
-                // 成功后，修改同步状态
-                cartDao.markLocalItems2Synced(pendingItems.map { it.id })
+//        Log.d("CartRepositoryImpl", "syncLocal2Server: $pendingItems")
+        if (pendingItems.isNotEmpty()) {
+            safeApiCall { api.cartSyncLocal2Server(pendingItems) }?.let { bool ->
+                if (bool) {
+                    // 成功后，修改同步状态
+                    cartDao.markLocalItems2Synced(pendingItems.map { it.id })
+                }
             }
         }
     }
@@ -52,41 +50,37 @@ class CartRepositoryImpl @Inject constructor(
 
     // 参数是商品的参数
     override suspend fun insert(params: Add2CartParams) {
-        withContext(Dispatchers.IO) {
-            Log.d("CartRepositoryImpl ", "insert params: $params")
-            val existingEntity = cartDao.getItemById(params.id)
-            if (existingEntity != null) {
-                // 已存在：数量 + 1，并标记为待更新
-                val updatedEntity = existingEntity.copy(
-                    quantity = existingEntity.quantity + 1,
-                    syncState = SyncState.PENDING_UPDATE
-                )
-                cartDao.update(updatedEntity)
-            } else {
-                // 不存在：直接插入新记录
-                val userId = profileDao.getUserProfile()!!.toDomain().id
-                val cartProduct = CartProduct(
-                    id = MongoIdGenerator.generate(),
-                    userId = userId,
-                    goodsId = params.id,
-                    price = params.price,
-                    quantity = 1,
-                    isValid = true,
-                    checked = true,
-                    goodsStock = params.stock,
-                    goodsOnSale = params.onSale,
-                    goodsNameZh = params.nameZh,
-                    goodsNameEn = params.nameEn,
-                    goodsIcon = params.iconUrl,
-                    syncState = SyncState.PENDING_UPDATE
-                )
-                val entity = cartProduct.toEntity()
-                cartDao.insert(entity)
-                Log.d("CartRepositoryImpl ", "insert cartProduct: $cartProduct")
-                Log.d("CartRepositoryImpl ", "insert entity: $entity")
-            }
-            syncLocal2Server()
+        // Log.d("CartRepositoryImpl ", "insert params: $params")
+        val existingEntity = cartDao.getItemByProductId(params.id)
+        if (existingEntity != null) {
+            // 已存在：数量 + 1，并标记为待更新
+            val updatedEntity = existingEntity.copy(
+                quantity = existingEntity.quantity + 1,
+                checked = true, // 勾选上
+                syncState = SyncState.PENDING_UPDATE
+            )
+            cartDao.update(updatedEntity)
+        } else {
+            // 不存在：直接插入新记录
+            val userId = profileDao.getUserProfile()!!.toDomain().id
+            val cartProduct = CartProduct(
+                id = MongoIdGenerator.generate(),
+                userId = userId,
+                goodsId = params.id,
+                goodsPrice = params.price,
+                quantity = 1,
+                isValid = true,
+                checked = true, // 勾选上
+                goodsStock = params.stock,
+                goodsOnSale = params.onSale,
+                goodsNameZh = params.nameZh,
+                goodsNameEn = params.nameEn,
+                goodsIcon = params.iconUrl,
+                syncState = SyncState.PENDING_UPDATE
+            )
+            cartDao.insert(cartProduct.toEntity())
         }
+        syncLocal2Server()
     }
 
     override suspend fun delete(ids: List<String>) {
@@ -101,6 +95,7 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun updateQuantity(id: String, quantity: Int) {
         cartDao.updateQuantity(id, quantity)
+        cartDao.updateMultiChecked(listOf(id), true)
         // 要做防抖，所以同步到服务器方法（syncLocal2Server）须在 CartViewModel 中调用
     }
 
