@@ -49,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -65,8 +66,8 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel(),
-    onNavigateToRegister: () -> Unit = {},
-    onLoginSuccess: () -> Unit = {}
+    onNavigate2Register: () -> Unit = {},
+    onNavigate2Home: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -79,7 +80,7 @@ fun LoginScreen(
                 }
 
                 is UiEvent.LoginSuccess -> {
-                    onLoginSuccess() // 登录成功
+                    onNavigate2Home() // 登录成功
                 }
 
                 else -> {}
@@ -200,6 +201,19 @@ fun LoginScreen(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+            TextButton(
+                onClick = onNavigate2Home,
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+                modifier = Modifier.height(24.dp)
+            ) {
+                Text(
+                    text = "不登录，随便看看",
+                    fontSize = 14.sp,
+                    color = Color(0xFF666666),
+                    fontWeight = FontWeight.Medium
+                )
+            }
             Spacer(modifier = Modifier.weight(0.7f))
             // 第三方登录
             Row(
@@ -250,7 +264,7 @@ fun LoginScreen(
                     color = Color(0xFF666666)
                 )
                 TextButton(
-                    onClick = onNavigateToRegister,
+                    onClick = onNavigate2Register,
                     contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
                     modifier = Modifier.height(24.dp)
                 ) {

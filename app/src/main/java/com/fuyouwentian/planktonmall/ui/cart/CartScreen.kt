@@ -111,6 +111,7 @@ fun CartScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.fetchCartData()
@@ -130,7 +131,7 @@ fun CartScreen(
 
     Surface(
         modifier = modifier,
-        color = if (uiState.cartData.isEmpty()) Color.White else Color(0xFFF5F6FA) // background
+        color = if (cartItems.isEmpty()) Color.White else Color(0xFFF5F6FA) // background
     ) {
         // 根据状态展示不同 UI
         when {
@@ -173,7 +174,7 @@ fun CartScreen(
                 }
             }
 
-            uiState.cartData.isEmpty() -> {
+            cartItems.isEmpty() -> {
                 // 请求成功但没有数据
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
@@ -202,7 +203,6 @@ fun CartScreen(
             }
 
             else -> {
-                val cartData = uiState.cartData
                 // 记录当前滑出的商品 ID
                 var revealedProductId by remember { mutableStateOf<String?>(null) }
 
@@ -222,7 +222,7 @@ fun CartScreen(
                             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                             modifier = modifier.fillMaxSize()
                         ) {
-                            items(cartData, key = { it.id }) { product ->
+                            items(cartItems, key = { it.id }) { product ->
                                 SwipeableCartItem(
                                     product = product,
                                     isRevealed = revealedProductId == product.id,
@@ -244,7 +244,7 @@ fun CartScreen(
 
                     // 底部结算栏
                     SettleColumn(
-                        cartData = cartData,
+                        cartItems = cartItems,
                         onSettleBtnClick = onSettleClick,
                         onToggleSelectAll = viewModel::toggleSelectAll
                     )
@@ -594,16 +594,16 @@ fun SwipeableCartItem(
 
 @Composable
 fun SettleColumn(
-    cartData: List<CartProduct>,
+    cartItems: List<CartProduct>,
     modifier: Modifier = Modifier,
     onSettleBtnClick: () -> Unit = {},
     onToggleSelectAll: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val allSelected = cartData.filter { it.isValid }.all { it.checked }
-    val anySelected = cartData.filter { it.isValid }.any { it.checked }
-    val someSelected = cartData.filter { it.isValid }.any { it.checked } && !allSelected
-    val grandTotal = cartData
+    val allSelected = cartItems.filter { it.isValid }.all { it.checked }
+    val anySelected = cartItems.filter { it.isValid }.any { it.checked }
+    val someSelected = cartItems.filter { it.isValid }.any { it.checked } && !allSelected
+    val grandTotal = cartItems
         .filter { it.isValid && it.checked }
         .fold(BigDecimal.ZERO) { acc, product ->
             val price = product.price.toBigDecimalOrNull() ?: BigDecimal.ZERO

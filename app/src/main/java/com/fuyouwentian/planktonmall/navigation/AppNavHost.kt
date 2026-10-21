@@ -143,8 +143,8 @@ fun AppNavHost(
             composable(route = Routes.LOGIN) {
                 LoginScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onNavigateToRegister = { navController.navigate2Normal(Routes.REGISTER) },
-                    onLoginSuccess = {
+                    onNavigate2Register = { navController.navigate2Normal(Routes.REGISTER) },
+                    onNavigate2Home = {
                         /**
                          * 401 保存跳转登录前的路由，登录后重新跳转到保存的路由，存在隐患
                          * 因保存的路由对应页面的获取数据接口，可能对新登录的账号无权限，又返回 401，陷入无限死循环

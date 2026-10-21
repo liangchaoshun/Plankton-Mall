@@ -249,7 +249,7 @@ fun CarouselSection(
 fun ProductCard(
     product: ProductLite,
     onProductClick: (String) -> Unit = {},
-    onAdd2Cart: (String) -> Unit = {}
+    onAdd2Cart: (ProductLite) -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -295,7 +295,7 @@ fun ProductCard(
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(
-                    onClick = { onAdd2Cart(product.id) },
+                    onClick = { onAdd2Cart(product) },
                     modifier = Modifier.size(32.dp) // 默认 48dp
                 ) {
                     Icon(
@@ -314,7 +314,7 @@ fun HomeContentGrid(
     uiState: HomeUiState,
     onLoadMore: () -> Unit = {},
     onClickProduct: (String) -> Unit = {},
-    onClickAdd2Cart: (String) -> Unit = {}
+    onClickAdd2Cart: (ProductLite) -> Unit = {}
 ) {
     val gridState = rememberLazyGridState()
     // 触底加载更多

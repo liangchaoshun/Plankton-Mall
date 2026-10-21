@@ -4,8 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.domain.model.Add2CartParams
+import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
+import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -22,6 +26,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
+    private val userRepo: UserRepository,
+    private val cartRepo: CartRepository,
     private val productRepo: ProductRepository
 ) : ViewModel() {
     // UI 状态
@@ -59,23 +65,63 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun add2Cart(productId: String) {
-        Log.d("Detail", "add2Cart: $productId")
-        // TODO: 弹框提示“加入购物车成功”
+    fun add2Cart(product: Product) {
+        Log.d("Detail", "add2Cart: $product")
+        viewModelScope.launch {
+            try {
+                if (userRepo.isLoggedIn() == false) {
+                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
+                    return@launch
+                }
+                cartRepo.insert(
+                    Add2CartParams(
+                        id = product.id,
+                        price = product.price,
+                        stock = product.stock,
+                        onSale = product.onSale,
+                        nameZh = product.nameZh,
+                        nameEn = product.nameEn,
+                        iconUrl = product.iconUrl
+                    )
+                )
+                _uiEvent.emit(UiEvent.ShowToast("加入购物车成功"))
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
     }
 
-    fun add2Favorites(productId: String) {
-        Log.d("Detail", "add2Favorites: $productId")
-        // TODO: 弹框提示“收藏成功”
+    fun add2Favorites(product: Product) {
+        Log.d("Detail", "add2Favorites: $product")
+        viewModelScope.launch {
+            try {
+                if (userRepo.isLoggedIn() == false) {
+                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
+                    return@launch
+                }
+                // TODO 加入收藏
+                _uiEvent.emit(UiEvent.ShowToast("收藏成功"))
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
     }
 
-    fun madeAnOrder(productId: String, quantity: Int) {
+    fun immediatelyMadeAnOrder(productId: String) {
         Log.d("Detail", "immediately make an order: $productId")
-        // TODO 校验是否登录，返回创建订单是否成功
         _uiState.update { it.copy(isMadeOrder = false) }
         viewModelScope.launch {
-            delay(5.seconds)
-            _uiState.update { it.copy(isMadeOrder = true) }
+            try {
+                if (userRepo.isLoggedIn() == false) {
+                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
+                    return@launch
+                }
+                // TODO 创建订单
+                delay(5.seconds)
+                _uiState.update { it.copy(isMadeOrder = true) } // 跳转到下单页
+            } catch (e: Exception) {
+                handleError(e)
+            }
         }
     }
 

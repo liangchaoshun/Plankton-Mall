@@ -156,19 +156,19 @@ fun DetailContent(
             modifier = Modifier.align(Alignment.BottomCenter),
             onFavorIconClick = {
                 if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
-                    viewModel.add2Favorites(uiState.product?.id ?: "")
+                    viewModel.add2Favorites(uiState.product!!)
                 }
             },
             onCartIconClick = onCartIconClick, // 跳转到购物车页面
             onClickAdd2Cart = {
                 if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
-                    viewModel.add2Cart(uiState.product?.id ?: "")
+                    viewModel.add2Cart(uiState.product!!)
                 }
             },
             onClickBuyNow = {
                 if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
-                    // TODO: 下单后再跳转
-                    viewModel.madeAnOrder(uiState.product?.id ?: "", 1)
+                    // 下单后再跳路由
+                    viewModel.immediatelyMadeAnOrder(uiState.product!!.id)
                     if (uiState.isMadeOrder) onBuyNowClick() // 路由跳转
                 }
             }
@@ -353,8 +353,7 @@ fun BottomActionBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-//        color = Color(0xFFF0F8FF),
-        color = Color.LightGray,
+        color = Color(0xFFF0F8FF),
         shadowElevation = 8.dp
     ) {
         Row(

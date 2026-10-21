@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.domain.model
 
+import com.fuyouwentian.planktonmall.data.local.cart.SyncState
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -94,6 +95,18 @@ data class CartProduct(
     val goodsNameEn: String,
     @SerialName("goods_icon")
     val goodsIcon: String,
+    @SerialName("sync_state")
+    val syncState: SyncState? = null
+)
+
+data class Add2CartParams(
+    val id: String,
+    val price: String,
+    val stock: Int,
+    val onSale: Int,
+    val nameZh: String,
+    val nameEn: String,
+    val iconUrl: String,
 )
 
 @Serializable

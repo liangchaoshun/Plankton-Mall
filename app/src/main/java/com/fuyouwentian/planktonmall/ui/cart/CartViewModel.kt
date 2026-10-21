@@ -4,22 +4,29 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
-
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class CartViewModel @Inject constructor(
     private val cartRepo: CartRepository,
@@ -29,110 +36,124 @@ class CartViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
     val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
 
+    // 订阅 Room cart data Flow
+    val cartItems: StateFlow<List<CartProduct>> = cartRepo.getAllLocalCartItems()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
     // UI 事件
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
+    private val syncTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    private var currentJob: Job? = null
+
     // 防止竞态：fetchProductsData
     private var requestId = 0
 
-    // 初始化加载/刷新（重置列表）
+    init {
+        viewModelScope.launch {
+            syncTrigger
+                .debounce(400.milliseconds)
+                .collect {
+                    cartRepo.syncLocal2Server()
+                }
+        }
+    }
+
+    // 初始化加载/下拉刷新
     fun fetchCartData() {
         val id = ++requestId
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true) }
+        currentJob?.cancel() // 重置
+        currentJob = viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    loading = true,
+                    updatingIds = emptySet(),
+                    allSelected = false,
+                    error = null
+                )
+            }
+
             try {
                 val isLoggedIn = userRepo.isLoggedIn() ?: false
                 _uiState.update { it.copy(isLoggedIn = isLoggedIn) }
                 if (!isLoggedIn) return@launch // 跳出
-                val cartData = cartRepo.fetchData()
-                // mock data
-                // val cartData = MockProducts.CartProducts
+                cartRepo.fetchData() // 请求，成功后写入 Room cart
                 if (id != requestId) return@launch // 已过期
-                cartData?.let { _uiState.update { it.copy(cartData = cartData.data) } }
-                // TODO Room cart
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
-                _uiState.update { it.copy(loading = false) }
+                if (id == requestId) _uiState.update { it.copy(loading = false) }
             }
         }
     }
 
     // 切换选中某项
-    fun toggleSelect(productId: String, bool: Boolean) {
-        _uiState.update { state ->
-            state.copy(
-                cartData = state.cartData.map { item ->
-                    if (item.id == productId) item.copy(checked = bool)
-                    else item
-                }
-            )
+    fun toggleSelect(id: String, bool: Boolean) {
+        viewModelScope.launch {
+            try {
+                cartRepo.updateMultiChecked(ids = listOf(id), checked = bool)
+                syncTrigger.tryEmit(Unit)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                handleError(e)
+            }
         }
-        // TODO 更新 Room cart
     }
 
     // 切换全选/全不选
     fun toggleSelectAll() {
         val target = !_uiState.value.allSelected // 只有两种可能：全选和全不选
-        _uiState.update { state ->
-            state.copy(
-                allSelected = target,
-                cartData = state.cartData
-                    .map {
-                        // 无效的商品不用处理
-                        val bool = if (it.isValid) target else it.checked
-                        it.copy(checked = bool)
-                    }
-            )
-        }
-        // TODO 更新 Room cart
-    }
-
-    // 更新数量
-    fun changeQuantity(productId: String, value: Int) {
-        if (value !in 1 until 1000) return
-        // 取旧值用于失败回滚
-        val legacyValue = _uiState.value.cartData
-            .firstOrNull { it.id == productId }?.quantity ?: return
-
-        if (legacyValue == value) return
-
-        toggleSelect(productId, true) // 改变数量，要求选中
-
-        // 乐观更新：立即改 UI
-        updateLocalQuantity(productId, value)
-        _uiState.update { it.copy(updatingIds = it.updatingIds + productId) }
-
-        // 提交服务端
+        _uiState.update { state -> state.copy(allSelected = target) }
         viewModelScope.launch {
             try {
-                // cartRepo.updateQuantity(productId, value) TODO: 更新
+                val ids = cartItems.value.filter { it.isValid }.map { it.id }
+                cartRepo.updateMultiChecked(ids = ids, checked = target)
+                syncTrigger.tryEmit(Unit)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                // 失败：回滚
-                updateLocalQuantity(productId, legacyValue)
                 handleError(e)
-            } finally {
-                _uiState.update { it.copy(updatingIds = it.updatingIds - productId) }
             }
         }
     }
 
-    private fun updateLocalQuantity(productId: String, quantity: Int) {
-        _uiState.update { state ->
-            state.copy(
-                cartData = state.cartData.map { item ->
-                    if (item.id == productId) item.copy(quantity = quantity)
-                    else item
-                }
-            )
+    // 更新数量
+    fun changeQuantity(id: String, value: Int) {
+        if (value !in 1 until 1000) return
+        // 取旧值用于失败回滚
+        val legacyValue = cartItems.value
+            .firstOrNull { it.id == id }?.quantity ?: return
+
+        if (legacyValue == value) return
+        toggleSelect(id, true) // 改变数量时，并将其选中
+        viewModelScope.launch {
+            try {
+                cartRepo.updateQuantity(id, value)
+                syncTrigger.tryEmit(Unit)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                handleError(e)
+            } finally {
+                _uiState.update { it.copy(updatingIds = it.updatingIds - id) }
+            }
         }
-        // TODO 更新 Room cart
     }
 
     fun syncData2Server(id: String) {
-        Log.d("syncData2Server", id)
+        Log.d("Cart", "[syncData2Server] id: $id")
+        viewModelScope.launch {
+            try {
+                cartRepo.syncLocal2Server()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                handleError(e)
+            }
+        }
     }
 
     private suspend fun handleError(e: Exception) {

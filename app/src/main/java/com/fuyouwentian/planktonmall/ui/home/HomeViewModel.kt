@@ -4,10 +4,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.domain.model.Add2CartParams
 import com.fuyouwentian.planktonmall.domain.model.PaginationParamsRequest
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
+import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -26,7 +29,8 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val cartRepo: CartRepository,
-    private val productRepo: ProductRepository
+    private val userRepo: UserRepository,
+    private val productRepo: ProductRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(HomeUiState(loading = true))
@@ -102,7 +106,7 @@ class HomeViewModel @Inject constructor(
             if (!loadMoreMutex.tryLock()) return@launch
             val id = requestId // 捕获当前版本
             try {
-                _uiState.update { it.copy(loadingMore = true) }
+                _uiState.update { it.copy(loadingMore = true, exceptionInfo = null) }
                 val latest = _uiState.value
                 val nextPage = latest.recommendProducts.pageIndex + 1
                 val pageParams = lastPageParams.copy(pageIndex = nextPage)
@@ -132,9 +136,30 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun add2Cart(productId: String) {
-        Log.d("Home", productId)
-        // TODO 操作 Room
+    fun add2Cart(product: ProductLite) {
+        Log.d("Home", "add2Cart: $product")
+
+        viewModelScope.launch {
+            try {
+                if (userRepo.isLoggedIn() == false) {
+                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
+                    return@launch
+                }
+                cartRepo.insert(
+                    Add2CartParams(
+                        id = product.id,
+                        price = product.price,
+                        stock = product.stock,
+                        onSale = product.onSale,
+                        nameZh = product.nameZh,
+                        nameEn = product.nameEn,
+                        iconUrl = product.iconUrl
+                    )
+                )
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
     }
 
     private suspend fun handleError(e: Exception) {

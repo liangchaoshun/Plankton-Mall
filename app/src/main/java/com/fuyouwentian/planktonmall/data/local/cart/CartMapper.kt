@@ -22,6 +22,7 @@ fun CartEntity.toDomain(): CartProduct = CartProduct(
     goodsNameZh = goodsNameZh,
     goodsNameEn = goodsNameEn,
     goodsIcon = goodsIcon,
+    syncState = syncState,
 )
 
 // Domain -> Entity
@@ -38,4 +39,6 @@ fun CartProduct.toEntity(): CartEntity = CartEntity(
     goodsNameZh = goodsNameZh,
     goodsNameEn = goodsNameEn,
     goodsIcon = goodsIcon,
+    syncState = syncState ?: SyncState.SYNCED,
 )
+
