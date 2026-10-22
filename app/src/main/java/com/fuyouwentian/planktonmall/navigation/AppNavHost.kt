@@ -1,22 +1,34 @@
 package com.fuyouwentian.planktonmall.navigation
 
-import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -26,7 +38,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
@@ -75,27 +86,74 @@ fun AppNavHost(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(modifier = Modifier.fillMaxWidth()) {
-                    NAVI_DEST.forEach { dest ->
-                        val route = dest.route
-                        NavigationBarItem(
-                            selected = currentRoute == route,
-                            onClick = {
-                                Log.d("BottomNavigation", "from: $currentRoute, to: $route")
-                                if (currentRoute != route) {
-                                    navController.navigate2Tab(route)
-                                } else {
-                                    // 可实现滚动到当前页面最顶端
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (currentRoute == route) dest.selectedIcon else dest.unselectedIcon,
-                                    contentDescription = null
+                // 自定义底部导航栏布局
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface) // 底部背景色
+                        .navigationBarsPadding() // 适配真机三大金刚键/手势条
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp), // 固定高度
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        NAVI_DEST.forEach { dest ->
+                            val route = dest.route
+                            val selected = currentRoute == route
+                            val iconVector =
+                                if (selected) dest.selectedIcon else dest.unselectedIcon
+                            val destColor =
+                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null // 去掉水波纹
+                                    ) {
+                                        if (currentRoute != route) {
+                                            navController.navigate2Tab(route)
+                                        } else {
+                                            // 可实现滚动到当前页面最顶端
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // 选中的背景
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 60.dp, height = 40.dp)
+                                        .background(
+                                            if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
+                                                0.3f
+                                            )
+                                            else Color.Transparent
+                                        )
                                 )
-                            },
-                            label = { Text(stringResource(dest.iconTextId)) }
-                        )
+
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Icon(
+                                        imageVector = iconVector,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = destColor
+                                    )
+                                    Text(
+                                        text = stringResource(dest.iconTextId),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = destColor
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

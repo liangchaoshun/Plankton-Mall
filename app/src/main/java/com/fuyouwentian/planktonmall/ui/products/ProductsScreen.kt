@@ -72,7 +72,8 @@ fun ProductsScreen(
     LaunchedEffect(q) {
         // TODO 能否从路由判断是从哪个页面跳转而来？请求的 api 不对~，以系列id 查询其下的商品，有专用 api，
         //  不过和“搜索框”统一使用 goods/list 也好，性能差了一些而已！
-        viewModel.fetchProductsData(ProductsRequest(q = q.trim())) // 页面初始化，加载列表数据。
+        // 页面初始化，加载列表数据
+        if (searchQuery.isBlank()) viewModel.fetchProductsData(ProductsRequest(q = q.trim()))
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {

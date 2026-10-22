@@ -31,6 +31,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -56,6 +57,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -201,18 +203,23 @@ fun LoginScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-            TextButton(
-                onClick = onNavigate2Home,
-                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
-                modifier = Modifier.height(24.dp)
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                Text(
-                    text = "不登录，随便看看",
-                    fontSize = 14.sp,
-                    color = Color(0xFF666666),
-                    fontWeight = FontWeight.Medium
-                )
+                TextButton(
+                    onClick = onNavigate2Home,
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp),
+                    modifier = Modifier.height(24.dp)
+                ) {
+                    Text(
+                        text = "不登录，随便看看",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color(0xFFFF7A00),
+                        textDecoration = TextDecoration.Underline,
+                    )
+                }
             }
             Spacer(modifier = Modifier.weight(0.7f))
             // 第三方登录
@@ -220,14 +227,14 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFCCCCCC))
                 Text(
                     text = "第三方账号登录",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    fontSize = 16.sp,
+                    modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_small)),
+                    style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF666666)
                 )
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFCCCCCC))
             }
 
             Spacer(modifier = Modifier.weight(0.3f))
@@ -260,7 +267,7 @@ fun LoginScreen(
             ) {
                 Text(
                     text = "还没账号？",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF666666)
                 )
                 TextButton(
@@ -270,7 +277,7 @@ fun LoginScreen(
                 ) {
                     Text(
                         text = "去注册",
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFF5E5CE6),
                         fontWeight = FontWeight.Medium
                     )
