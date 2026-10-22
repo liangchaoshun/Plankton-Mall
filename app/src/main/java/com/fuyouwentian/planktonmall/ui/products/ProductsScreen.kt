@@ -12,26 +12,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,10 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -62,6 +52,7 @@ import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.common.Constants
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.ui.components.widgets.Searchbar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,18 +106,20 @@ fun ProductsScreen(
                         )
                     }
 
-                    SearchBar(
+                    Searchbar(
                         query = searchQuery,
                         modifier = Modifier.weight(1f),
-                        onChangeEvent = { searchQuery = it },
+                        onValueChangeEvent = { searchQuery = it },
                         onSearch = { qs ->
-                            viewModel.fetchProductsData(
-                                ProductsRequest(
-                                    pageIndex = 1,
-                                    pageSize = 10,
-                                    q = qs.trim()
+                            if (qs.isNotBlank()) {
+                                viewModel.fetchProductsData(
+                                    ProductsRequest(
+                                        pageIndex = 1,
+                                        pageSize = 10,
+                                        q = qs.trim()
+                                    )
                                 )
-                            )
+                            }
                         }
                     )
                 }
@@ -150,56 +143,6 @@ fun ProductsScreen(
             onClickProduct = onProductClick
         )
     }
-}
-
-@Composable
-fun SearchBar(
-    modifier: Modifier = Modifier,
-    query: String = "",
-    onChangeEvent: (String) -> Unit = {},
-    onSearch: (String) -> Unit = {}
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    OutlinedTextField(
-        value = query,
-        onValueChange = { str -> onChangeEvent(str.trim()) },
-        leadingIcon = if (query.isEmpty()) {
-            { Icon(imageVector = Icons.Default.Search, contentDescription = null) }
-        } else null,
-        trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = {
-                    onSearch(query)
-                    keyboardController?.hide()
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Done,
-                        contentDescription = "搜索"
-                    )
-                }
-            }
-        },
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-        ),
-        placeholder = { Text(stringResource(R.string.placeholder_search)) },
-        singleLine = true,
-        shape = RoundedCornerShape(14.dp),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(
-            onSearch = {
-                if (query.isNotBlank()) onSearch(query)
-                keyboardController?.hide()
-            }
-        ),
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-    )
 }
 
 @Composable
@@ -289,14 +232,14 @@ fun ProductsScreenContent(
                         ) {
                             Text(
                                 text = product.nameZh,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = "¥${product.price}",
                                 color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }

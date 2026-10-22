@@ -326,7 +326,7 @@ fun NumberStepper(
                 enabled = isValid,
                 singleLine = true,
                 textStyle = TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     color = Color.Black
                 ),
@@ -542,7 +542,7 @@ fun SwipeableCartItem(
             }
             AsyncImage(
                 model = product.goodsIcon,
-                contentDescription = product.goodsNameZh,
+                contentDescription = null,
                 modifier = Modifier
                     .size(120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
                     .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
@@ -560,7 +560,7 @@ fun SwipeableCartItem(
             ) {
                 Text(
                     text = product.goodsNameZh,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -572,8 +572,8 @@ fun SwipeableCartItem(
                 ) {
                     Text(
                         text = "¥${product.goodsPrice}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleMedium
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     NumberStepper(
                         value = product.quantity,
@@ -621,9 +621,10 @@ fun SettleColumn(
             modifier = Modifier
                 .padding(
                     start = 0.dp,
-                    end = dimensionResource(R.dimen.padding_medium)
-                )
-                .padding(vertical = dimensionResource(R.dimen.padding_medium)),
+                    end = dimensionResource(R.dimen.padding_medium),
+                    top = 2.dp,
+                    bottom = 2.dp
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TriStateCheckbox(
@@ -636,17 +637,18 @@ fun SettleColumn(
             )
             Text(
                 text = "全选",
-                fontSize = 14.sp
+                style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = "￥$grandTotal",
-                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
                 color = Color.Red
             )
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
             Button(
+                modifier = Modifier.width(100.dp),
                 onClick = {
                     if (anySelected) {
                         onSettleBtnClick()
@@ -661,12 +663,12 @@ fun SettleColumn(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFF40E21)
                 ),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
             ) {
                 Text(
                     text = "去结算",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }

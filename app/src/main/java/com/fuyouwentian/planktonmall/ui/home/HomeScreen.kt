@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -23,12 +22,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,8 +31,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
@@ -59,11 +52,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -72,6 +62,7 @@ import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.ui.components.widgets.Searchbar
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -116,8 +107,24 @@ fun HomeScreen(
         }
     }
 
-    Column(modifier = modifier.background(Color(0xFFF5F6FA))) {
-        Searchbar(onSearch = onSearch)
+    Column(
+        modifier = modifier
+            .padding(
+                start = dimensionResource(R.dimen.padding_small),
+                end = dimensionResource(R.dimen.padding_small),
+                top = dimensionResource(R.dimen.padding_small),
+                bottom = 0.dp
+            )
+            .background(Color(0xFFF5F6FA))
+        // .background(Color.Cyan)
+    ) {
+        var searchQuery by rememberSaveable { mutableStateOf("") }
+        Searchbar(
+            query = searchQuery,
+            onValueChangeEvent = { searchQuery = it },
+            onSearch = onSearch
+        )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
         when {
             uiState.loading && uiState.recommendProducts.data.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -159,60 +166,10 @@ fun HomeScreen(
     }
 }
 
-@Composable
-fun Searchbar(
-    modifier: Modifier = Modifier,
-    onSearch: (String) -> Unit = {}
-) {
-    var query by rememberSaveable { mutableStateOf("") }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    OutlinedTextField(
-        value = query,
-        onValueChange = { query = it },
-        leadingIcon = if (query.isEmpty()) {
-            { Icon(imageVector = Icons.Default.Search, contentDescription = null) }
-        } else null,
-        trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = {
-                    onSearch(query.trim())
-                    keyboardController?.hide()
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Done,
-                        contentDescription = "搜索"
-                    )
-                }
-            }
-        },
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-        ),
-        placeholder = { Text(stringResource(R.string.placeholder_search)) },
-        singleLine = true,
-        shape = RoundedCornerShape(14.dp),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(
-            onSearch = {
-                onSearch(query)
-                keyboardController?.hide()
-            }
-        ),
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarouselSection(
     carouselData: List<ProductLite>,
-    modifier: Modifier = Modifier,
     onClickProduct: (String) -> Unit = {}
 ) {
     val carouselHeight = 150.dp
@@ -220,7 +177,7 @@ fun CarouselSection(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(carouselHeight + 30.dp), // 内容高度 + 上下 padding
+            .height(carouselHeight + 15.dp), // 🌟 内容高度 + 上下 padding
         contentAlignment = Alignment.Center
     ) {
         HorizontalMultiBrowseCarousel(
@@ -237,7 +194,7 @@ fun CarouselSection(
                 contentDescription = item.nameZh,
                 modifier = Modifier
                     .height(carouselHeight)
-                    .clip(MaterialTheme.shapes.extraLarge)
+                    .clip(MaterialTheme.shapes.large)
                     .clickable { onClickProduct(item.id) },
                 contentScale = ContentScale.Crop
             )
@@ -274,13 +231,12 @@ fun ProductCard(
         Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))) {
             Text(
                 text = product.nameZh,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 lineHeight = 18.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 color = Color(0xFF333333)
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -289,14 +245,14 @@ fun ProductCard(
             ) {
                 Text(
                     text = "￥${product.price}",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.Red
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(
                     onClick = { onAdd2Cart(product) },
-                    modifier = Modifier.size(32.dp) // 默认 48dp
+                    modifier = Modifier.size(28.dp) // 默认 48dp
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -354,7 +310,7 @@ fun HomeContentGrid(
 
         // 商品列表
         if (uiState.recommendProducts.data.isEmpty()) {
-            // 👇 如果商品为空，占据一整行显示提示
+            // 如果商品为空，占据一整行显示提示
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Box(
                     modifier = Modifier

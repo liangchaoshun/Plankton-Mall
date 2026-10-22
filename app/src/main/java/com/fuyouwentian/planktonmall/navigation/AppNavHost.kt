@@ -110,9 +110,7 @@ fun AppNavHost(
         ) {
             composable(route = Routes.HOME) {
                 HomeScreen(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(dimensionResource(R.dimen.padding_medium)),
+                    modifier = Modifier.fillMaxSize(),
                     onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
                     onSearch = { qs ->
                         if (qs.isNotBlank()) navController.navigate2Normal("products/$qs")

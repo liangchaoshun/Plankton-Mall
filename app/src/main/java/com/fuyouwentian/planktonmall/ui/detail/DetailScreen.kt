@@ -204,12 +204,13 @@ fun DetailContent(
                 .padding(start = 16.dp, top = 16.dp)
                 .align(Alignment.TopStart)
                 .background(Color.Gray.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
-                .size(36.dp)
+                .size(width = 30.dp, height = 28.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "返回",
                 tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
     }
