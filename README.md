@@ -23,4 +23,4 @@
 #### 效果
 
 - 竖屏
-- ![screenshot_portrait](./app/src/main/res/drawable/screenshot_20261019_170502.png)
+- ![screenshot_portrait](./app/src/main/res/drawable/screenshot_20261023_113021.png)

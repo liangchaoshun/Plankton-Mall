@@ -33,10 +33,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fuyouwentian.planktonmall.R
@@ -47,19 +49,24 @@ fun Searchbar(
     query: String = "",
     placeholder: String = "请输入搜索内容",
     onValueChangeEvent: (String) -> Unit = {},
-    onSearch: (String) -> Unit = {}
+    onSearch: (String) -> Unit = {},
+    height: Dp = 40.dp,
+    borderWidth: Dp = 1.dp,
+    borderColor: Color = MaterialTheme.colorScheme.outline,
+    borderShape: Shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    backgroundShape: Shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    val shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)) // 边框形状
 
     BasicTextField(
         value = query,
         onValueChange = { str -> onValueChangeEvent(str.trim()) },
         modifier = modifier
             .fillMaxWidth()
-            .height(40.dp) // 总高度
-            .background(color = MaterialTheme.colorScheme.surface, shape = shape)
-            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = shape),
+            .height(height) // 总高度
+            .background(color = backgroundColor, shape = backgroundShape)
+            .border(width = borderWidth, color = borderColor, shape = borderShape),
         textStyle = LocalTextStyle.current.copy(
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = 14.sp
@@ -73,7 +80,7 @@ fun Searchbar(
                 keyboardController?.hide()
             }
         ),
-        // 用基础的 Row 来自定义内部布局
+        // 用 Row 自定义内部布局
         decorationBox = { innerTextField ->
             Row(
                 modifier = Modifier

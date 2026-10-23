@@ -109,14 +109,14 @@ fun HomeScreen(
 
     Column(
         modifier = modifier
+            .background(Color(0xFFF5F6FA))
+            //.background(Color.Cyan)
             .padding(
                 start = dimensionResource(R.dimen.padding_small),
                 end = dimensionResource(R.dimen.padding_small),
                 top = dimensionResource(R.dimen.padding_small),
                 bottom = 0.dp
             )
-            .background(Color(0xFFF5F6FA))
-        // .background(Color.Cyan)
     ) {
         var searchQuery by rememberSaveable { mutableStateOf("") }
         Searchbar(
