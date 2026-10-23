@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
-import com.fuyouwentian.planktonmall.domain.model.Add2CartParams
+import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
@@ -66,15 +66,14 @@ class DetailViewModel @Inject constructor(
     }
 
     fun add2Cart(product: Product) {
-        Log.d("Detail", "add2Cart: $product")
         viewModelScope.launch {
             try {
                 if (userRepo.isLoggedIn() == false) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                cartRepo.insert(
-                    Add2CartParams(
+                val bool = cartRepo.insert(
+                    Add2CartProductParams(
                         id = product.id,
                         price = product.price,
                         stock = product.stock,
@@ -84,7 +83,7 @@ class DetailViewModel @Inject constructor(
                         iconUrl = product.iconUrl
                     )
                 )
-                _uiEvent.emit(UiEvent.ShowToast("加入购物车成功"))
+                if (bool) _uiEvent.emit(UiEvent.ShowToast("加入购物车成功"))
             } catch (e: Exception) {
                 handleError(e)
             }

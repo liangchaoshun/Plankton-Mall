@@ -8,7 +8,8 @@ import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
 import com.fuyouwentian.planktonmall.data.local.profile.toDomain
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
-import com.fuyouwentian.planktonmall.domain.model.Add2CartParams
+import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
+import com.fuyouwentian.planktonmall.domain.model.Add2CartRequest
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.util.MongoIdGenerator
@@ -49,28 +50,36 @@ class CartRepositoryImpl @Inject constructor(
     }
 
     // 参数是商品的参数
-    override suspend fun insert(params: Add2CartParams) {
+    override suspend fun insert(params: Add2CartProductParams): Boolean {
         // Log.d("CartRepositoryImpl ", "insert params: $params")
+        var add2CartRequest = Add2CartRequest(
+            id = MongoIdGenerator.generate(),
+            goodsId = params.id
+        )
+
         val existingEntity = cartDao.getItemByProductId(params.id)
         if (existingEntity != null) {
-            // 已存在：数量 + 1，并标记为待更新
+            // 存在，先更新本地数据
             val updatedEntity = existingEntity.copy(
                 quantity = existingEntity.quantity + 1,
                 checked = true, // 勾选上
                 syncState = SyncState.PENDING_UPDATE
             )
             cartDao.update(updatedEntity)
+            add2CartRequest = Add2CartRequest(
+                id = updatedEntity.id,
+                goodsId = updatedEntity.goodsId
+            )
         } else {
-            // 不存在：直接插入新记录
-            val userId = profileDao.getUserProfile()!!.toDomain().id
+            // 不存在，先插入一条新的到本地数据
             val cartProduct = CartProduct(
-                id = MongoIdGenerator.generate(),
-                userId = userId,
+                id = add2CartRequest.id,
+                userId = profileDao.getUserProfile()!!.toDomain().id,
                 goodsId = params.id,
                 goodsPrice = params.price,
                 quantity = 1,
                 isValid = true,
-                checked = true, // 勾选上
+                checked = true,
                 goodsStock = params.stock,
                 goodsOnSale = params.onSale,
                 goodsNameZh = params.nameZh,
@@ -80,7 +89,14 @@ class CartRepositoryImpl @Inject constructor(
             )
             cartDao.insert(cartProduct.toEntity())
         }
-        syncLocal2Server()
+        // 再同步到服务器
+        var result = false
+        val response = safeApiCall { api.cartInsert(add2CartRequest) }
+        response?.let {
+            cartDao.update(response.toEntity().copy(syncState = SyncState.SYNCED))
+            result = true
+        }
+        return result
     }
 
     override suspend fun delete(ids: List<String>) {

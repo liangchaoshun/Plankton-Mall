@@ -100,7 +100,7 @@ data class CartProduct(
     val syncState: SyncState? = null
 )
 
-data class Add2CartParams(
+data class Add2CartProductParams(
     val id: String,
     val price: String,
     val stock: Int,
@@ -108,6 +108,13 @@ data class Add2CartParams(
     val nameZh: String,
     val nameEn: String,
     val iconUrl: String,
+)
+
+@Serializable
+data class Add2CartRequest(
+    val id: String,
+    @SerialName("goods_id")
+    val goodsId: String,
 )
 
 @Serializable

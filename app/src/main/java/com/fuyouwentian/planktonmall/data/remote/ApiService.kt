@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.data.remote
 
+import com.fuyouwentian.planktonmall.domain.model.Add2CartRequest
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.CartProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.Category
@@ -53,7 +54,7 @@ interface ApiService {
     suspend fun userValidate(): BaseResponse<Boolean?>
 
     @POST("cart/insert")
-    suspend fun cartInsert(@Body param: CartProduct): BaseResponse<Unit>
+    suspend fun cartInsert(@Body param: Add2CartRequest): BaseResponse<CartProduct>
 
     @DELETE("cart/delete")
     suspend fun cartDelete(@Body ids: List<String>): BaseResponse<Unit>
