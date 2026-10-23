@@ -1,4 +1,4 @@
-package com.fuyouwentian.planktonmall.domain.repository;
+package com.fuyouwentian.planktonmall.domain.repository
 
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
@@ -9,8 +9,9 @@ interface CartRepository {
     fun getAllLocalCartItems(): Flow<List<CartProduct>>
     suspend fun syncLocal2Server()
     suspend fun insert(params: Add2CartProductParams): Boolean
-    suspend fun delete(ids: List<String>)
+    suspend fun delete(ids: List<String>): Boolean
     suspend fun fetchData()
+
     // 会将多条记录设置为同一个值
     suspend fun updateMultiChecked(ids: List<String>, checked: Boolean)
     suspend fun updateQuantity(id: String, quantity: Int)

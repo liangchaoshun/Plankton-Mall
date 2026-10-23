@@ -36,7 +36,7 @@ interface CartDao {
     suspend fun insert(item: CartEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(items: List<CartEntity>)
+    suspend fun insertMulti(items: List<CartEntity>)
 
     @Update
     suspend fun update(item: CartEntity)
@@ -45,11 +45,7 @@ interface CartDao {
     suspend fun deleteById(id: String)
     */
     @Query("DELETE FROM cart WHERE id IN (:ids)")
-    suspend fun deleteLocalItemsById(ids: List<String>)
-
-
-    @Query("UPDATE cart SET syncState = 'PENDING_DELETE' WHERE id IN (:ids)")
-    suspend fun markLocalItems2Deleted(ids: List<String>)
+    suspend fun deleteItemsByIds(ids: List<String>)
 
     @Query("UPDATE cart SET syncState = 'SYNCED' WHERE id IN (:ids)")
     suspend fun markLocalItems2Synced(ids: List<String>)
@@ -85,10 +81,10 @@ interface CartDao {
                 }
             }
         // 统一插入/更新
-        insertAll(mergedEntities)
+        insertMulti(mergedEntities)
         // 删除掉多余的脏数据
         val allLocalCartIds = getAllItemIds()
         val dirtyIds = allLocalCartIds.filter { !remoteIds.contains(it) }
-        if (dirtyIds.isNotEmpty()) deleteLocalItemsById(dirtyIds)
+        if (dirtyIds.isNotEmpty()) deleteItemsByIds(dirtyIds)
     }
 }

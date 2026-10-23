@@ -96,6 +96,10 @@ data class CartProduct(
     val goodsNameEn: String,
     @SerialName("goods_icon")
     val goodsIcon: String,
+    @SerialName("create_time")
+    val createTime: String? = null,
+    @SerialName("update_time")
+    val updateTime: String? = null,
     @SerialName("sync_state")
     val syncState: SyncState? = null
 )

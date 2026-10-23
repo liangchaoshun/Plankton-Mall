@@ -22,6 +22,8 @@ fun CartEntity.toDomain(): CartProduct = CartProduct(
     goodsNameZh = goodsNameZh,
     goodsNameEn = goodsNameEn,
     goodsIcon = goodsIcon,
+    createTime = createTime,
+    updateTime = updateTime,
     syncState = syncState,
 )
 
@@ -39,6 +41,7 @@ fun CartProduct.toEntity(): CartEntity = CartEntity(
     goodsNameZh = goodsNameZh,
     goodsNameEn = goodsNameEn,
     goodsIcon = goodsIcon,
+    createTime = createTime,
+    updateTime = updateTime,
     syncState = syncState ?: SyncState.SYNCED,
 )
-

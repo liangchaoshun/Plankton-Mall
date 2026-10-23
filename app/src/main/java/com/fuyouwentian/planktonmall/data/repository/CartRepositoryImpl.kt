@@ -29,7 +29,6 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun syncLocal2Server() {
         val pendingItems = cartDao.getAllPendingSyncedItems().map { it.toDomain() }
-//        Log.d("CartRepositoryImpl", "syncLocal2Server: $pendingItems")
         if (pendingItems.isNotEmpty()) {
             safeApiCall { api.cartSyncLocal2Server(pendingItems) }?.let { bool ->
                 if (bool) {
@@ -57,9 +56,10 @@ class CartRepositoryImpl @Inject constructor(
             goodsId = params.id
         )
 
+        // 先处理本地数据
         val existingEntity = cartDao.getItemByProductId(params.id)
         if (existingEntity != null) {
-            // 存在，先更新本地数据
+            // 存在，更新本地数据
             val updatedEntity = existingEntity.copy(
                 quantity = existingEntity.quantity + 1,
                 checked = true, // 勾选上
@@ -71,7 +71,7 @@ class CartRepositoryImpl @Inject constructor(
                 goodsId = updatedEntity.goodsId
             )
         } else {
-            // 不存在，先插入一条新的到本地数据
+            // 不存在，插入一条新的到本地数据
             val cartProduct = CartProduct(
                 id = add2CartRequest.id,
                 userId = profileDao.getUserProfile()!!.toDomain().id,
@@ -90,18 +90,32 @@ class CartRepositoryImpl @Inject constructor(
             cartDao.insert(cartProduct.toEntity())
         }
         // 再同步到服务器
-        var result = false
-        val response = safeApiCall { api.cartInsert(add2CartRequest) }
-        response?.let {
-            cartDao.update(response.toEntity().copy(syncState = SyncState.SYNCED))
-            result = true
+        var response = false
+        try {
+            safeApiCall { api.cartInsert(add2CartRequest) }?.let {
+                cartDao.update(it.toEntity().copy(syncState = SyncState.SYNCED))
+                response = true
+            }
+        } catch (e: Exception) {
+            cartDao.deleteItemsByIds(listOf(add2CartRequest.id)) // 同步到服务器失败，还原
+            throw e
         }
-        return result
+        return response
     }
 
-    override suspend fun delete(ids: List<String>) {
-        cartDao.markLocalItems2Deleted(ids)
-        syncLocal2Server()
+    override suspend fun delete(ids: List<String>): Boolean {
+        // 先删除本地数据
+        val legacyItems = cartDao.getItemsByIds(ids)
+        cartDao.deleteItemsByIds(ids)
+        // 再同步到服务器
+        var response = false
+        try {
+            safeApiCall { api.cartDelete(ids) }?.let { response = it }
+        } catch (e: Exception) {
+            cartDao.insertMulti(legacyItems) // 同步到服务器失败，还原
+            throw e
+        }
+        return response
     }
 
     override suspend fun updateMultiChecked(ids: List<String>, checked: Boolean) {

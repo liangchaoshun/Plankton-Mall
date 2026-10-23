@@ -21,11 +21,12 @@ data class CartEntity(
     val goodsNameZh: String,
     val goodsNameEn: String,
     val goodsIcon: String,
+    val createTime: String? = null,
+    val updateTime: String? = null,
     val syncState: SyncState? = SyncState.SYNCED,
 )
 
 enum class SyncState {
-    SYNCED,          // 已与服务端一致
-    PENDING_UPDATE,  // 本地已修改，待同步
-    PENDING_DELETE   // 本地已删除，待同步
+    SYNCED, // 已与服务端一致
+    PENDING_UPDATE, // 本地已修改，待同步
 }

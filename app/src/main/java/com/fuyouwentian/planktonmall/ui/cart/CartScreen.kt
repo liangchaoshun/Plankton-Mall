@@ -113,6 +113,15 @@ fun CartScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
 
+    // cartItems 是缓存值，当 key1，即 cartItems 发生引用变化（即数据更新）时，会重新排序
+    val sortedCartItems = remember(cartItems) {
+        // 即使 cartItems 为 emptyList()，也会调用 sortedWith 方法，返回结果也为 emptyList()
+        cartItems.sortedWith(
+            compareBy<CartProduct> { it.createTime } // 第一排序字段
+                .thenBy { it.id } // 若第一排序字段相同，则使用第二排序字段，一次类推 .thenBy
+        )
+    }
+
     LaunchedEffect(Unit) {
         viewModel.fetchCartData()
     }
@@ -222,7 +231,7 @@ fun CartScreen(
                             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                             modifier = modifier.fillMaxSize()
                         ) {
-                            items(cartItems, key = { it.id }) { product ->
+                            items(sortedCartItems, key = { it.id }) { product ->
                                 SwipeableCartItem(
                                     product = product,
                                     isRevealed = revealedProductId == product.id,
@@ -234,7 +243,7 @@ fun CartScreen(
                                     onProductClick = onProductClick,
                                     onToggleSelect = viewModel::toggleSelect,
                                     onQuantityChange = viewModel::changeQuantity,
-                                    onCollect = { value -> Log.d("Cart", "收藏: ${product.id}") },
+                                    onCollect = { Log.d("Cart", "收藏: ${product.id}") }, // TODO
                                     onDelete = viewModel::deleteCartItems,
                                     onSyncClick = viewModel::syncData2Server
                                 )
@@ -244,7 +253,7 @@ fun CartScreen(
 
                     // 底部结算栏
                     SettleColumn(
-                        cartItems = cartItems,
+                        cartItems = sortedCartItems,
                         onSettleBtnClick = onSettleClick,
                         onToggleSelectAll = viewModel::toggleSelectAll
                     )
@@ -595,7 +604,6 @@ fun SwipeableCartItem(
 @Composable
 fun SettleColumn(
     cartItems: List<CartProduct>,
-    modifier: Modifier = Modifier,
     onSettleBtnClick: () -> Unit = {},
     onToggleSelectAll: () -> Unit = {}
 ) {

@@ -15,7 +15,6 @@ import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -56,8 +55,8 @@ interface ApiService {
     @POST("cart/insert")
     suspend fun cartInsert(@Body param: Add2CartRequest): BaseResponse<CartProduct>
 
-    @DELETE("cart/delete")
-    suspend fun cartDelete(@Body ids: List<String>): BaseResponse<Unit>
+    @POST("cart/delete")
+    suspend fun cartDelete(@Body ids: List<String>): BaseResponse<Boolean>
 
     @PUT("cart/sync")
     suspend fun cartSyncLocal2Server(@Body param: List<CartProduct>): BaseResponse<Boolean?>

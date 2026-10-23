@@ -148,7 +148,7 @@ class CartViewModel @Inject constructor(
         Log.d("CartViewModel", "deleteCartItems: $ids")
         viewModelScope.launch {
             try {
-                cartRepo.delete(ids)
+                if (cartRepo.delete(ids)) _uiEvent.emit(UiEvent.ShowToast("删除成功"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 handleError(e)
