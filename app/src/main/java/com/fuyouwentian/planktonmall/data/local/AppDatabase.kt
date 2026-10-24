@@ -9,7 +9,7 @@ import com.fuyouwentian.planktonmall.data.local.profile.ProfileEntity
 
 @Database(
     entities = [CartEntity::class, ProfileEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

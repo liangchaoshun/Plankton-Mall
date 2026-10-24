@@ -1,13 +1,16 @@
 package com.fuyouwentian.planktonmall.data.remote
 
 import com.fuyouwentian.planktonmall.domain.model.Add2CartRequest
+import com.fuyouwentian.planktonmall.domain.model.Add2FavorRequest
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.CartProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.Category
 import com.fuyouwentian.planktonmall.domain.model.CategoryData
+import com.fuyouwentian.planktonmall.domain.model.FavorProduct
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
 import com.fuyouwentian.planktonmall.domain.model.PaginationParamsRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
@@ -63,4 +66,14 @@ interface ApiService {
 
     @GET("cart/list")
     suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>
+
+    @POST("favor/insert")
+    suspend fun favorInsert(@Body param: Add2FavorRequest): BaseResponse<FavorProduct>
+
+    @POST("favor/delete")
+    suspend fun favorDelete(@Body ids: List<String>): BaseResponse<Boolean>
+
+    @POST("favor/list")
+    suspend fun favorList(@Body param: PaginationRequest): BaseResponse<ProductsResponseData<FavorProduct>?>
+
 }

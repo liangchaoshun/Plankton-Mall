@@ -1,6 +1,6 @@
 package com.fuyouwentian.planktonmall.domain.model
 
-import com.fuyouwentian.planktonmall.data.local.cart.SyncState
+import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -100,8 +100,7 @@ data class CartProduct(
     val createTime: String? = null,
     @SerialName("update_time")
     val updateTime: String? = null,
-    @SerialName("sync_state")
-    val syncState: SyncState? = null
+    val syncState: SyncRecordState? = null
 )
 
 data class Add2CartProductParams(
@@ -128,7 +127,14 @@ data class ProductsRequest(
     @SerialName("page_size")
     val pageSize: Int = 10,
     val q: String? = ""
-    // 其他后端要求的字段
+)
+
+@Serializable
+data class PaginationRequest(
+    @SerialName("page_index")
+    val pageIndex: Int = 1,
+    @SerialName("page_size")
+    val pageSize: Int = 10,
 )
 
 @Serializable
@@ -155,4 +161,34 @@ data class ProductsResponseData<T>(
 data class CartProductsResponseData<T>(
     val data: List<T>,
     val total: Int
+)
+
+@Serializable
+data class FavorProduct(
+    @SerialName("_id")
+    val id: String,
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("goods_id")
+    val goodsId: String,
+    @SerialName("is_valid")
+    val isValid: Boolean,
+    @SerialName("goods_name_zh")
+    val goodsNameZh: String,
+    @SerialName("goods_name_en")
+    val goodsNameEn: String,
+    @SerialName("goods_icon")
+    val goodsIcon: String,
+    @SerialName("create_time")
+    val createTime: String? = null,
+    @SerialName("update_time")
+    val updateTime: String? = null,
+    val syncState: SyncRecordState? = null
+)
+
+@Serializable
+data class Add2FavorRequest(
+    val id: String,
+    @SerialName("goods_id")
+    val goodsId: String,
 )

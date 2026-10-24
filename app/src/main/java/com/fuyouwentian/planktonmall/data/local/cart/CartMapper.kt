@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.data.local.cart
 
+import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 
 /**
@@ -43,5 +44,5 @@ fun CartProduct.toEntity(): CartEntity = CartEntity(
     goodsIcon = goodsIcon,
     createTime = createTime,
     updateTime = updateTime,
-    syncState = syncState ?: SyncState.SYNCED,
+    syncState = syncState ?: SyncRecordState.SYNCED,
 )

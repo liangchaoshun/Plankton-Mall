@@ -2,6 +2,7 @@ package com.fuyouwentian.planktonmall.data.local.cart
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 
 // 关于 syncState 字段的类型，
 // 在 Room 中，如果要保存枚举类型，
@@ -23,11 +24,5 @@ data class CartEntity(
     val goodsIcon: String,
     val createTime: String? = null,
     val updateTime: String? = null,
-    val syncState: SyncState? = SyncState.SYNCED,
+    val syncState: SyncRecordState? = SyncRecordState.SYNCED,
 )
-
-enum class SyncState {
-    SYNCED, // 已与服务端一致
-    PENDING_INSERT, // 本地已修改，待同步
-    PENDING_UPDATE, // 本地已修改，待同步
-}

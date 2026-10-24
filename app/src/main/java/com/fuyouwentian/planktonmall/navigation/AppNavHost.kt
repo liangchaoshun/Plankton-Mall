@@ -132,7 +132,7 @@ fun AppNavHost(
                                 // 选中的背景
                                 Box(
                                     modifier = Modifier
-                                        .size(width = 60.dp, height = 40.dp)
+                                        .size(width = 60.dp, height = 50.dp)
                                         .background(
                                             if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
                                                 0.3f
@@ -156,7 +156,7 @@ fun AppNavHost(
                                         if (dest.route == Routes.CART && cartTotalQuantity > 0) {
                                             Box(
                                                 modifier = Modifier
-                                                    .offset(x = 12.dp, y = (-9).dp)
+                                                    .offset(x = 12.dp, y = (-8).dp)
                                                     .clip(RoundedCornerShape(8.dp))
                                                     .background(Color.Red),
                                             ) {

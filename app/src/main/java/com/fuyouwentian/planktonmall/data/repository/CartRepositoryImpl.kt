@@ -1,7 +1,7 @@
 package com.fuyouwentian.planktonmall.data.repository
 
+import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.local.cart.CartDao
-import com.fuyouwentian.planktonmall.data.local.cart.SyncState
 import com.fuyouwentian.planktonmall.data.local.cart.toDomain
 import com.fuyouwentian.planktonmall.data.local.cart.toEntity
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
@@ -65,7 +65,7 @@ class CartRepositoryImpl @Inject constructor(
             val updatedEntity = existingEntity.copy(
                 quantity = existingEntity.quantity + 1,
                 checked = true, // 勾选上
-                syncState = SyncState.PENDING_UPDATE
+                syncState = SyncRecordState.PENDING_UPDATE
             )
             cartDao.update(updatedEntity)
             add2CartRequest = Add2CartRequest(
@@ -87,7 +87,7 @@ class CartRepositoryImpl @Inject constructor(
                 goodsNameZh = params.nameZh,
                 goodsNameEn = params.nameEn,
                 goodsIcon = params.iconUrl,
-                syncState = SyncState.PENDING_INSERT
+                syncState = SyncRecordState.PENDING_INSERT
             )
             cartDao.insert(cartProduct.toEntity())
         }
@@ -95,7 +95,7 @@ class CartRepositoryImpl @Inject constructor(
         var response = false
         try {
             safeApiCall { api.cartInsert(add2CartRequest) }?.let {
-                cartDao.update(it.toEntity().copy(syncState = SyncState.SYNCED))
+                cartDao.update(it.toEntity().copy(syncState = SyncRecordState.SYNCED))
                 response = true
             }
         } catch (e: Exception) {

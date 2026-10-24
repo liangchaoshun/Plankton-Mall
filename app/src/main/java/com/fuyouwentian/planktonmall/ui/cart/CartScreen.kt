@@ -64,10 +64,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -81,6 +84,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -560,6 +564,14 @@ fun SwipeableCartItem(
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
+                    .dropShadow(
+                        shape = RectangleShape, // RoundedCornerShape 已验证不可用
+                        shadow = Shadow(
+                            radius = 8.dp,
+                            offset = DpOffset(x = 0.dp, y = 3.dp),
+                            color = Color.Black.copy(alpha = 0.3f)
+                        )
+                    )
                     .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                     .clickable(enabled = product.isValid && !isCurrentlyRevealed) {
                         onProductClick(product.id)
