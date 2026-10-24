@@ -72,11 +72,11 @@ class ProfileViewModel @Inject constructor(
     }
 
     // TEST
-    fun syncData2Server() {
+    fun syncLocalData2Server() {
         Log.d("ProfileViewModel", "[syncData2Server]")
         viewModelScope.launch {
             try {
-                cartRepo.syncLocal2Server()
+                cartRepo.syncLocalUpdate2Server()
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 handleError(e)

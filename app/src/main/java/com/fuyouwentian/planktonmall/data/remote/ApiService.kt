@@ -58,8 +58,8 @@ interface ApiService {
     @POST("cart/delete")
     suspend fun cartDelete(@Body ids: List<String>): BaseResponse<Boolean>
 
-    @PUT("cart/sync")
-    suspend fun cartSyncLocal2Server(@Body param: List<CartProduct>): BaseResponse<Boolean?>
+    @PUT("cart/update")
+    suspend fun cartUpdate(@Body params: List<CartProduct>): BaseResponse<Boolean?>
 
     @GET("cart/list")
     suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>

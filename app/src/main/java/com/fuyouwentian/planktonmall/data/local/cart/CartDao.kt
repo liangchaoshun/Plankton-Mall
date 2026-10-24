@@ -21,8 +21,12 @@ interface CartDao {
     @Query("SELECT * FROM cart")
     fun getAllItemFlow(): Flow<List<CartEntity>>
 
+    // 购物车为空时，SUM 会返回 NULL
+    @Query("SELECT SUM(quantity) FROM cart")
+    fun getTotalQuantityFlow(): Flow<Int?>
+
     @Query("SELECT id FROM cart")
-    // Room 官方原生也支持直接返回 Set，底层处理转换
+    // Room 官方原生也支持直接返回 Set，底层自动处理转换
     fun getAllItemIds(): List<String>
 
     @Query("SELECT * FROM cart WHERE goodsId = :productId")
@@ -41,9 +45,6 @@ interface CartDao {
     @Update
     suspend fun update(item: CartEntity)
 
-    /*@Query("DELETE FROM cart WHERE id = :id")
-    suspend fun deleteById(id: String)
-    */
     @Query("DELETE FROM cart WHERE id IN (:ids)")
     suspend fun deleteItemsByIds(ids: List<String>)
 
@@ -56,9 +57,9 @@ interface CartDao {
     @Query("UPDATE cart SET checked = :checked, syncState = 'PENDING_UPDATE' WHERE id IN (:ids)")
     suspend fun updateMultiChecked(ids: List<String>, checked: Boolean)
 
-    // 查询所有待同步数据
-    @Query("SELECT * FROM cart WHERE syncState != 'SYNCED'")
-    suspend fun getAllPendingSyncedItems(): List<CartEntity>
+    // 查询所有待更新的数据，“待插入”和“待删除”的数据是另外处理
+    @Query("SELECT * FROM cart WHERE syncState = 'PENDING_UPDATE'")
+    suspend fun getPendingUpdateItems(): List<CartEntity>
 
     @Transaction
     suspend fun syncRemoteData2Room(remote: List<CartProduct>) {

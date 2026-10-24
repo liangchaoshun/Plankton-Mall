@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,11 +27,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -60,6 +64,7 @@ fun AppNavHost(
     val currentRoute: String = backStackEntry?.destination?.route ?: Routes.HOME
     // 只有当前路由在底部导航的目的地里，才显示底部栏
     val showBottomBar = currentRoute in NAVI_ROUTES
+    val cartTotalQuantity by viewModel.cartTotalQuantity.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.tokenUiEvent.collect { event ->
@@ -140,12 +145,33 @@ fun AppNavHost(
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-                                    Icon(
-                                        imageVector = iconVector,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
-                                        tint = destColor
-                                    )
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = iconVector,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = destColor
+                                        )
+                                        // 购物车徽章
+                                        if (dest.route == Routes.CART && cartTotalQuantity > 0) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .offset(x = 12.dp, y = (-9).dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(Color.Red),
+                                            ) {
+                                                Text(
+                                                    text = if (cartTotalQuantity > 99) "99+" else cartTotalQuantity.toString(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color.White,
+                                                    modifier = Modifier.padding(
+                                                        horizontal = 4.dp,
+                                                        vertical = 0.dp
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
                                     Text(
                                         text = stringResource(dest.iconTextId),
                                         style = MaterialTheme.typography.labelSmall,

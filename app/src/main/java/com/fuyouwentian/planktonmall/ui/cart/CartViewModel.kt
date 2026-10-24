@@ -47,20 +47,24 @@ class CartViewModel @Inject constructor(
     // UI 事件
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
-
-    private val syncTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-
     private var currentJob: Job? = null
 
     // 防止竞态：fetchProductsData
     private var requestId = 0
+
+    // 🌟 关于防抖说明：https://chat.deepseek.com/share/xhacrastm18ql8rii0
+    // 选用防抖设置每个条目的选中（checked）、数量（quantity）做同步更新到服务器上，还是有点小问题
+    // 问题主要在于网络的信号强弱带来的延迟性，导致本地可能已经变了但是上一次的请求延迟了返回结果将当前条目设置为已同步！
+    private val syncTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     init {
         viewModelScope.launch {
             syncTrigger
                 .debounce(400.milliseconds)
                 .collect {
-                    cartRepo.syncLocal2Server()
+                    runCatching {
+                        cartRepo.syncLocalUpdate2Server()
+                    }.onFailure { e -> handleError(e) }
                 }
         }
     }
@@ -73,12 +77,10 @@ class CartViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     loading = true,
-                    updatingIds = emptySet(),
                     allSelected = false,
                     error = null
                 )
             }
-
             try {
                 val isLoggedIn = userRepo.isLoggedIn() ?: false
                 _uiState.update { it.copy(isLoggedIn = isLoggedIn) }
@@ -93,16 +95,19 @@ class CartViewModel @Inject constructor(
         }
     }
 
+    private suspend fun safeUpdateAndSync(updateLocal: suspend () -> Unit) {
+        try {
+            updateLocal() // 先更新本地
+            syncTrigger.tryEmit(Unit) // 再同步到服务器
+        } catch (e: Throwable) {
+            handleError(e)
+        }
+    }
+
     // 切换选中某项
     fun toggleSelect(id: String, bool: Boolean) {
         viewModelScope.launch {
-            try {
-                cartRepo.updateMultiChecked(ids = listOf(id), checked = bool)
-                syncTrigger.tryEmit(Unit)
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                handleError(e)
-            }
+            safeUpdateAndSync { cartRepo.updateMultiLocalChecked(ids = listOf(id), checked = bool) }
         }
     }
 
@@ -111,13 +116,11 @@ class CartViewModel @Inject constructor(
         val target = !_uiState.value.allSelected // 只有两种可能：全选和全不选
         _uiState.update { state -> state.copy(allSelected = target) }
         viewModelScope.launch {
-            try {
-                val ids = cartItems.value.filter { it.isValid }.map { it.id }
-                cartRepo.updateMultiChecked(ids = ids, checked = target)
-                syncTrigger.tryEmit(Unit)
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                handleError(e)
+            safeUpdateAndSync {
+                cartRepo.updateMultiLocalChecked(
+                    ids = cartItems.value.filter { it.isValid }.map { it.id },
+                    checked = target
+                )
             }
         }
     }
@@ -126,49 +129,37 @@ class CartViewModel @Inject constructor(
     fun changeQuantity(id: String, value: Int) {
         if (value !in 1 until 1000) return
         // 取旧值用于失败回滚
-        val legacyValue = cartItems.value
-            .firstOrNull { it.id == id }?.quantity ?: return
-
+        val legacyValue = cartItems.value.firstOrNull { it.id == id }?.quantity ?: return
         if (legacyValue == value) return
+
         viewModelScope.launch {
-            try {
-                cartRepo.updateQuantity(id, value)
-                syncTrigger.tryEmit(Unit)
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                handleError(e)
-            } finally {
-                _uiState.update { it.copy(updatingIds = it.updatingIds - id) }
-            }
+            safeUpdateAndSync { cartRepo.updateLocalQuantity(id, value) }
         }
     }
 
-    // TODO 待完善，很多事件没有成功的提示文案
     fun deleteCartItems(ids: List<String>) {
         Log.d("CartViewModel", "deleteCartItems: $ids")
         viewModelScope.launch {
             try {
                 if (cartRepo.delete(ids)) _uiEvent.emit(UiEvent.ShowToast("删除成功"))
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
                 handleError(e)
             }
         }
     }
 
     fun syncData2Server(id: String) {
-        Log.d("Cart", "[syncData2Server] id: $id")
+        // Log.d("Cart", "[syncData2Server] id: $id")
         viewModelScope.launch {
             try {
-                cartRepo.syncLocal2Server()
+                cartRepo.syncLocalUpdate2Server() // 全量（checked、quantity）提交的
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
                 handleError(e)
             }
         }
     }
 
-    private suspend fun handleError(e: Exception) {
+    private suspend fun handleError(e: Throwable) {
         if (e is CancellationException) throw e // 协程取消时会抛出
         val msg = when (e) {
             /**

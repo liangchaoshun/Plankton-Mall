@@ -93,7 +93,7 @@ fun ProfileScreen(
             }
             Spacer(modifier = Modifier.height(30.dp))
             Button(
-                onClick = viewModel::syncData2Server,
+                onClick = viewModel::syncLocalData2Server,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

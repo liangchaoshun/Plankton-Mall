@@ -172,7 +172,10 @@ fun CartScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(text = "请先登录，以获取数据")
+                        Text(
+                            text = "请先登录，以获取数据",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                         Button(
                             onClick = { onNavigate2Login() },
@@ -200,7 +203,10 @@ fun CartScreen(
                                 .aspectRatio(1f),
                             contentScale = ContentScale.Crop
                         )
-                        Text(text = "购物车空空如也")
+                        Text(
+                            text = "购物车空空如也",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                         Button(
                             onClick = { onNavigate2Pickup() },
@@ -235,7 +241,6 @@ fun CartScreen(
                                 SwipeableCartItem(
                                     product = product,
                                     isRevealed = revealedProductId == product.id,
-                                    isSyncFiled = product.id in uiState.syncFailedIds,
                                     onRevealedChange = { isRevealed ->
                                         // Log.d("Cart", "$isRevealed")
                                         revealedProductId = if (isRevealed) product.id else null
@@ -537,6 +542,7 @@ fun SwipeableCartItem(
                         checkmarkColor = Color.White
                     )
                 )
+                // 若该商品（checked、quantity）同步失败，则显示一个刷新的 icon
                 if (isSyncFiled) {
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(onClick = { onSyncClick(product.id) }) {

@@ -18,8 +18,6 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// 本地优先 + syncState 标记 + 后台同步
-// 这样可以做到 UI 立即响应
 @Singleton
 class CartRepositoryImpl @Inject constructor(
     private val api: ApiService, // Hilt 会自动提供
@@ -27,16 +25,20 @@ class CartRepositoryImpl @Inject constructor(
     private val profileDao: ProfileDao,
 ) : CartRepository {
 
-    override suspend fun syncLocal2Server() {
-        val pendingItems = cartDao.getAllPendingSyncedItems().map { it.toDomain() }
+    override suspend fun syncLocalUpdate2Server() {
+        val pendingItems = cartDao.getPendingUpdateItems().map { it.toDomain() }
         if (pendingItems.isNotEmpty()) {
-            safeApiCall { api.cartSyncLocal2Server(pendingItems) }?.let { bool ->
+            safeApiCall { api.cartUpdate(pendingItems) }?.let { bool ->
                 if (bool) {
-                    // 成功后，修改同步状态
+                    // 成功后，修改同步状态为“已同步”
                     cartDao.markLocalItems2Synced(pendingItems.map { it.id })
                 }
             }
         }
+    }
+
+    override fun getTotalQuantityFlow(): Flow<Int?> {
+        return cartDao.getTotalQuantityFlow()
     }
 
     // Room 框架在底层实现时，对于返回 Flow<List<T>> 的查询，
@@ -85,7 +87,7 @@ class CartRepositoryImpl @Inject constructor(
                 goodsNameZh = params.nameZh,
                 goodsNameEn = params.nameEn,
                 goodsIcon = params.iconUrl,
-                syncState = SyncState.PENDING_UPDATE
+                syncState = SyncState.PENDING_INSERT
             )
             cartDao.insert(cartProduct.toEntity())
         }
@@ -118,15 +120,13 @@ class CartRepositoryImpl @Inject constructor(
         return response
     }
 
-    override suspend fun updateMultiChecked(ids: List<String>, checked: Boolean) {
-        cartDao.updateMultiChecked(ids, checked)
-        // 要做防抖，所以同步到服务器方法（syncLocal2Server）须在 CartViewModel 中调用
-    }
-
-    override suspend fun updateQuantity(id: String, quantity: Int) {
+    override suspend fun updateLocalQuantity(id: String, quantity: Int) {
         cartDao.updateQuantity(id, quantity)
         cartDao.updateMultiChecked(listOf(id), true)
-        // 要做防抖，所以同步到服务器方法（syncLocal2Server）须在 CartViewModel 中调用
+    }
+
+    override suspend fun updateMultiLocalChecked(ids: List<String>, checked: Boolean) {
+        cartDao.updateMultiChecked(ids, checked)
     }
 
     override suspend fun fetchData() {
