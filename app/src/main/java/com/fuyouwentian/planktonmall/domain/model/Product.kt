@@ -177,8 +177,14 @@ data class FavorProduct(
     val goodsNameZh: String,
     @SerialName("goods_name_en")
     val goodsNameEn: String,
+    @SerialName("goods_price")
+    val goodsPrice: String,
     @SerialName("goods_icon")
     val goodsIcon: String,
+    @SerialName("goods_stock")
+    val goodsStock: Int,
+    @SerialName("goods_on_sale")
+    val goodsOnSale: Int,
     @SerialName("create_time")
     val createTime: String? = null,
     @SerialName("update_time")
@@ -187,8 +193,64 @@ data class FavorProduct(
 )
 
 @Serializable
+data class HistoryProduct(
+    val id: String,
+    val userId: String,
+    val goodsId: String,
+    val isValid: Boolean,
+    val goodsNameZh: String,
+    val goodsNameEn: String,
+    val goodsPrice: String,
+    val goodsIcon: String,
+    val goodsStock: Int,
+    val goodsOnSale: Int,
+    val createTime: String? = "",
+    val updateTime: String? = "",
+)
+
+@Serializable
 data class Add2FavorRequest(
     val id: String,
     @SerialName("goods_id")
     val goodsId: String,
+)
+
+@Serializable
+data class Order(
+    @SerialName("_id")
+    val id: String,
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("goods_id")
+    val goodsId: String,
+    @SerialName("goods_name_zh")
+    val goodsNameZh: String,
+    @SerialName("goods_name_en")
+    val goodsNameEn: String,
+    @SerialName("goods_icon")
+    val goodsIcon: String,
+    @SerialName("goods_price")
+    val goodsPrice: String,
+    val quantity: Int,
+    @SerialName("actual_pay")
+    val actualPay: String,
+    @SerialName("receiver_name")
+    val receiverName: String,
+    @SerialName("receiver_phone")
+    val receiverPhone: String,
+    @SerialName("receiver_address")
+    val receiverAddress: String,
+    @SerialName("order_status")
+    val orderStatus: Int,
+    @SerialName("payment_status")
+    val paymentStatus: Int,
+    @SerialName("after_sales_status")
+    val afterSalesStatus: Int,
+    val deleted: Int,
+    @SerialName("payment_time")
+    val paymentTime: String,
+    @SerialName("create_time")
+    val createTime: String? = null,
+    @SerialName("update_time")
+    val updateTime: String? = null,
 )

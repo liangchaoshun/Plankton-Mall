@@ -15,7 +15,7 @@ fun ProfileEntity.toDomain(): UserProfile = UserProfile(
     avatar = avatar,
     email = email,
     phone = phone,
-    address = address,
+    receiverInfo = receiverInfo,
     bio = bio,
     birthday = birthday
 )
@@ -29,7 +29,7 @@ fun UserProfile.toEntity(): ProfileEntity = ProfileEntity(
     avatar = avatar,
     email = email,
     phone = phone,
-    address = address,
+    receiverInfo = receiverInfo,
     bio = bio,
     birthday = birthday
 )

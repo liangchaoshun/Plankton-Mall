@@ -25,16 +25,24 @@ data class RegisterRequest(
 )
 
 @Serializable
+data class ReceiverInfo(
+    val name: String,
+    val phone: String,
+    val address: String
+)
+
+@Serializable
 data class UserProfile(
     @SerialName("_id")
     val id: String,
     val account: String,
     val password: String,
-    val nickname: String? = null,
-    val avatar: String? = null,
-    val email: String? = null,
-    val phone: String? = null,
-    val address: String? = null,
-    val bio: String? = null,
-    val birthday: String? = null
+    val nickname: String? = "",
+    val avatar: String? = "",
+    val email: String? = "",
+    val phone: String? = "",
+    @SerialName("receiver_info")
+    val receiverInfo: List<ReceiverInfo>? = emptyList(),
+    val bio: String? = "",
+    val birthday: String? = ""
 )

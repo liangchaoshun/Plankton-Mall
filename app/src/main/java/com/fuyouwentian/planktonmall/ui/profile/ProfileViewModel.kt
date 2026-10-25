@@ -7,6 +7,7 @@ import com.fuyouwentian.planktonmall.data.local.AppDatabase
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
+import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +31,7 @@ class ProfileViewModel @Inject constructor(
     private val tokenRepo: TokenRepository,
     private val appDatabase: AppDatabase,
     private val cartRepo: CartRepository,
+    private val historyRepo: HistoryRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(ProfileUiState(commiting = false))
