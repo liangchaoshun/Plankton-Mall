@@ -5,7 +5,7 @@ import com.fuyouwentian.planktonmall.data.local.history.toDomain
 import com.fuyouwentian.planktonmall.data.local.history.toEntity
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
 import com.fuyouwentian.planktonmall.data.local.profile.toDomain
-import com.fuyouwentian.planktonmall.domain.model.HistoryProduct
+import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import javax.inject.Inject
@@ -17,7 +17,7 @@ class HistoryRepositoryImpl @Inject constructor(
     private val profileDao: ProfileDao,
 ) : HistoryRepository {
     override suspend fun insert(product: Product) {
-        val historyProduct = HistoryProduct(
+        val historyProduct = HistoryRecord(
             id = product.id,
             userId = profileDao.getUserProfile()!!.toDomain().id,
             goodsId = product.id,
@@ -38,7 +38,7 @@ class HistoryRepositoryImpl @Inject constructor(
         historyDao.deleteItemsByIds(ids)
     }
 
-    override suspend fun getAllItems(): List<HistoryProduct> {
+    override suspend fun getAllItems(): List<HistoryRecord> {
         return historyDao.getAllItems().map { it.toDomain() }
     }
 }

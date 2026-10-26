@@ -219,7 +219,7 @@ fun AppNavHost(
             composable(route = Routes.PROFILE) {
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onLogoutSuccess = { navController.navigate2HomeClearAll() }
+                    onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) }
                 )
             }
             composable(route = Routes.LOGIN) {

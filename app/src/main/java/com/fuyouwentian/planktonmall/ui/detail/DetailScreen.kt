@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.common.Constants
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
@@ -313,13 +315,12 @@ fun ProductInfoSection(product: Product?) {
 @Composable
 fun ProductDescException(
     uiState: DetailUiState,
-    modifier: Modifier = Modifier,
     onClickRetry: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 300.dp),
+            .padding(top = 100.dp),
         contentAlignment = Alignment.Center
     ) {
         when {
@@ -332,7 +333,7 @@ fun ProductDescException(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(text = uiState.error)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                     TextButton(onClick = onClickRetry) { Text("重试") }
                 }
             }

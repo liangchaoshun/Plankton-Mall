@@ -185,7 +185,12 @@ fun CartScreen(
                             onClick = { onNavigate2Login() },
                             modifier = Modifier.width(100.dp),
                             shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
-                        ) { Text("去登录") }
+                        ) {
+                            Text(
+                                text = "去登录",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }
@@ -216,7 +221,12 @@ fun CartScreen(
                             onClick = { onNavigate2Pickup() },
                             modifier = Modifier.width(100.dp),
                             shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
-                        ) { Text("去挑选") }
+                        ) {
+                            Text(
+                                text = "去挑选",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }

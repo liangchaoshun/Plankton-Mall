@@ -6,7 +6,7 @@ import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.CartProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.Category
 import com.fuyouwentian.planktonmall.domain.model.CategoryData
-import com.fuyouwentian.planktonmall.domain.model.FavorProduct
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
 import com.fuyouwentian.planktonmall.domain.model.PaginationParamsRequest
@@ -68,12 +68,12 @@ interface ApiService {
     suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>
 
     @POST("favor/insert")
-    suspend fun favorInsert(@Body param: Add2FavorRequest): BaseResponse<FavorProduct>
+    suspend fun favorInsert(@Body param: Add2FavorRequest): BaseResponse<FavorRecord>
 
     @POST("favor/delete")
     suspend fun favorDelete(@Body ids: List<String>): BaseResponse<Boolean>
 
     @POST("favor/list")
-    suspend fun favorList(@Body param: PaginationRequest): BaseResponse<ProductsResponseData<FavorProduct>?>
+    suspend fun favorList(@Body param: PaginationRequest): BaseResponse<ProductsResponseData<FavorRecord>?>
 
 }

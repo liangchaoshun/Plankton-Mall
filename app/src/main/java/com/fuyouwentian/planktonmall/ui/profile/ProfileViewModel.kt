@@ -8,10 +8,8 @@ import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
-import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,7 +18,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -28,60 +25,75 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepo: UserRepository,
-    private val tokenRepo: TokenRepository,
     private val appDatabase: AppDatabase,
     private val cartRepo: CartRepository,
     private val historyRepo: HistoryRepository,
 ) : ViewModel() {
-    // UI 状态
-    private val _uiState = MutableStateFlow(ProfileUiState(commiting = false))
+    private val _uiState = MutableStateFlow(ProfileUiState(loading = false))
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    // UI 事件（用于 Toast、导航等一次性动作）
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    // TEST
-    fun getUserProfile() {
+    fun loadOrders() {
         viewModelScope.launch {
             try {
-                val profile = userRepo.getRemoteUserProfile()
-                profile?.let {
-                    Log.d("ProfileViewModel", "$profile")
-                }
+                // TODO
             } catch (e: Exception) {
                 handleError(e)
             }
         }
     }
 
-    // TEST
-    fun logout() {
+    fun loadBrowsingHistory() {
         viewModelScope.launch {
             try {
-                if (userRepo.logout() == true) {
-                    _uiEvent.emit(UiEvent.LogoutSuccess)
-                    tokenRepo.clearToken()
-                    // 清理所有 Room 表
-                    withContext(Dispatchers.IO) {
-                        appDatabase.clearAllTables()
-                    }
-                }
+                _uiState.update { it.copy(histories = historyRepo.getAllItems()) }
             } catch (e: Exception) {
                 handleError(e)
             }
         }
     }
 
-    // TEST
-    fun syncLocalData2Server() {
-        Log.d("ProfileViewModel", "[syncData2Server]")
+    fun loadFavorites() {
         viewModelScope.launch {
             try {
-                cartRepo.syncLocalUpdate2Server()
+                // TODO
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
                 handleError(e)
+            }
+        }
+    }
+
+    fun initScreen() {
+        _uiState.update {
+            it.copy(
+                orders = emptyList(),
+                histories = emptyList(),
+                favors = emptyList(),
+                profile = null,
+                isLoggedIn = false,
+                loading = false,
+                error = null
+            )
+        }
+        loadUserInfo()
+    }
+
+    fun loadUserInfo() {
+        viewModelScope.launch {
+            try {
+                val isLoggedIn = userRepo.isLoggedIn() ?: false
+                _uiState.update { it.copy(isLoggedIn = isLoggedIn) }
+                if (!isLoggedIn) return@launch // 跳出
+                userRepo.getLocalUserProfile()?.let { localProfile ->
+                    Log.d("ProfileViewModel", "$localProfile")
+                    _uiState.update { it.copy(profile = localProfile) }
+                }
+            } catch (e: Exception) {
+                handleError(e)
+            } finally {
+                _uiState.update { it.copy(loading = false) }
             }
         }
     }

@@ -1,8 +1,8 @@
 package com.fuyouwentian.planktonmall.data.local.history
 
-import com.fuyouwentian.planktonmall.domain.model.HistoryProduct
+import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
 
-fun HistoryEntity.toDomain(): HistoryProduct = HistoryProduct(
+fun HistoryEntity.toDomain(): HistoryRecord = HistoryRecord(
     id = id,
     userId = userId,
     goodsId = goodsId,
@@ -17,7 +17,7 @@ fun HistoryEntity.toDomain(): HistoryProduct = HistoryProduct(
     updateTime = updateTime,
 )
 
-fun HistoryProduct.toEntity(): HistoryEntity = HistoryEntity(
+fun HistoryRecord.toEntity(): HistoryEntity = HistoryEntity(
     id = id,
     userId = userId,
     goodsId = goodsId,

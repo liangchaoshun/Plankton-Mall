@@ -164,7 +164,7 @@ data class CartProductsResponseData<T>(
 )
 
 @Serializable
-data class FavorProduct(
+data class FavorRecord(
     @SerialName("_id")
     val id: String,
     @SerialName("user_id")
@@ -193,7 +193,7 @@ data class FavorProduct(
 )
 
 @Serializable
-data class HistoryProduct(
+data class HistoryRecord(
     val id: String,
     val userId: String,
     val goodsId: String,
@@ -216,7 +216,7 @@ data class Add2FavorRequest(
 )
 
 @Serializable
-data class Order(
+data class OrderRecord(
     @SerialName("_id")
     val id: String,
     @SerialName("user_id")

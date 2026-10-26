@@ -1,10 +1,9 @@
 package com.fuyouwentian.planktonmall.data.local.favor
 
 import com.fuyouwentian.planktonmall.data.local.SyncRecordState
-import com.fuyouwentian.planktonmall.domain.model.FavorProduct
-import kotlin.Int
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 
-fun FavorEntity.toDomain(): FavorProduct = FavorProduct(
+fun FavorEntity.toDomain(): FavorRecord = FavorRecord(
     id = id,
     userId = userId,
     goodsId = goodsId,
@@ -20,7 +19,7 @@ fun FavorEntity.toDomain(): FavorProduct = FavorProduct(
     syncState = syncState,
 )
 
-fun FavorProduct.toEntity(): FavorEntity = FavorEntity(
+fun FavorRecord.toEntity(): FavorEntity = FavorEntity(
     id = id,
     userId = userId,
     goodsId = goodsId,

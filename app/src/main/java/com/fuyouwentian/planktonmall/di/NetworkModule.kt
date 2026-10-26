@@ -1,12 +1,12 @@
 package com.fuyouwentian.planktonmall.di
 
+import com.fuyouwentian.planktonmall.common.GlobalConfig
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -14,12 +14,6 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
-// 1. 配置 Json 实例
-val json = Json {
-    ignoreUnknownKeys = true // 核心：遇到不认识的字段不报错，直接忽略
-    coerceInputValues = true // 可选：如果遇到 null 但非空字段，尝试给默认值
-    encodeDefaults = true // 即使是默认值也发送给后端
-}
 
 /**
  * Hilt 扫描所有 @Module，收集"如何创建依赖"的信息。查看 RepositoryModule
@@ -70,7 +64,7 @@ object NetworkModule {
          * KotlinSerializationConverterFactory：Kotlinx Serialization，对应依赖：com.squareup.retrofit2:converter-kotlinx-serialization
          * ScalarsConverterFactory：常用于把响应直接当作 String 或基本类型处理，而不是解析成对象
          */
-        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .addConverterFactory(GlobalConfig.json.asConverterFactory("application/json".toMediaType()))
         .build()
 
     @Provides

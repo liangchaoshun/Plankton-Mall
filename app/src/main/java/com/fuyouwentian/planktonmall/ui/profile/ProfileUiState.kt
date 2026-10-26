@@ -1,7 +1,17 @@
 package com.fuyouwentian.planktonmall.ui.profile
 
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
+import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
+import com.fuyouwentian.planktonmall.domain.model.OrderRecord
+import com.fuyouwentian.planktonmall.domain.model.UserProfile
+
 
 data class ProfileUiState(
-    val commiting: Boolean = false,
+    val orders: List<OrderRecord> = emptyList(),
+    val histories: List<HistoryRecord> = emptyList(),
+    val favors: List<FavorRecord> = emptyList(),
+    val profile: UserProfile? = null,
+    val isLoggedIn: Boolean = false,
+    val loading: Boolean = false,
     val error: String? = null
 )

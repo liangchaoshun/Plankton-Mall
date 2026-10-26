@@ -8,4 +8,4 @@ annotation class ApplicationScope
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class IoDispatcher
+annotation class IODispatcher
