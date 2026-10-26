@@ -59,7 +59,9 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
-    onNavigate2Login: () -> Unit = {}
+    onNavigate2Login: () -> Unit = {},
+    onLogoutSuccess: () -> Unit = {},
+    onProductClick: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -135,7 +137,9 @@ fun ProfileScreen(
                     uiState = uiState,
                     loadOrders = viewModel::loadOrders,
                     loadBrowsingHistory = viewModel::loadBrowsingHistory,
-                    loadFavorites = viewModel::loadFavorites
+                    loadFavorites = viewModel::loadFavorites,
+                    onLogoutSuccess = onLogoutSuccess,
+                    onClickProduct = onProductClick,
                 )
             }
         }
@@ -181,10 +185,12 @@ fun ProfileContent(
     loadOrders: () -> Unit = {},
     loadBrowsingHistory: () -> Unit = {},
     loadFavorites: () -> Unit = {},
+    onLogoutSuccess: () -> Unit = {},
+    onClickProduct: (String) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val tabs = listOf("订单", "足迹", "收藏", "个人信息")
-    val pagerState = rememberPagerState(pageCount = { tabs.size })
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { tabs.size })
 
     // 监听页面切换，触发对应 Tab 的初始化请求
     // 利用 snapshotFlow 确保只有真正切换到该页才触发
@@ -203,7 +209,7 @@ fun ProfileContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F6FA))
+            .background(Color(0xFFF5F5F5))
             .padding(
                 start = dimensionResource(R.dimen.padding_small),
                 end = dimensionResource(R.dimen.padding_small),
@@ -247,9 +253,15 @@ fun ProfileContent(
         ) { page ->
             when (page) {
                 0 -> OrderContent()
-                1 -> HistoryContent()
+                1 -> HistoryContent(
+                    histories = uiState.histories,
+                    onClickProduct = onClickProduct
+                )
+
                 2 -> FavorContent()
-                3 -> UserInfoContent()
+                3 -> UserInfoContent(
+                    onLogoutSuccess = onLogoutSuccess
+                )
             }
         }
     }

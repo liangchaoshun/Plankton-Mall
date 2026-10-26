@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
+import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
+import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +23,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -28,7 +32,8 @@ import kotlin.time.Duration.Companion.seconds
 class DetailViewModel @Inject constructor(
     private val userRepo: UserRepository,
     private val cartRepo: CartRepository,
-    private val productRepo: ProductRepository
+    private val productRepo: ProductRepository,
+    private val historyRepo: HistoryRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(DetailUiState(loading = true))
@@ -56,7 +61,29 @@ class DetailViewModel @Inject constructor(
                 // val product = MockProducts.ProductDetail
                 val product = productRepo.getProductDetail(pid)
                 if (id != requestId) return@launch // 已过期
-                product?.let { _uiState.update { it.copy(product = product, error = null) } }
+                product?.let { nonNullProduct ->
+                    _uiState.update { it.copy(product = nonNullProduct, error = null) }
+                    // 登录后存在用户信息时，才加入历史数据表
+                    userRepo.getLocalUserProfile()?.let {
+                        // 未删除的商品都可加入浏览历史（即使下架和售罄）
+                        val today = LocalDate.now()
+                        val historyRecord = HistoryRecord(
+                            userId = it.id,
+                            goodsId = nonNullProduct.id,
+                            isValid = nonNullProduct.deleted == 0,
+                            goodsNameZh = nonNullProduct.nameZh,
+                            goodsNameEn = nonNullProduct.nameEn,
+                            goodsPrice = nonNullProduct.price,
+                            goodsIcon = nonNullProduct.iconUrl,
+                            goodsStock = nonNullProduct.stock,
+                            goodsOnSale = nonNullProduct.onSale,
+                            // 固定格式 "yyyy-MM-dd"，月和日必须是两位数，否则按日期排序不正确
+                            createDate = today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                            createTimeMillis = System.currentTimeMillis()
+                        )
+                        historyRepo.insert(historyRecord)
+                    }
+                }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {

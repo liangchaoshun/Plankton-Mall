@@ -114,24 +114,29 @@ fun DetailContent(
             }
         }
     }
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            // 底部留出空间，防止内容被底部悬浮栏遮挡
-            contentPadding = PaddingValues(bottom = 42.dp)
-        ) {
-            // 商品详情描述 (多张图片)
-            // 使用 items 直接渲染图片列表，避免嵌套滚动冲突
-            if (!uiState.loading && uiState.error.isNullOrBlank()) {
+        // 加载中和错误状态的处理
+        if (uiState.loading || !uiState.error.isNullOrBlank()) {
+            ProductDescException(
+                uiState = uiState,
+                onClickRetry = { viewModel.fetchProductDetail(id) }
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                // 底部留出空间，防止内容被底部悬浮栏遮挡
+                contentPadding = PaddingValues(bottom = 42.dp)
+            ) {
                 // 轮播图
                 item { CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList()) }
                 // 商品标题和描述
                 item { ProductInfoSection(product = uiState.product) }
+                // 商品详情描述 (多张图片)
+                // 使用 items 直接渲染图片列表，避免嵌套滚动冲突
                 items(uiState.product?.descUrl ?: emptyList()) { url ->
                     AsyncImage(
                         model = url,
@@ -142,58 +147,48 @@ fun DetailContent(
                 }
             }
 
-            // 加载中和错误状态的处理
-            if (uiState.loading || !uiState.error.isNullOrBlank()) {
-                item {
-                    ProductDescException(
-                        uiState = uiState,
-                        onClickRetry = { viewModel.fetchProductDetail(id) }
-                    )
+            // 底部操作栏
+            BottomActionBar(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onFavorIconClick = {
+                    uiState.product?.let {
+                        viewModel.add2Favorites(uiState.product!!)
+                    }
+                },
+                onCartIconClick = onCartIconClick, // 跳转到购物车页面
+                onClickAdd2Cart = {
+                    uiState.product?.let {
+                        viewModel.add2Cart(uiState.product!!)
+                    }
+                },
+                onClickBuyNow = {
+                    uiState.product?.let {
+                        // 下单后再跳路由
+                        viewModel.immediatelyMadeAnOrder(uiState.product!!.id)
+                        if (uiState.isMadeOrder) onBuyNowClick() // 路由跳转
+                    }
                 }
-            }
-        }
+            )
 
-        // 底部操作栏
-        BottomActionBar(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            onFavorIconClick = {
-                if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
-                    viewModel.add2Favorites(uiState.product!!)
-                }
-            },
-            onCartIconClick = onCartIconClick, // 跳转到购物车页面
-            onClickAdd2Cart = {
-                if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
-                    viewModel.add2Cart(uiState.product!!)
-                }
-            },
-            onClickBuyNow = {
-                if (!uiState.loading && uiState.error.isNullOrBlank() && uiState.product != null) {
-                    // 下单后再跳路由
-                    viewModel.immediatelyMadeAnOrder(uiState.product!!.id)
-                    if (uiState.isMadeOrder) onBuyNowClick() // 路由跳转
-                }
-            }
-        )
-
-        // 蒙版：商品被删除或下架了
-        uiState.product?.let { product ->
-            if (product.isInvalid) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White.copy(0.7f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null // 去除波纹
-                        ) { Log.d("Detail", "click cover") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (product.isDeleted) "商品无效" else "商品已下架",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.headlineLarge
-                    )
+            // 蒙版：商品被删除或下架了
+            uiState.product?.let { product ->
+                if (product.isInvalid) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White.copy(0.7f))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null // 去除波纹
+                            ) { Log.d("Detail", "click cover") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (product.isDeleted) "商品无效" else "商品已下架",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.headlineLarge
+                        )
+                    }
                 }
             }
         }
@@ -216,6 +211,7 @@ fun DetailContent(
             )
         }
     }
+
 }
 
 
@@ -226,7 +222,6 @@ fun CarouselSection(
     // 计算轮播图高度：设为屏幕宽度 (正方形)
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
-    val carouselHeight = screenWidth
 
     // 创建 PagerState
     val pagerState = rememberPagerState(pageCount = {
@@ -236,12 +231,16 @@ fun CarouselSection(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(carouselHeight)
+            .height(screenWidth)
             .background(Color.White.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center
     ) {
         if (imageUrls.isEmpty()) {
-            Text(text = "暂无图片", color = Color.White)
+            Text(
+                text = "暂无图片",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.LightGray
+            )
         } else {
             // HorizontalPager：每页铺满整个 Box
             HorizontalPager(
@@ -286,29 +285,29 @@ fun ProductInfoSection(product: Product?) {
             .heightIn(80.dp, 120.dp)
             .fillMaxWidth()
             .background(Color(0xFFF5FFFA))
-            .padding(16.dp)
+            .padding(dimensionResource(R.dimen.padding_medium))
     ) {
-        if (product != null) {
+        product?.let {
             // 商品标题
             Text(
                 text = product.nameZh,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
             // 价格显示
             Text(
                 text = "¥${product.price}",
-                fontSize = 20.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFF44336)
             )
-        } else {
-            Text(text = "加载中...", fontSize = 18.sp, color = Color.Red)
-        }
+        } ?: Text(
+            text = "加载中...",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+
     }
 }
 
@@ -319,8 +318,8 @@ fun ProductDescException(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 100.dp),
+            .fillMaxSize()
+            .padding(dimensionResource(R.dimen.padding_small)),
         contentAlignment = Alignment.Center
     ) {
         when {
@@ -336,10 +335,6 @@ fun ProductDescException(
                     Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                     TextButton(onClick = onClickRetry) { Text("重试") }
                 }
-            }
-
-            else -> {
-                Text(text = "详情加载中...")
             }
         }
     }

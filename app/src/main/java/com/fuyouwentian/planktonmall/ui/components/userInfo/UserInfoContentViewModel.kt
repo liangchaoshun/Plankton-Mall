@@ -53,9 +53,10 @@ class UserInfoContentViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (userRepo.logout() == true) {
+                    _uiEvent.emit(UiEvent.ShowToast("退出登录成功"))
                     _uiEvent.emit(UiEvent.LogoutSuccess)
                     tokenRepo.clearToken()
-                    // 清理所有 Room 表
+                    // TODO 是否要清理所有 Room 表
                     withContext(Dispatchers.IO) {
                         appDatabase.clearAllTables()
                     }

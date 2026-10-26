@@ -187,7 +187,7 @@ fun AppNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.HOME,
+            startDestination = Routes.PROFILE, // ⚠✨🔥
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -219,7 +219,9 @@ fun AppNavHost(
             composable(route = Routes.PROFILE) {
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) }
+                    onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
+                    onLogoutSuccess = { navController.navigate2HomeClearAll() },
+                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
                 )
             }
             composable(route = Routes.LOGIN) {

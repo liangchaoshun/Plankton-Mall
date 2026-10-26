@@ -48,7 +48,11 @@ class ProfileViewModel @Inject constructor(
     fun loadBrowsingHistory() {
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(histories = historyRepo.getAllItems()) }
+                val recordsMap = historyRepo.getAllItems()
+                    .groupBy { it.createDate }
+                    .toSortedMap(compareByDescending { it })
+                // TODO List 中还需要按照 createTimeMillis 排序
+                _uiState.update { it.copy(histories = recordsMap) }
             } catch (e: Exception) {
                 handleError(e)
             }
@@ -69,7 +73,7 @@ class ProfileViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 orders = emptyList(),
-                histories = emptyList(),
+                histories = sortedMapOf(),
                 favors = emptyList(),
                 profile = null,
                 isLoggedIn = false,

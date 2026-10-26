@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -183,10 +182,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5E5CE6)
-                ),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
                 enabled = !uiState.commiting
             ) {
                 if (uiState.commiting) {
@@ -198,7 +194,7 @@ fun LoginScreen(
                 } else {
                     Text(
                         text = "登录",
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
                 }

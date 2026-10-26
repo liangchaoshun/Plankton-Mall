@@ -10,7 +10,7 @@ interface HistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: HistoryEntity)
 
-    @Query("DELETE FROM history WHERE id IN (:ids)")
+    @Query("DELETE FROM history WHERE goodsId IN (:ids)")
     suspend fun deleteItemsByIds(ids: List<String>)
 
     // 即使没有 LIMIT，只要返回类型是单对象（如 ProfileEntity），空表依然会返回 null

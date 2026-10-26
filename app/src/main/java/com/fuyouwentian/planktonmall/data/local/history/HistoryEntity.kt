@@ -1,12 +1,12 @@
 package com.fuyouwentian.planktonmall.data.local.history
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "history")
+@Entity(
+    tableName = "history",
+    primaryKeys = ["createDate", "goodsId"] // 复合主键：日期 + 商品ID，前后顺序有区别
+)
 data class HistoryEntity(
-    @PrimaryKey
-    val id: String,
     val userId: String,
     val goodsId: String,
     val isValid: Boolean,
@@ -16,6 +16,7 @@ data class HistoryEntity(
     val goodsIcon: String,
     val goodsStock: Int,
     val goodsOnSale: Int,
-    val createTime: String? = null,
-    val updateTime: String? = null,
+    // 固定格式 "yyyy-MM-dd"，月和日必须是两位数，否则按日期排序不正确
+    val createDate: String,
+    val createTimeMillis: Long
 )

@@ -3,7 +3,6 @@ package com.fuyouwentian.planktonmall.data.local.history
 import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
 
 fun HistoryEntity.toDomain(): HistoryRecord = HistoryRecord(
-    id = id,
     userId = userId,
     goodsId = goodsId,
     isValid = isValid,
@@ -13,12 +12,11 @@ fun HistoryEntity.toDomain(): HistoryRecord = HistoryRecord(
     goodsIcon = goodsIcon,
     goodsStock = goodsStock,
     goodsOnSale = goodsOnSale,
-    createTime = createTime,
-    updateTime = updateTime,
+    createDate = createDate,
+    createTimeMillis = createTimeMillis,
 )
 
 fun HistoryRecord.toEntity(): HistoryEntity = HistoryEntity(
-    id = id,
     userId = userId,
     goodsId = goodsId,
     isValid = isValid,
@@ -28,6 +26,6 @@ fun HistoryRecord.toEntity(): HistoryEntity = HistoryEntity(
     goodsIcon = goodsIcon,
     goodsStock = goodsStock,
     goodsOnSale = goodsOnSale,
-    createTime = createTime,
-    updateTime = updateTime,
+    createDate = createDate,
+    createTimeMillis = createTimeMillis,
 )

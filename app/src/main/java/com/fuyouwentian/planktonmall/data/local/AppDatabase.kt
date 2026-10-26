@@ -19,7 +19,7 @@ import com.fuyouwentian.planktonmall.data.local.profile.ProfileEntity
         HistoryEntity::class,
         FavorEntity::class
     ],
-    version = 9,
+    version = 12,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

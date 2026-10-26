@@ -192,9 +192,9 @@ data class FavorRecord(
     val syncState: SyncRecordState? = null
 )
 
+// history 仅用于本地数据库，不会保存到服务器
 @Serializable
 data class HistoryRecord(
-    val id: String,
     val userId: String,
     val goodsId: String,
     val isValid: Boolean,
@@ -204,8 +204,9 @@ data class HistoryRecord(
     val goodsIcon: String,
     val goodsStock: Int,
     val goodsOnSale: Int,
-    val createTime: String? = "",
-    val updateTime: String? = "",
+    // 固定格式 "yyyy-MM-dd"，月和日必须是两位数，否则按日期排序不正确
+    val createDate: String = "",
+    val createTimeMillis: Long,
 )
 
 @Serializable
