@@ -10,6 +10,7 @@ import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
+import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -30,6 +31,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class HomeViewModel @Inject constructor(
     private val cartRepo: CartRepository,
     private val userRepo: UserRepository,
+    private val tokenRepo: TokenRepository,
     private val productRepo: ProductRepository,
 ) : ViewModel() {
     // UI 状态
@@ -139,7 +141,7 @@ class HomeViewModel @Inject constructor(
     fun add2Cart(product: ProductLite) {
         viewModelScope.launch {
             try {
-                if (userRepo.isLoggedIn() == false) {
+                if (!tokenRepo.hasToken()) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }

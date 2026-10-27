@@ -149,6 +149,7 @@ fun DetailContent(
 
             // 底部操作栏
             BottomActionBar(
+                product = uiState.product,
                 modifier = Modifier.align(Alignment.BottomCenter),
                 onFavorIconClick = {
                     uiState.product?.let {
@@ -183,11 +184,19 @@ fun DetailContent(
                             ) { Log.d("Detail", "click cover") },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = if (product.isDeleted) "商品无效" else "商品已下架",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.headlineLarge
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(0.7f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (product.isDeleted) "商品无效" else "商品已下架",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                     }
                 }
             }
@@ -342,12 +351,14 @@ fun ProductDescException(
 
 @Composable
 fun BottomActionBar(
+    product: Product?,
     modifier: Modifier = Modifier,
     onFavorIconClick: () -> Unit,
     onCartIconClick: () -> Unit,
     onClickAdd2Cart: () -> Unit,
     onClickBuyNow: () -> Unit
 ) {
+    val isValid = product?.deleted == 0 && product.onSale == 1 && product.stock > 0
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFFF0F8FF),
@@ -396,6 +407,7 @@ fun BottomActionBar(
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
+                enabled = isValid,
                 onClick = onClickAdd2Cart,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),
@@ -405,6 +417,7 @@ fun BottomActionBar(
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(
+                enabled = isValid,
                 onClick = onClickBuyNow,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),

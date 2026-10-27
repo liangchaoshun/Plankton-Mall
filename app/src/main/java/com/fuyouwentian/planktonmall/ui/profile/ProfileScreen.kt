@@ -36,6 +36,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +56,7 @@ import com.fuyouwentian.planktonmall.ui.components.userInfo.UserInfoContent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+
 
 @Composable
 fun ProfileScreen(
@@ -106,7 +109,7 @@ fun ProfileScreen(
                 }
             }
 
-            !uiState.isLoggedIn -> {
+            !uiState.hasToken -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         modifier = Modifier.fillMaxWidth(0.5f),
@@ -153,8 +156,13 @@ fun ProfileHeader(profile: UserProfile?) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 50.dp)
-            .clip(shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
-            .background(Color.White)
+            .background(
+                Brush.horizontalGradient(
+                    0.0f to Color(0xFF885F84),
+                    0.2f to Color(0xFF8D6E8A),
+                    1.0f to Color(0xFFF8F9FA)
+                )
+            )
             .padding(dimensionResource(R.dimen.padding_small)),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -163,6 +171,12 @@ fun ProfileHeader(profile: UserProfile?) {
             contentDescription = "avatar",
             modifier = Modifier
                 .size(60.dp)
+                // 注意 modifier 书写顺序，必须把 shadow 和 clip 放在一起
+                .shadow( // 阴影
+                    elevation = 4.dp,
+                    shape = CircleShape,
+                    clip = false // false，防止阴影被自身裁剪
+                )
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentScale = ContentScale.Crop,
@@ -190,9 +204,9 @@ fun ProfileContent(
 ) {
     val scope = rememberCoroutineScope()
     val tabs = listOf("订单", "足迹", "收藏", "个人信息")
-    val pagerState = rememberPagerState(initialPage = 1, pageCount = { tabs.size })
+    val pagerState = rememberPagerState(initialPage = 2, pageCount = { tabs.size })
 
-    // 监听页面切换，触发对应 Tab 的初始化请求
+    // 🔥监听页面切换，触发对应 Tab 的初始化请求
     // 利用 snapshotFlow 确保只有真正切换到该页才触发
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }
@@ -225,7 +239,8 @@ fun ProfileContent(
             selectedTabIndex = pagerState.currentPage,
             containerColor = Color.White,
             contentColor = MaterialTheme.colorScheme.primary,
-            divider = { HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray) }
+            divider = { HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray) },
+            modifier = Modifier.height(35.dp) // 固定高度
         ) {
             tabs.forEachIndexed { index, title ->
                 Tab(
@@ -236,7 +251,14 @@ fun ProfileContent(
                             pagerState.animateScrollToPage(index)
                         }
                     },
-                    text = { Text(text = title) }
+                    text = {
+                        Text(
+                            text = title,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    },
+                    modifier = Modifier.height(35.dp) // 让 Tab 撑满
                 )
             }
         }
@@ -260,6 +282,7 @@ fun ProfileContent(
 
                 2 -> FavorContent()
                 3 -> UserInfoContent(
+                    userInfo = uiState.profile,
                     onLogoutSuccess = onLogoutSuccess
                 )
             }

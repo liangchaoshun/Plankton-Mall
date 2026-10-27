@@ -8,6 +8,7 @@ import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
+import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,6 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepo: UserRepository,
+    private val tokenRepo: TokenRepository,
     private val appDatabase: AppDatabase,
     private val cartRepo: CartRepository,
     private val historyRepo: HistoryRepository,
@@ -36,6 +38,7 @@ class ProfileViewModel @Inject constructor(
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     fun loadOrders() {
+        Log.d("ProfileViewModel", "loadOrders")
         viewModelScope.launch {
             try {
                 // TODO
@@ -46,12 +49,16 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun loadBrowsingHistory() {
+        Log.d("ProfileViewModel", "loadBrowsingHistory")
         viewModelScope.launch {
             try {
                 val recordsMap = historyRepo.getAllItems()
                     .groupBy { it.createDate }
+                    .mapValues { (_, records) ->
+                        // 列表中，按 createTimeMillis 字段倒排
+                        records.sortedByDescending { it.createTimeMillis }
+                    }
                     .toSortedMap(compareByDescending { it })
-                // TODO List 中还需要按照 createTimeMillis 排序
                 _uiState.update { it.copy(histories = recordsMap) }
             } catch (e: Exception) {
                 handleError(e)
@@ -60,6 +67,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun loadFavorites() {
+        Log.d("ProfileViewModel", "loadFavorites")
         viewModelScope.launch {
             try {
                 // TODO
@@ -76,7 +84,7 @@ class ProfileViewModel @Inject constructor(
                 histories = sortedMapOf(),
                 favors = emptyList(),
                 profile = null,
-                isLoggedIn = false,
+                hasToken = true,
                 loading = false,
                 error = null
             )
@@ -84,14 +92,15 @@ class ProfileViewModel @Inject constructor(
         loadUserInfo()
     }
 
-    fun loadUserInfo() {
+    private fun loadUserInfo() {
+        Log.d("ProfileViewModel", "loadUserInfo")
         viewModelScope.launch {
             try {
-                val isLoggedIn = userRepo.isLoggedIn() ?: false
-                _uiState.update { it.copy(isLoggedIn = isLoggedIn) }
-                if (!isLoggedIn) return@launch // 跳出
+                val hasToken = tokenRepo.hasToken()
+                _uiState.update { it.copy(hasToken = hasToken) }
+                if (!hasToken) return@launch // 跳出
                 userRepo.getLocalUserProfile()?.let { localProfile ->
-                    Log.d("ProfileViewModel", "$localProfile")
+                    Log.d("ProfileViewModel", "localProfile: $localProfile")
                     _uiState.update { it.copy(profile = localProfile) }
                 }
             } catch (e: Exception) {

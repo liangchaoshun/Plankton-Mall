@@ -169,7 +169,7 @@ fun CartScreen(
                 }
             }
 
-            !uiState.isLoggedIn -> {
+            !uiState.hasToken -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         modifier = Modifier.fillMaxWidth(0.5f),

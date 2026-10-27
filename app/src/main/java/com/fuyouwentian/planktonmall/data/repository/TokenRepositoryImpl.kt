@@ -41,6 +41,10 @@ class TokenRepositoryImpl @Inject constructor(
             .first()
     }
 
+    override suspend fun hasToken(): Boolean {
+        return !(getToken().isNullOrBlank())
+    }
+
     override suspend fun clearToken() {
         dataStore.edit { prefs ->
             prefs.remove(PrefsKeys.TOKEN)

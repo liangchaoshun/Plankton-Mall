@@ -11,6 +11,7 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
+import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -32,6 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 class DetailViewModel @Inject constructor(
     private val userRepo: UserRepository,
     private val cartRepo: CartRepository,
+    private val tokenRepo: TokenRepository,
     private val productRepo: ProductRepository,
     private val historyRepo: HistoryRepository,
 ) : ViewModel() {
@@ -64,11 +66,12 @@ class DetailViewModel @Inject constructor(
                 product?.let { nonNullProduct ->
                     _uiState.update { it.copy(product = nonNullProduct, error = null) }
                     // 登录后存在用户信息时，才加入历史数据表
-                    userRepo.getLocalUserProfile()?.let {
-                        // 未删除的商品都可加入浏览历史（即使下架和售罄）
+                    val localUserProfile = userRepo.getLocalUserProfile()
+                    if (tokenRepo.hasToken() && localUserProfile != null) {
+                        // 未被物理删除的商品都可加入浏览历史（即使逻辑删除、下架、售罄）
                         val today = LocalDate.now()
                         val historyRecord = HistoryRecord(
-                            userId = it.id,
+                            userId = localUserProfile.id,
                             goodsId = nonNullProduct.id,
                             isValid = nonNullProduct.deleted == 0,
                             goodsNameZh = nonNullProduct.nameZh,
@@ -95,7 +98,7 @@ class DetailViewModel @Inject constructor(
     fun add2Cart(product: Product) {
         viewModelScope.launch {
             try {
-                if (userRepo.isLoggedIn() == false) {
+                if (!tokenRepo.hasToken()) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
@@ -121,7 +124,7 @@ class DetailViewModel @Inject constructor(
         Log.d("Detail", "add2Favorites: $product")
         viewModelScope.launch {
             try {
-                if (userRepo.isLoggedIn() == false) {
+                if (!tokenRepo.hasToken()) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
@@ -138,7 +141,7 @@ class DetailViewModel @Inject constructor(
         _uiState.update { it.copy(isMadeOrder = false) }
         viewModelScope.launch {
             try {
-                if (userRepo.isLoggedIn() == false) {
+                if (!tokenRepo.hasToken()) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }

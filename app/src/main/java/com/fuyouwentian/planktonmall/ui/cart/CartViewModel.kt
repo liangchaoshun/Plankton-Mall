@@ -7,7 +7,7 @@ import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
-import com.fuyouwentian.planktonmall.domain.repository.UserRepository
+import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class CartViewModel @Inject constructor(
     private val cartRepo: CartRepository,
-    private val userRepo: UserRepository,
+    private val tokenRepo: TokenRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
@@ -82,9 +82,9 @@ class CartViewModel @Inject constructor(
                 )
             }
             try {
-                val isLoggedIn = userRepo.isLoggedIn() ?: false
-                _uiState.update { it.copy(isLoggedIn = isLoggedIn) }
-                if (!isLoggedIn) return@launch // 跳出
+                val hasToken = tokenRepo.hasToken()
+                _uiState.update { it.copy(hasToken = hasToken) }
+                if (!hasToken) return@launch // 跳出
                 cartRepo.fetchData() // 请求，成功后写入 Room cart
                 if (id != requestId) return@launch // 已过期
             } catch (e: Exception) {

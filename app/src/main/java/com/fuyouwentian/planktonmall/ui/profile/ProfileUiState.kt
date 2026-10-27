@@ -12,7 +12,7 @@ data class ProfileUiState(
     val histories: SortedMap<String, List<HistoryRecord>> = sortedMapOf(),
     val favors: List<FavorRecord> = emptyList(),
     val profile: UserProfile? = null,
-    val isLoggedIn: Boolean = false,
+    val hasToken: Boolean = true,
     val loading: Boolean = false,
     val error: String? = null
 )
