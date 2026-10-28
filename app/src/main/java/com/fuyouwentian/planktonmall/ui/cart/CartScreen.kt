@@ -41,7 +41,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -104,6 +104,7 @@ enum class DragValue {
     Revealed // 露出按钮状态
 }
 
+// 购物车数据没分页，一次性全部查回来
 @Composable
 fun CartScreen(
     modifier: Modifier = Modifier,
@@ -121,8 +122,8 @@ fun CartScreen(
     val sortedCartItems = remember(cartItems) {
         // 即使 cartItems 为 emptyList()，也会调用 sortedWith 方法，返回结果也为 emptyList()
         cartItems.sortedWith(
-            compareBy<CartProduct> { it.createTime } // 第一排序字段
-                .thenBy { it.id } // 若第一排序字段相同，则使用第二排序字段，一次类推 .thenBy
+            compareByDescending<CartProduct> { it.createTime } // 第一排序字段（倒序）
+                .thenBy { it.id } // 若第一排序字段相同，则使用第二排序字段（正序），一次类推 .thenBy
         )
     }
 
@@ -452,8 +453,12 @@ fun SwipeableCartItem(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.StarBorder, contentDescription = "收藏", tint = Color.White)
-                    Text("收藏", color = Color.White, fontSize = 12.sp)
+                    Icon(Icons.Default.Star, contentDescription = "收藏", tint = Color.White)
+                    Text(
+                        text = "收藏",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
                 }
             }
             // 删除按钮
@@ -467,7 +472,11 @@ fun SwipeableCartItem(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Delete, contentDescription = "删除", tint = Color.White)
-                    Text("删除", color = Color.White, fontSize = 12.sp)
+                    Text(
+                        text = "删除",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
                 }
             }
         }
@@ -494,8 +503,6 @@ fun SwipeableCartItem(
                 .background(Color.White)
                 // 如果已滑出，则收起
                 .clickable { onRevealedChange(false) }
-                .padding(vertical = dimensionResource(R.dimen.padding_medium))
-                .padding(start = 0.dp, end = dimensionResource(R.dimen.padding_medium))
                 // 无效商品蒙版和水印
                 .then(
                     if (!product.isValid) {
@@ -574,6 +581,10 @@ fun SwipeableCartItem(
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
+                    .padding(
+                        horizontal = 0.dp,
+                        vertical = dimensionResource(R.dimen.padding_small)
+                    )
                     .dropShadow(
                         shape = RectangleShape, // RoundedCornerShape 已验证不可用
                         shadow = Shadow(
@@ -588,12 +599,12 @@ fun SwipeableCartItem(
                     },
                 contentScale = ContentScale.Crop
             )
-            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .heightIn(min = 120.dp) // 设置最小高度，否则撑不开高度
+                    .padding(dimensionResource(R.dimen.padding_small))
             ) {
                 Text(
                     text = product.goodsNameZh,

@@ -18,11 +18,11 @@ interface HistoryDao {
     @Query("DELETE FROM history WHERE goodsId IN (:ids)")
     suspend fun deleteItemsByIds(ids: List<String>)
 
-    @Query("SELECT * FROM history WHERE goodsId IN (:ids)")
-    suspend fun getItemsByIds(ids: List<String>): List<HistoryEntity>
-
     // 即使没有 LIMIT，只要返回类型是单对象（如 ProfileEntity），空表依然会返回 null
     // 若返回 List<ClassName> 则为 emptyList()
     @Query("SELECT * FROM history")
     suspend fun getAllItems(): List<HistoryEntity>
+
+    @Query("SELECT * FROM history WHERE goodsId IN (:ids)")
+    suspend fun getItemsByIds(ids: List<String>): List<HistoryEntity>
 }

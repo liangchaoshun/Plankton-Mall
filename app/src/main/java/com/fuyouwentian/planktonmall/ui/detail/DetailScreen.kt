@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Button
@@ -35,6 +36,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,7 +56,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -153,7 +154,7 @@ fun DetailContent(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 onFavorIconClick = {
                     uiState.product?.let {
-                        viewModel.add2Favorites(uiState.product!!)
+                        viewModel.toggleFavorites()
                     }
                 },
                 onCartIconClick = onCartIconClick, // 跳转到购物车页面
@@ -171,7 +172,7 @@ fun DetailContent(
                 }
             )
 
-            // 蒙版：商品被删除或下架了
+            // 蒙版：商品被删除或下架了，售罄不用出现蒙版
             uiState.product?.let { product ->
                 if (product.isInvalid) {
                     Box(
@@ -305,13 +306,27 @@ fun ProductInfoSection(product: Product?) {
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-            // 价格显示
-            Text(
-                text = "¥${product.price}",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFF44336)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 价格显示
+                Text(
+                    text = "¥${product.price}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFF44336)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                if (product.stock < 1) {
+                    Text(
+                        text = "暂时无货",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         } ?: Text(
             text = "加载中...",
             style = MaterialTheme.typography.bodyMedium,
@@ -358,7 +373,6 @@ fun BottomActionBar(
     onClickAdd2Cart: () -> Unit,
     onClickBuyNow: () -> Unit
 ) {
-    val isValid = product?.deleted == 0 && product.onSale == 1 && product.stock > 0
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFFF0F8FF),
@@ -378,14 +392,15 @@ fun BottomActionBar(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Default.StarBorder,
+                    imageVector = if (product?.isFavorite == true) Icons.Default.Star else Icons.Default.StarBorder,
                     contentDescription = "收藏",
+                    tint = if (product?.isFavorite == true) Color(0xFFFF9800) else LocalContentColor.current,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
                     text = "收藏",
-                    fontSize = 10.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelSmall,
                 )
             }
             Column(
@@ -401,29 +416,37 @@ fun BottomActionBar(
                 )
                 Text(
                     text = "购物车",
-                    fontSize = 10.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelSmall,
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
-                enabled = isValid,
+                enabled = product?.isInvalid == false && product.stock != 0,
                 onClick = onClickAdd2Cart,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(38.dp)
             ) {
-                Text(text = "加入购物车", color = Color.White, fontSize = 13.sp)
+                Text(
+                    text = "加入购物车",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(
-                enabled = isValid,
+                enabled = product?.isInvalid == false && product.stock != 0,
                 onClick = onClickBuyNow,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(38.dp)
             ) {
-                Text(text = "立即购买", color = Color.White, fontSize = 13.sp)
+                Text(
+                    text = "立即购买",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
     }

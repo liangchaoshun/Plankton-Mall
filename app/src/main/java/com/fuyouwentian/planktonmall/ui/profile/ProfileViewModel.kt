@@ -5,12 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.local.AppDatabase
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
+import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -19,6 +23,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -48,41 +53,10 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun loadBrowsingHistory() {
-        Log.d("ProfileViewModel", "loadBrowsingHistory")
-        viewModelScope.launch {
-            try {
-                val recordsMap = historyRepo.getAllItems()
-                    .groupBy { it.createDate }
-                    .mapValues { (_, records) ->
-                        // 列表中，按 createTimeMillis 字段倒排
-                        records.sortedByDescending { it.createTimeMillis }
-                    }
-                    .toSortedMap(compareByDescending { it })
-                _uiState.update { it.copy(histories = recordsMap) }
-            } catch (e: Exception) {
-                handleError(e)
-            }
-        }
-    }
-
-    fun loadFavorites() {
-        Log.d("ProfileViewModel", "loadFavorites")
-        viewModelScope.launch {
-            try {
-                // TODO
-            } catch (e: Exception) {
-                handleError(e)
-            }
-        }
-    }
-
     fun initScreen() {
         _uiState.update {
             it.copy(
                 orders = emptyList(),
-                histories = sortedMapOf(),
-                favors = emptyList(),
                 profile = null,
                 hasToken = true,
                 loading = false,
@@ -93,20 +67,61 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun loadUserInfo() {
-        Log.d("ProfileViewModel", "loadUserInfo")
         viewModelScope.launch {
             try {
                 val hasToken = tokenRepo.hasToken()
                 _uiState.update { it.copy(hasToken = hasToken) }
                 if (!hasToken) return@launch // 跳出
                 userRepo.getLocalUserProfile()?.let { localProfile ->
-                    Log.d("ProfileViewModel", "localProfile: $localProfile")
                     _uiState.update { it.copy(profile = localProfile) }
                 }
             } catch (e: Exception) {
                 handleError(e)
             } finally {
                 _uiState.update { it.copy(loading = false) }
+            }
+        }
+    }
+
+    fun onAdd2Cart(product: FavorRecord) {
+        viewModelScope.launch {
+            try {
+                if (!tokenRepo.hasToken()) {
+                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
+                    return@launch
+                }
+                val bool = cartRepo.insert(
+                    Add2CartProductParams(
+                        id = product.goodsId,
+                        price = product.goodsPrice,
+                        stock = product.goodsStock,
+                        onSale = product.goodsOnSale,
+                        nameZh = product.goodsNameZh,
+                        nameEn = product.goodsNameEn,
+                        iconUrl = product.goodsIcon
+                    )
+                )
+                if (bool) _uiEvent.emit(UiEvent.ShowToast("加入购物车成功"))
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                if (userRepo.logout() == true) {
+                    _uiEvent.emit(UiEvent.ShowToast("退出登录成功"))
+                    _uiEvent.emit(UiEvent.LogoutSuccess)
+                    tokenRepo.clearToken()
+                    // TODO 是否要清理所有 Room 表
+                    withContext(Dispatchers.IO) {
+                        appDatabase.clearAllTables()
+                    }
+                }
+            } catch (e: Exception) {
+                handleError(e)
             }
         }
     }

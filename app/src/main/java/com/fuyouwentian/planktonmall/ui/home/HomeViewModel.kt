@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
-import com.fuyouwentian.planktonmall.domain.model.PaginationParamsRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
@@ -45,7 +45,7 @@ class HomeViewModel @Inject constructor(
     private var currentJob: Job? = null
 
     // 保存最后一次请求参数，供 loadMore 使用
-    private var lastPageParams: PaginationParamsRequest = PaginationParamsRequest()
+    private var lastPageParams: PaginationRequest = PaginationRequest()
 
     // 请求版本号：刷新/搜索时自增，loadMore 返回时校验
     private var requestId = 0
@@ -55,7 +55,7 @@ class HomeViewModel @Inject constructor(
     fun initFetchData(isRefresh: Boolean = false) {
         val id = ++requestId
         currentJob?.cancel() // 重置
-        lastPageParams = PaginationParamsRequest() // 重置
+        lastPageParams = PaginationRequest() // 重置
         currentJob = viewModelScope.launch {
             _uiState.update {
                 // 下拉刷新，不清空数据，也不显示全屏 loading

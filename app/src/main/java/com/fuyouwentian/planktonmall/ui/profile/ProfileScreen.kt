@@ -47,10 +47,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
-import com.fuyouwentian.planktonmall.ui.components.favor.FavorContent
-import com.fuyouwentian.planktonmall.ui.components.history.HistoryContent
+import com.fuyouwentian.planktonmall.ui.components.favor.Favor
+import com.fuyouwentian.planktonmall.ui.components.history.History
 import com.fuyouwentian.planktonmall.ui.components.order.OrderContent
 import com.fuyouwentian.planktonmall.ui.components.userInfo.UserInfoContent
 import kotlinx.coroutines.flow.collectLatest
@@ -75,6 +76,10 @@ fun ProfileScreen(
             when (event) {
                 is UiEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+
+                is UiEvent.LogoutSuccess -> {
+                    onLogoutSuccess()
                 }
 
                 else -> {}
@@ -139,10 +144,9 @@ fun ProfileScreen(
                 ProfileContent(
                     uiState = uiState,
                     loadOrders = viewModel::loadOrders,
-                    loadBrowsingHistory = viewModel::loadBrowsingHistory,
-                    loadFavorites = viewModel::loadFavorites,
-                    onLogoutSuccess = onLogoutSuccess,
+                    onLogout = viewModel::logout,
                     onClickProduct = onProductClick,
+                    onClickAdd2Cart = viewModel::onAdd2Cart
                 )
             }
         }
@@ -187,7 +191,7 @@ fun ProfileHeader(profile: UserProfile?) {
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
-            text = profile?.nickname ?: "无敌三花小彩狸",
+            text = profile?.nickname ?: "--",
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -197,14 +201,13 @@ fun ProfileHeader(profile: UserProfile?) {
 fun ProfileContent(
     uiState: ProfileUiState,
     loadOrders: () -> Unit = {},
-    loadBrowsingHistory: () -> Unit = {},
-    loadFavorites: () -> Unit = {},
-    onLogoutSuccess: () -> Unit = {},
+    onLogout: () -> Unit = {},
     onClickProduct: (String) -> Unit = {},
+    onClickAdd2Cart: (FavorRecord) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val tabs = listOf("订单", "足迹", "收藏", "个人信息")
-    val pagerState = rememberPagerState(initialPage = 2, pageCount = { tabs.size })
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabs.size })
 
     // 🔥监听页面切换，触发对应 Tab 的初始化请求
     // 利用 snapshotFlow 确保只有真正切换到该页才触发
@@ -214,8 +217,6 @@ fun ProfileContent(
             .collectLatest { page ->
                 when (page) {
                     0 -> loadOrders()
-                    1 -> loadBrowsingHistory()
-                    2 -> loadFavorites()
                 }
             }
     }
@@ -271,19 +272,19 @@ fun ProfileContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            // beyondViewportPageCount = 0 // 取消预加载组组件，避免没必要的网络请求，但会略微影响滑动流畅度
+            beyondViewportPageCount = 0 // 设置当前页的前后 n 个 tab 对应的组件，进行预加载
         ) { page ->
             when (page) {
                 0 -> OrderContent()
-                1 -> HistoryContent(
-                    histories = uiState.histories,
-                    onClickProduct = onClickProduct
+                1 -> History(onClickProduct = onClickProduct)
+                2 -> Favor(
+                    onClickProductPicture = onClickProduct,
+                    onAdd2Cart = onClickAdd2Cart
                 )
 
-                2 -> FavorContent()
                 3 -> UserInfoContent(
                     userInfo = uiState.profile,
-                    onLogoutSuccess = onLogoutSuccess
+                    onLogout = onLogout,
                 )
             }
         }

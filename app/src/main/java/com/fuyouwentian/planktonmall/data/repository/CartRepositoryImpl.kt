@@ -53,8 +53,9 @@ class CartRepositoryImpl @Inject constructor(
     // 参数是商品的参数
     override suspend fun insert(params: Add2CartProductParams): Boolean {
         // Log.d("CartRepositoryImpl ", "insert params: $params")
+        val mongoIdStr = MongoIdGenerator.generate()
         var add2CartRequest = Add2CartRequest(
-            id = MongoIdGenerator.generate(),
+            id = mongoIdStr,
             goodsId = params.id
         )
 
@@ -75,7 +76,7 @@ class CartRepositoryImpl @Inject constructor(
         } else {
             // 不存在，插入一条新的到本地数据
             val cartProduct = CartProduct(
-                id = add2CartRequest.id,
+                id = mongoIdStr,
                 userId = profileDao.getUserProfile()!!.toDomain().id,
                 goodsId = params.id,
                 goodsPrice = params.price,
@@ -99,7 +100,7 @@ class CartRepositoryImpl @Inject constructor(
                 response = true
             }
         } catch (e: Exception) {
-            cartDao.deleteItemsByIds(listOf(add2CartRequest.id)) // 同步到服务器失败，还原
+            cartDao.deleteItemsByIds(listOf(mongoIdStr)) // 同步到服务器失败，还原
             throw e
         }
         return response

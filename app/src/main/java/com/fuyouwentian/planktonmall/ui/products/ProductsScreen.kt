@@ -170,7 +170,11 @@ fun ProductsScreenContent(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = uiState.error)
+                    Text(
+                        text = uiState.error,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onClickRetry) { Text("重试") }
                 }

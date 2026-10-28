@@ -2,8 +2,9 @@ package com.fuyouwentian.planktonmall.data.repository
 
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
-import com.fuyouwentian.planktonmall.domain.model.PaginationParamsRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
 import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
@@ -24,13 +25,13 @@ class ProductRepositoryImpl @Inject constructor(
         return safeApiCall { apiService.getHomeCarousel() }
     }
 
-    override suspend fun getRecommendProducts(request: PaginationParamsRequest?): ProductsResponseData<ProductLite>? {
+    override suspend fun getRecommendProducts(request: PaginationRequest?): ProductsResponseData<ProductLite>? {
         // 若传了 null，则给一个默认空实例
-        val actualRequest = request ?: PaginationParamsRequest()
+        val actualRequest = request ?: PaginationRequest()
         return safeApiCall { apiService.getRecommendProducts(actualRequest) }
     }
 
-    override suspend fun getProductDetail(id: String): Product? {
-        return safeApiCall { apiService.getProductDetail(id) }
+    override suspend fun getProductDetail(param: ProductDetailRequest): Product? {
+        return safeApiCall { apiService.getProductDetail(param) }
     }
 }

@@ -3,16 +3,21 @@ package com.fuyouwentian.planktonmall.ui.detail
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
 import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
+import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
+import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -36,6 +41,7 @@ class DetailViewModel @Inject constructor(
     private val tokenRepo: TokenRepository,
     private val productRepo: ProductRepository,
     private val historyRepo: HistoryRepository,
+    private val favorRepo: FavorRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(DetailUiState(loading = true))
@@ -61,12 +67,18 @@ class DetailViewModel @Inject constructor(
                 // mock data
                 // val product = null
                 // val product = MockProducts.ProductDetail
-                val product = productRepo.getProductDetail(pid)
+                val localUserProfile = userRepo.getLocalUserProfile()
+                val userId = localUserProfile?.id ?: ""
+                val product = productRepo.getProductDetail(
+                    ProductDetailRequest(
+                        userId = userId,
+                        goodsId = pid
+                    )
+                )
                 if (id != requestId) return@launch // 已过期
                 product?.let { nonNullProduct ->
                     _uiState.update { it.copy(product = nonNullProduct, error = null) }
                     // 登录后存在用户信息时，才加入历史数据表
-                    val localUserProfile = userRepo.getLocalUserProfile()
                     if (tokenRepo.hasToken() && localUserProfile != null) {
                         // 未被物理删除的商品都可加入浏览历史（即使逻辑删除、下架、售罄）
                         val today = LocalDate.now()
@@ -120,16 +132,45 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun add2Favorites(product: Product) {
-        Log.d("Detail", "add2Favorites: $product")
+    // 添加、取消收藏
+    fun toggleFavorites() {
+        Log.d("Detail", "toggleFavorites")
         viewModelScope.launch {
             try {
-                if (!tokenRepo.hasToken()) {
+                val userLocalProfile = userRepo.getLocalUserProfile()
+                if (!tokenRepo.hasToken() || userLocalProfile == null) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                // TODO 加入收藏
-                _uiEvent.emit(UiEvent.ShowToast("收藏成功"))
+                _uiState.value.product?.let { product ->
+                    val productId = product.id
+                    if (favorRepo.getItemCountByGoodsId(productId) > 0) {
+                        // 已存在，则取消收藏
+                        if (favorRepo.removeFromFavorites(productId)) {
+                            _uiEvent.emit(UiEvent.ShowToast("取消收藏成功"))
+                            _uiState.update { it.copy(product = it.product?.copy(isFavorite = false)) }
+                        }
+                    } else {
+                        // 不存在，则加入收藏
+                        val req = FavorRecord(
+                            id = MongoIdGenerator.generate(),
+                            userId = userLocalProfile.id,
+                            goodsId = product.id,
+                            isValid = product.deleted == 0,
+                            goodsNameZh = product.nameZh,
+                            goodsNameEn = product.nameEn,
+                            goodsIcon = product.iconUrl,
+                            goodsPrice = product.price,
+                            goodsStock = product.stock,
+                            goodsOnSale = product.onSale,
+                            syncState = SyncRecordState.PENDING_INSERT
+                        )
+                        if (favorRepo.add2Favorites(request = req)) {
+                            _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
+                            _uiState.update { it.copy(product = it.product?.copy(isFavorite = true)) }
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 handleError(e)
             }

@@ -31,6 +31,8 @@ data class Product(
     @SerialName("on_sale")
     val onSale: Int,
     val stock: Int,
+    @SerialName("is_favorite")
+    val isFavorite: Boolean,
     val deleted: Int,
     @SerialName("desc_url")
     val descUrl: List<String>,
@@ -138,16 +140,6 @@ data class PaginationRequest(
 )
 
 @Serializable
-data class PaginationParamsRequest(
-    @SerialName("page_index")
-    val pageIndex: Int = 1,
-    @SerialName("page_size")
-    val pageSize: Int = 10,
-    // 其他后端要求的字段
-)
-
-
-@Serializable
 data class ProductsResponseData<T>(
     val data: List<T>,
     val total: Int,
@@ -155,6 +147,14 @@ data class ProductsResponseData<T>(
     val pageIndex: Int,
     @SerialName("page_size")
     val pageSize: Int
+)
+
+@Serializable
+data class ProductDetailRequest(
+    @SerialName("user_id")
+    val userId: String = "",
+    @SerialName("goods_id")
+    val goodsId: String
 )
 
 @Serializable
@@ -177,10 +177,10 @@ data class FavorRecord(
     val goodsNameZh: String,
     @SerialName("goods_name_en")
     val goodsNameEn: String,
-    @SerialName("goods_price")
-    val goodsPrice: String,
     @SerialName("goods_icon")
     val goodsIcon: String,
+    @SerialName("goods_price")
+    val goodsPrice: String,
     @SerialName("goods_stock")
     val goodsStock: Int,
     @SerialName("goods_on_sale")
@@ -214,6 +214,15 @@ data class Add2FavorRequest(
     val id: String,
     @SerialName("goods_id")
     val goodsId: String,
+)
+
+@Serializable
+data class FavorsPaginationState(
+    val total: Int = 0,
+    @SerialName("page_index")
+    val pageIndex: Int = 1,
+    @SerialName("page_size")
+    val pageSize: Int = 10
 )
 
 @Serializable

@@ -70,6 +70,7 @@ object MockProducts {
             "http://localhost:8058/api/static/files/1789609920199_518dfdbc-2141-46b6-a998-019c68322aa7@6.webp"
         ),
         deleted = 1,
+        isFavorite = false,
         createTime = "2026-09-17T01:52:00.401Z",
         updateTime = "2026-09-17T01:52:00.401Z"
     )

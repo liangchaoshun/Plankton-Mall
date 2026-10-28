@@ -9,9 +9,9 @@ import com.fuyouwentian.planktonmall.domain.model.CategoryData
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
-import com.fuyouwentian.planktonmall.domain.model.PaginationParamsRequest
 import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
 import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
@@ -29,13 +29,13 @@ interface ApiService {
     suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>?>
 
     @POST("goods/recommend")
-    suspend fun getRecommendProducts(@Body param: PaginationParamsRequest?): BaseResponse<ProductsResponseData<ProductLite>?>
+    suspend fun getRecommendProducts(@Body param: PaginationRequest?): BaseResponse<ProductsResponseData<ProductLite>?>
 
     @POST("goods/list")
     suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsResponseData<ProductLite>?>
 
-    @GET("goods/{id}")
-    suspend fun getProductDetail(@Path("id") id: String): BaseResponse<Product?>
+    @POST("goods/detail")
+    suspend fun getProductDetail(@Body param: ProductDetailRequest): BaseResponse<Product?>
 
     @GET("category/list")
     suspend fun getCategories(): BaseResponse<CategoryData<Category>?>
