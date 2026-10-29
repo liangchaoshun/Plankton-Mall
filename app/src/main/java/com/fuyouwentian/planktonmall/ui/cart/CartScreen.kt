@@ -2,7 +2,6 @@ package com.fuyouwentian.planktonmall.ui.cart
 
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
@@ -263,7 +262,7 @@ fun CartScreen(
                                     onProductClick = onProductClick,
                                     onToggleSelect = viewModel::toggleSelect,
                                     onQuantityChange = viewModel::changeQuantity,
-                                    onCollect = { Log.d("Cart", "收藏: ${product.id}") }, // TODO
+                                    onCollect = viewModel::add2Favorites,
                                     onDelete = viewModel::deleteCartItems,
                                     onSyncClick = viewModel::syncData2Server
                                 )
@@ -392,7 +391,7 @@ fun SwipeableCartItem(
     onProductClick: (String) -> Unit,
     onToggleSelect: (String, Boolean) -> Unit,
     onQuantityChange: (String, Int) -> Unit,
-    onCollect: (String) -> Unit,
+    onCollect: (CartProduct) -> Unit,
     onDelete: (List<String>) -> Unit,
     onSyncClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -449,7 +448,7 @@ fun SwipeableCartItem(
                     .fillMaxHeight()
                     .width(60.dp)
                     .background(Color(0xFFFFB800))
-                    .clickable(enabled = isRevealed) { onCollect(product.id) },
+                    .clickable(enabled = isRevealed) { onCollect(product) },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -550,7 +549,7 @@ fun SwipeableCartItem(
             ) {
                 Checkbox(
                     checked = product.isValid && product.checked,
-                    enabled = product.isValid && !isCurrentlyRevealed,
+                    enabled = product.isValid && !isCurrentlyRevealed && product.goodsStock > 0,
                     onCheckedChange = {
                         onToggleSelect(
                             product.id,
@@ -595,7 +594,7 @@ fun SwipeableCartItem(
                     )
                     .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                     .clickable(enabled = product.isValid && !isCurrentlyRevealed) {
-                        onProductClick(product.id)
+                        onProductClick(product.goodsId)
                     },
                 contentScale = ContentScale.Crop
             )
@@ -623,17 +622,25 @@ fun SwipeableCartItem(
                         color = Color.Red,
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    NumberStepper(
-                        value = product.quantity,
-                        isValid = product.isValid && !isCurrentlyRevealed,
-                        onChangeQuantity = { value ->
-                            onRevealedChange(false)
-                            onQuantityChange(
-                                product.id,
-                                value
-                            )
-                        }
-                    )
+                    if (product.goodsStock < 1) {
+                        Text(
+                            text = "售罄",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    } else {
+                        NumberStepper(
+                            value = product.quantity,
+                            isValid = product.isValid && !isCurrentlyRevealed,
+                            onChangeQuantity = { value ->
+                                onRevealedChange(false)
+                                onQuantityChange(
+                                    product.id,
+                                    value
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -647,9 +654,10 @@ fun SettleColumn(
     onToggleSelectAll: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val allSelected = cartItems.filter { it.isValid }.all { it.checked }
-    val anySelected = cartItems.filter { it.isValid }.any { it.checked }
-    val someSelected = cartItems.filter { it.isValid }.any { it.checked } && !allSelected
+    val allSelected = cartItems.filter { it.isValid && it.goodsStock > 0 }.all { it.checked }
+    val anySelected = cartItems.filter { it.isValid && it.goodsStock > 0 }.any { it.checked }
+    val someSelected =
+        cartItems.filter { it.isValid && it.goodsStock > 0 }.any { it.checked } && !allSelected
     val grandTotal = cartItems
         .filter { it.isValid && it.checked }
         .fold(BigDecimal.ZERO) { acc, product ->

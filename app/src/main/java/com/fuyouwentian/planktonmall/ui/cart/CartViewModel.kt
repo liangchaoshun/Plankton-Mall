@@ -3,11 +3,16 @@ package com.fuyouwentian.planktonmall.ui.cart
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
+import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
+import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
+import com.fuyouwentian.planktonmall.domain.repository.UserRepository
+import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
@@ -30,7 +35,9 @@ import kotlin.time.Duration.Companion.milliseconds
 @HiltViewModel
 class CartViewModel @Inject constructor(
     private val cartRepo: CartRepository,
+    private val userRepo: UserRepository,
     private val tokenRepo: TokenRepository,
+    private val favorRepo: FavorRepository,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
@@ -118,7 +125,7 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch {
             safeUpdateAndSync {
                 cartRepo.updateMultiLocalChecked(
-                    ids = cartItems.value.filter { it.isValid }.map { it.id },
+                    ids = cartItems.value.filter { it.isValid && it.goodsStock > 0 }.map { it.id },
                     checked = target
                 )
             }
@@ -148,7 +155,48 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun syncData2Server(id: String) {
+    fun add2Favorites(product: CartProduct) {
+        viewModelScope.launch {
+            try {
+                val localUserProfile = userRepo.getLocalUserProfile()
+                if (localUserProfile == null) {
+                    _uiEvent.emit(UiEvent.ShowToast("缺失用户数据"))
+                    return@launch
+                }
+                val userId = localUserProfile.id
+                if (favorRepo.getItemCountByGoodsId(
+                        userId = userId,
+                        goodsId = product.goodsId
+                    ) > 0
+                ) {
+                    // 已存在，则只提示
+                    _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
+                } else {
+                    // 不存在，则加入收藏
+                    val req = FavorRecord(
+                        id = MongoIdGenerator.generate(),
+                        userId = userId,
+                        goodsId = product.goodsId,
+                        isValid = product.isValid,
+                        goodsNameZh = product.goodsNameZh,
+                        goodsNameEn = product.goodsNameEn,
+                        goodsIcon = product.goodsIcon,
+                        goodsPrice = product.goodsPrice,
+                        goodsStock = product.goodsStock,
+                        goodsOnSale = product.goodsOnSale,
+                        syncState = SyncRecordState.PENDING_INSERT
+                    )
+                    if (favorRepo.add2Favorites(request = req)) {
+                        _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
+                    }
+                }
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    fun syncData2Server(id: String = "") {
         // Log.d("Cart", "[syncData2Server] id: $id")
         viewModelScope.launch {
             try {
@@ -158,6 +206,7 @@ class CartViewModel @Inject constructor(
             }
         }
     }
+
 
     private suspend fun handleError(e: Throwable) {
         if (e is CancellationException) throw e // 协程取消时会抛出

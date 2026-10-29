@@ -14,8 +14,8 @@ data class HomeUiState(
     val carouselData: List<ProductLite> = emptyList(),
     val recommendProducts: ProductsResponseData<ProductLite> = productsDataDefault,
     val loading: Boolean = false, // 仅用于首次加载（全屏转圈）
-    val isRefreshing: Boolean = false, // 专门用于下拉刷新
-    val loadingMore: Boolean = false, // 上滑加载更多
+    val isRefreshing: Boolean = false, // 用于下拉刷新
+    val loadingMore: Boolean = false, // 上划加载更多
     val hasMore: Boolean = true, // 是否还有下一页
     val exceptionInfo: String? = null,
 )

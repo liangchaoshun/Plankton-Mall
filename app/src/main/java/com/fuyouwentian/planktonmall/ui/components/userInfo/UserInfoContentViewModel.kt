@@ -3,13 +3,10 @@ package com.fuyouwentian.planktonmall.ui.components.userInfo
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.local.AppDatabase
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
-import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,15 +15,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class UserInfoContentViewModel @Inject constructor(
     private val userRepo: UserRepository,
-    private val tokenRepo: TokenRepository,
-    private val appDatabase: AppDatabase,
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow(UserInfoContentUiState(loading = false, commiting = false))
@@ -36,30 +30,12 @@ class UserInfoContentViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    fun getUserProfile() {
+    fun getRemoteUserProfile() {
         viewModelScope.launch {
             try {
                 val profile = userRepo.getRemoteUserProfile()
                 profile?.let {
-                    Log.d("ProfileViewModel", "$profile")
-                }
-            } catch (e: Exception) {
-                handleError(e)
-            }
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            try {
-                if (userRepo.logout() == true) {
-                    _uiEvent.emit(UiEvent.ShowToast("退出登录成功"))
-                    _uiEvent.emit(UiEvent.LogoutSuccess)
-                    tokenRepo.clearToken()
-                    // TODO 是否要清理所有 Room 表
-                    withContext(Dispatchers.IO) {
-                        appDatabase.clearAllTables()
-                    }
+                    Log.d("UserInfoContentViewModel", "$profile")
                 }
             } catch (e: Exception) {
                 handleError(e)

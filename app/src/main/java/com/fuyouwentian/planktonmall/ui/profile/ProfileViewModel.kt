@@ -9,8 +9,6 @@ import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
-import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
-import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +32,6 @@ class ProfileViewModel @Inject constructor(
     private val tokenRepo: TokenRepository,
     private val appDatabase: AppDatabase,
     private val cartRepo: CartRepository,
-    private val historyRepo: HistoryRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState(loading = false))
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()

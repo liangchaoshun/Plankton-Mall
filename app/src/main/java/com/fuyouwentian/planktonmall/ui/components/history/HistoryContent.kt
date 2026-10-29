@@ -51,8 +51,8 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun History(
-    viewModel: HistoryViewModel = hiltViewModel(),
+fun HistoryContent(
+    viewModel: HistoryContentViewModel = hiltViewModel(),
     onClickProduct: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

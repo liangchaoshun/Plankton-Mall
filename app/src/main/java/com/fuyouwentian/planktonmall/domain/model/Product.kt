@@ -123,7 +123,15 @@ data class Add2CartRequest(
 )
 
 @Serializable
-data class ProductsRequest(
+data class PaginationParameter(
+    @SerialName("page_index")
+    val pageIndex: Int = 1,
+    @SerialName("page_size")
+    val pageSize: Int = 10,
+)
+
+@Serializable
+data class PaginationWithQuery(
     @SerialName("page_index")
     val pageIndex: Int = 1,
     @SerialName("page_size")
@@ -132,11 +140,12 @@ data class ProductsRequest(
 )
 
 @Serializable
-data class PaginationRequest(
+data class PaginationWithTotal(
+    val total: Int = 0,
     @SerialName("page_index")
     val pageIndex: Int = 1,
     @SerialName("page_size")
-    val pageSize: Int = 10,
+    val pageSize: Int = 10
 )
 
 @Serializable
@@ -214,15 +223,6 @@ data class Add2FavorRequest(
     val id: String,
     @SerialName("goods_id")
     val goodsId: String,
-)
-
-@Serializable
-data class FavorsPaginationState(
-    val total: Int = 0,
-    @SerialName("page_index")
-    val pageIndex: Int = 1,
-    @SerialName("page_size")
-    val pageSize: Int = 10
 )
 
 @Serializable

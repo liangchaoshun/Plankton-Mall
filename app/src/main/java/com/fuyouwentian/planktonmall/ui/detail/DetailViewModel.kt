@@ -137,16 +137,21 @@ class DetailViewModel @Inject constructor(
         Log.d("Detail", "toggleFavorites")
         viewModelScope.launch {
             try {
-                val userLocalProfile = userRepo.getLocalUserProfile()
-                if (!tokenRepo.hasToken() || userLocalProfile == null) {
+                val localUserProfile = userRepo.getLocalUserProfile()
+                if (!tokenRepo.hasToken()) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
+                if (localUserProfile == null) {
+                    _uiEvent.emit(UiEvent.ShowToast("缺失用户数据"))
+                    return@launch
+                }
+                val userId = localUserProfile.id
                 _uiState.value.product?.let { product ->
                     val productId = product.id
-                    if (favorRepo.getItemCountByGoodsId(productId) > 0) {
+                    if (favorRepo.getItemCountByGoodsId(userId = userId, goodsId = productId) > 0) {
                         // 已存在，则取消收藏
-                        if (favorRepo.removeFromFavorites(productId)) {
+                        if (favorRepo.removeFromFavorites(userId = userId, goodsId = productId)) {
                             _uiEvent.emit(UiEvent.ShowToast("取消收藏成功"))
                             _uiState.update { it.copy(product = it.product?.copy(isFavorite = false)) }
                         }
@@ -154,7 +159,7 @@ class DetailViewModel @Inject constructor(
                         // 不存在，则加入收藏
                         val req = FavorRecord(
                             id = MongoIdGenerator.generate(),
-                            userId = userLocalProfile.id,
+                            userId = userId,
                             goodsId = product.id,
                             isValid = product.deleted == 0,
                             goodsNameZh = product.nameZh,

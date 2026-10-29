@@ -19,11 +19,11 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
-class HistoryViewModel @Inject constructor(
+class HistoryContentViewModel @Inject constructor(
     private val historyRepo: HistoryRepository,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HistoryUiState(loading = false))
-    val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(HistoryContentUiState(loading = false))
+    val uiState: StateFlow<HistoryContentUiState> = _uiState.asStateFlow()
 
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()

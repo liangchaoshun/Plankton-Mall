@@ -86,7 +86,7 @@ fun HomeScreen(
 
     // 初始化
     LaunchedEffect(Unit) {
-        viewModel.initFetchData()
+        viewModel.loadHomeData()
     }
 
     // 订阅事件
@@ -141,7 +141,13 @@ fun HomeScreen(
                     ) {
                         Text(text = uiState.exceptionInfo!!)
                         Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = viewModel::initFetchData) { Text("重试") }
+                        TextButton(onClick = viewModel::loadHomeData) {
+                            Text(
+                                text = "重试",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }
@@ -150,7 +156,7 @@ fun HomeScreen(
                 // 实验性 API
                 PullToRefreshBox(
                     isRefreshing = uiState.isRefreshing,
-                    onRefresh = { viewModel.initFetchData(isRefresh = true) },
+                    onRefresh = { viewModel.loadHomeData(isRefresh = true) },
                     state = pullToRefreshState,
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -318,7 +324,11 @@ fun HomeContentGrid(
                         .height(200.dp), // 固定高度，避免下拉刷新时布局抖动
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "暂无推荐商品", color = Color.Gray)
+                    Text(
+                        text = "暂无推荐商品",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
         } else {
@@ -334,7 +344,7 @@ fun HomeContentGrid(
         if (uiState.loadingMore) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "loading_more") {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
@@ -349,10 +359,14 @@ fun HomeContentGrid(
         if (!uiState.hasMore && uiState.recommendProducts.data.isNotEmpty()) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "no_more") {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("没有更多了", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = "没有更多了",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }

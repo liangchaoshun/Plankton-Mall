@@ -4,22 +4,27 @@ import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.local.favor.FavorDao
 import com.fuyouwentian.planktonmall.data.local.favor.toDomain
 import com.fuyouwentian.planktonmall.data.local.favor.toEntity
+import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
+import com.fuyouwentian.planktonmall.data.local.profile.toDomain
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.Add2FavorRequest
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
-import com.fuyouwentian.planktonmall.domain.model.FavorsPaginationState
-import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithTotal
 import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class FavorRepositoryImpl @Inject constructor(
     private val apiService: ApiService, // Hilt 会自动提供
-    private val favorDao: FavorDao
+    private val favorDao: FavorDao,
+    private val profileDao: ProfileDao,
 ) : FavorRepository {
     override fun getAllLocalFavorItems(): Flow<List<FavorRecord>> {
         return favorDao.getAllItems().map { entities ->
@@ -28,7 +33,7 @@ class FavorRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getItemCountByGoodsId(goodsId: String): Int {
+    override suspend fun getItemCountByGoodsId(userId: String, goodsId: String): Int {
         return favorDao.getItemCountByGoodsId(goodsId)
     }
 
@@ -56,7 +61,7 @@ class FavorRepositoryImpl @Inject constructor(
         return resultBool
     }
 
-    override suspend fun removeFromFavorites(goodsId: String): Boolean {
+    override suspend fun removeFromFavorites(userId: String, goodsId: String): Boolean {
         var resultBool = false
         val existingEntity = favorDao.getItemByGoodsId(goodsId)
         existingEntity?.let {
@@ -74,13 +79,19 @@ class FavorRepositoryImpl @Inject constructor(
         return resultBool
     }
 
-    override suspend fun getRemoteFavors(params: PaginationRequest): FavorsPaginationState? {
+    override suspend fun getRemoteFavors(params: PaginationParameter): PaginationWithTotal? {
         val response = safeApiCall { apiService.favorList(params) }
         response?.let {
             val list =
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
+            // 清理旧数据
+            if (list.isEmpty() || it.pageIndex == 1) {
+                val userId = profileDao.getUserProfile()!!.id
+                favorDao.clearItemsByUserId(userId)
+            }
             favorDao.insertMulti(list)
-            return FavorsPaginationState(
+            delay(200.milliseconds) // 让 favorDao Flow 先发送信号
+            return PaginationWithTotal(
                 total = it.total,
                 pageIndex = it.pageIndex,
                 pageSize = it.pageSize

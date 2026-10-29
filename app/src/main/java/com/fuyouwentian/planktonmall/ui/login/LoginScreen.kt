@@ -116,14 +116,14 @@ fun LoginScreen(
             // 标题
             Text(
                 text = "登录",
-                fontSize = 36.sp,
-                color = Color(0xFF333333)
+                color = Color(0xFF333333),
+                style = MaterialTheme.typography.headlineLarge,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "请登录以获得独家XX服务",
-                fontSize = 14.sp,
-                color = Color(0xFF999999)
+                color = Color(0xFF999999),
+                style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(modifier = Modifier.height(48.dp))
             // 账号
@@ -187,14 +187,14 @@ fun LoginScreen(
             ) {
                 if (uiState.commiting) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(16.dp),
                         color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
                     Text(
                         text = "登录",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }

@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
-import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
@@ -45,17 +45,17 @@ class HomeViewModel @Inject constructor(
     private var currentJob: Job? = null
 
     // 保存最后一次请求参数，供 loadMore 使用
-    private var lastPageParams: PaginationRequest = PaginationRequest()
+    private var lastPageParams: PaginationParameter = PaginationParameter()
 
     // 请求版本号：刷新/搜索时自增，loadMore 返回时校验
     private var requestId = 0
     private val loadMoreMutex = Mutex()
 
     // 初始化加载/下拉刷新页面
-    fun initFetchData(isRefresh: Boolean = false) {
+    fun loadHomeData(isRefresh: Boolean = false) {
         val id = ++requestId
         currentJob?.cancel() // 重置
-        lastPageParams = PaginationRequest() // 重置
+        lastPageParams = PaginationParameter() // 重置
         currentJob = viewModelScope.launch {
             _uiState.update {
                 // 下拉刷新，不清空数据，也不显示全屏 loading
@@ -132,6 +132,10 @@ class HomeViewModel @Inject constructor(
                 if (id == requestId) handleError(e)
             } finally {
                 // 无条件清：避免过期请求把 loadingMore 挂住
+                // Kotlin（以及 Java）的 try-finally 语义规定：
+                //  无论 try 块是正常结束、还是因为 return、break、continue 或抛异常提前退出，
+                //  finally 块都一定会被执行。
+                // 所以，即使 if (id != requestId) return@launch，锁还是会解开的
                 _uiState.update { it.copy(loadingMore = false) } // 统一清理
                 loadMoreMutex.unlock()
             }

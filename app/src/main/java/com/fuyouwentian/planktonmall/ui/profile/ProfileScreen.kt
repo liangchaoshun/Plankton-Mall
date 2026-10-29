@@ -50,8 +50,8 @@ import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
-import com.fuyouwentian.planktonmall.ui.components.favor.Favor
-import com.fuyouwentian.planktonmall.ui.components.history.History
+import com.fuyouwentian.planktonmall.ui.components.favor.FavorContent
+import com.fuyouwentian.planktonmall.ui.components.history.HistoryContent
 import com.fuyouwentian.planktonmall.ui.components.order.OrderContent
 import com.fuyouwentian.planktonmall.ui.components.userInfo.UserInfoContent
 import kotlinx.coroutines.flow.collectLatest
@@ -272,12 +272,15 @@ fun ProfileContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            beyondViewportPageCount = 0 // 设置当前页的前后 n 个 tab 对应的组件，进行预加载
+            userScrollEnabled = false, // 禁用左右滑动切换
+            // 即使为 0，但若允许滑动切换，还是可能预加载和组装目的 tab，
+            // 请查看：https://chat.deepseek.com/share/os7g9b6litccyixnja
+            beyondViewportPageCount = 0
         ) { page ->
             when (page) {
                 0 -> OrderContent()
-                1 -> History(onClickProduct = onClickProduct)
-                2 -> Favor(
+                1 -> HistoryContent(onClickProduct = onClickProduct)
+                2 -> FavorContent(
                     onClickProductPicture = onClickProduct,
                     onAdd2Cart = onClickAdd2Cart
                 )

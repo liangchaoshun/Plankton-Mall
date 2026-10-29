@@ -9,11 +9,11 @@ import com.fuyouwentian.planktonmall.domain.model.CategoryData
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
-import com.fuyouwentian.planktonmall.domain.model.PaginationRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
-import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
@@ -29,10 +29,10 @@ interface ApiService {
     suspend fun getHomeCarousel(): BaseResponse<List<ProductLite>?>
 
     @POST("goods/recommend")
-    suspend fun getRecommendProducts(@Body param: PaginationRequest?): BaseResponse<ProductsResponseData<ProductLite>?>
+    suspend fun getRecommendProducts(@Body param: PaginationParameter?): BaseResponse<ProductsResponseData<ProductLite>?>
 
     @POST("goods/list")
-    suspend fun getProducts(@Body param: ProductsRequest): BaseResponse<ProductsResponseData<ProductLite>?>
+    suspend fun getProducts(@Body param: PaginationWithQuery): BaseResponse<ProductsResponseData<ProductLite>?>
 
     @POST("goods/detail")
     suspend fun getProductDetail(@Body param: ProductDetailRequest): BaseResponse<Product?>
@@ -74,6 +74,6 @@ interface ApiService {
     suspend fun favorDelete(@Body ids: List<String>): BaseResponse<Boolean>
 
     @POST("favor/list")
-    suspend fun favorList(@Body param: PaginationRequest): BaseResponse<ProductsResponseData<FavorRecord>?>
+    suspend fun favorList(@Body param: PaginationParameter): BaseResponse<ProductsResponseData<FavorRecord>?>
 
 }

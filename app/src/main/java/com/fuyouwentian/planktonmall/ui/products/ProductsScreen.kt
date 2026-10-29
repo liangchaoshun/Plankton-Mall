@@ -50,7 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.common.Constants
-import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.components.widgets.Searchbar
 
@@ -73,7 +73,7 @@ fun ProductsScreen(
         // TODO 能否从路由判断是从哪个页面跳转而来？请求的 api 不对~，以系列id 查询其下的商品，有专用 api，
         //  不过和“搜索框”统一使用 goods/list 也好，性能差了一些而已！
         // 页面初始化，加载列表数据
-        viewModel.fetchProductsData(ProductsRequest(q = searchQuery.ifBlank { q.trim() }))
+        viewModel.fetchProductsData(PaginationWithQuery(q = searchQuery.ifBlank { q.trim() }))
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
@@ -114,7 +114,7 @@ fun ProductsScreen(
                         onSearch = { qs ->
                             if (qs.isNotBlank()) {
                                 viewModel.fetchProductsData(
-                                    ProductsRequest(
+                                    PaginationWithQuery(
                                         pageIndex = 1,
                                         pageSize = 10,
                                         q = qs.trim()
@@ -133,7 +133,7 @@ fun ProductsScreen(
             onClickRetry = {
                 val finalQuery = searchQuery.ifBlank { q } // 传入当前搜索参数
                 viewModel.fetchProductsData(
-                    ProductsRequest(
+                    PaginationWithQuery(
                         pageIndex = 1,
                         pageSize = 10,
                         q = finalQuery.trim()

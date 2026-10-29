@@ -308,6 +308,7 @@ fun ProductInfoSection(product: Product?) {
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 价格显示
@@ -317,13 +318,11 @@ fun ProductInfoSection(product: Product?) {
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFF44336)
                 )
-                Spacer(modifier = Modifier.weight(1f))
                 if (product.stock < 1) {
                     Text(
-                        text = "暂时无货",
+                        text = "售罄",
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }

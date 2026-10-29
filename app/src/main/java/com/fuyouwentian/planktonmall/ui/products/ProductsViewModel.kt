@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
-import com.fuyouwentian.planktonmall.domain.model.ProductsRequest
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,12 +37,12 @@ class ProductsViewModel @Inject constructor(
     private var requestId = 0
 
     // 保存最后一次请求参数，供 loadMore 使用
-    private var lastRequest: ProductsRequest = ProductsRequest()
+    private var lastRequest: PaginationWithQuery = PaginationWithQuery()
 
     private val loadMoreMutex = Mutex()
 
     // 初始化加载/刷新/搜索（重置列表）
-    fun fetchProductsData(params: ProductsRequest = ProductsRequest()) {
+    fun fetchProductsData(params: PaginationWithQuery = PaginationWithQuery()) {
         lastRequest = params
         val id = ++requestId
         viewModelScope.launch {
