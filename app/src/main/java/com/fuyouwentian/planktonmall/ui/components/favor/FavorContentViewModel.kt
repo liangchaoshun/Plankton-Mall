@@ -12,15 +12,20 @@ import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -37,27 +42,25 @@ class FavorContentViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FavorContentUiState(loading = true))
     val uiState: StateFlow<FavorContentUiState> = _uiState.asStateFlow()
 
-    private val _favorItems = MutableStateFlow<List<FavorRecord>>(emptyList())
-    val favorItems: StateFlow<List<FavorRecord>> = _favorItems.asStateFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val favorItems: StateFlow<List<FavorRecord>> = userRepo.getCurrentUserIdFlow()
+        .flatMapLatest { userId ->
+            if (userId != null) {
+                favorRepo.getItemsFlowByUserId(userId)
+                    .map { list -> list.sortedByDescending { it.createTime } }
+            } else {
+                flowOf(emptyList())
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            // 屏幕隐藏 5 秒后停止收集，节省资源
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
-
-    init {
-        viewModelScope.launch {
-            val userId = userRepo.getCurrentUserId()
-            if (userId != null) {
-                favorRepo.getItemsFlowByUserId(userId)
-                    .distinctUntilChanged()
-                    // collect 解构出上游 Flow 发射的数据类型
-                    .collect { list ->
-                        _favorItems.value = list.sortedByDescending { it.createTime }
-                    }
-            } else {
-                _favorItems.value = emptyList()
-            }
-        }
-    }
 
     private var currentJob: Job? = null
 
@@ -120,7 +123,6 @@ class FavorContentViewModel @Inject constructor(
     }
 
     fun cancelFavorite(productId: String) {
-        Log.d("FavorContentViewModel", "[cancelFavorite]")
         viewModelScope.launch {
             try {
                 val userId = userRepo.getCurrentUserId()

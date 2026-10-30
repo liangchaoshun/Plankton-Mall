@@ -264,7 +264,6 @@ fun CartScreen(
                                     product = product,
                                     isRevealed = revealedProductId == product.id,
                                     onRevealedChange = { isRevealed ->
-                                        // Log.d("Cart", "$isRevealed")
                                         revealedProductId = if (isRevealed) product.id else null
                                     },
                                     onProductClick = onProductClick,
@@ -501,21 +500,22 @@ fun SwipeableCartItem(
                 .offset { // 根据偏移量移动
                     // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
                     val offset = if (dragState.anchors.size > 0) dragState.requireOffset() else 0f
-                    IntOffset(offset.roundToInt(), 0)
+                    IntOffset(if (offset.isNaN()) 0 else offset.roundToInt(), 0)
                 }
                 .anchoredDraggable(
                     state = dragState,
                     orientation = Orientation.Horizontal,
                     flingBehavior = AnchoredDraggableDefaults.flingBehavior(
                         state = dragState,
-                        positionalThreshold = { distance -> distance * 0.5f },
+                        positionalThreshold = { distance ->
+                            if (distance.isNaN() || distance == 0f) actionWidthPx / 2
+                            else distance * 0.5f
+                        },
                         animationSpec = spring()
                     )
                 )
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
-                .background(Color.White)
-                // 如果已滑出，则收起
-                .clickable { onRevealedChange(false) }
+                .background(Color.White) // 确保放 .offset 之后，否则背景覆盖背景层
                 // 无效商品蒙版和水印
                 .then(
                     if (!product.isValid) {

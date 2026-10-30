@@ -16,6 +16,7 @@ import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -52,6 +53,7 @@ class UserRepositoryImpl @Inject constructor(
         return safeApiCall { api.userLogout() }
     }
 
+    // Preferences 类似 Map 对象，找不到键名时返回 null
     override suspend fun getCurrentUserId(): String? {
         return dataStore.data
             .catch { e ->
@@ -60,6 +62,14 @@ class UserRepositoryImpl @Inject constructor(
             }
             .map { prefs -> prefs[PrefsKeys.USER_ID] }
             .first()
+    }
+
+    override fun getCurrentUserIdFlow(): Flow<String?> {
+        return dataStore.data
+            .catch { e ->
+                if (e is IOException) emit(emptyPreferences()) else throw e
+            }
+            .map { prefs -> prefs[PrefsKeys.USER_ID] }
     }
 
     override suspend fun getLocalUserProfile(): UserProfile? {

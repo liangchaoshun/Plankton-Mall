@@ -30,7 +30,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -196,7 +195,7 @@ fun FavorContent(
                                 }
                             }
                         }
-                        items(favorItems) { favor ->
+                        items(items = favorItems, key = { it.goodsId }) { favor ->
                             LazyColumnItem(
                                 favor = favor,
                                 onAdd2Cart = onAdd2Cart,
@@ -309,7 +308,6 @@ fun LazyColumnItem(
         Row(
             modifier = Modifier
                 .matchParentSize() // 不参与 Box 的高度测量，而是等前景层测量完，直接强行和前景层一样大
-                .height(116.dp)
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
@@ -324,7 +322,6 @@ fun LazyColumnItem(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Delete, contentDescription = "删除", tint = Color.White)
                     Text(
                         text = "取消\n收藏",
                         color = Color.White,
@@ -333,7 +330,7 @@ fun LazyColumnItem(
                 }
             }
         }
-        // 前景层
+        // 前景层，应用 anchoredDraggable
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -341,19 +338,22 @@ fun LazyColumnItem(
                 .offset { // 根据偏移量移动
                     // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
                     val offset = if (dragState.anchors.size > 0) dragState.requireOffset() else 0f
-                    IntOffset(offset.roundToInt(), 0)
+                    IntOffset(if (offset.isNaN()) 0 else offset.roundToInt(), 0)
                 }
-                .anchoredDraggable(
+                .anchoredDraggable( // 先接收手势
                     state = dragState,
                     orientation = Orientation.Horizontal,
                     flingBehavior = AnchoredDraggableDefaults.flingBehavior(
                         state = dragState,
-                        positionalThreshold = { distance -> distance * 0.5f },
+                        positionalThreshold = { distance ->
+                            if (distance.isNaN() || distance == 0f) actionWidthPx / 2
+                            else distance * 0.5f
+                        },
                         animationSpec = spring()
                     )
                 )
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color.White) // 必须放在 .offset 之后
+                .background(Color.White) // 确保放 .offset 之后，否则背景覆盖背景层
                 .padding(vertical = dimensionResource(R.dimen.padding_small))
                 .padding(
                     start = 0.dp,
