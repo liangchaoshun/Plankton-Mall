@@ -9,6 +9,7 @@ interface UserRepository {
     suspend fun login(param: LoginRequest): LoginResponse?
     suspend fun register(param: RegisterRequest): Boolean?
     suspend fun logout(): Boolean?
+    suspend fun getCurrentUserId(): String?
     suspend fun getLocalUserProfile(): UserProfile?
     suspend fun getRemoteUserProfile(): UserProfile?
     suspend fun isLoggedIn(): Boolean?

@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -116,6 +117,8 @@ fun CartScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
+    val lazyColumnState = rememberLazyListState()
 
     // cartItems 是缓存值，当 key1，即 cartItems 发生引用变化（即数据更新）时，会重新排序
     val sortedCartItems = remember(cartItems) {
@@ -139,6 +142,13 @@ fun CartScreen(
 
                 else -> {}
             }
+        }
+    }
+
+    // 监听 LazyColumn 的滚动状态，如果在滑动，就收起已滑出的 Item
+    LaunchedEffect(lazyColumnState.isScrollInProgress) {
+        if (lazyColumnState.isScrollInProgress) {
+            revealedProductId = null
         }
     }
 
@@ -232,9 +242,6 @@ fun CartScreen(
             }
 
             else -> {
-                // 记录当前滑出的商品 ID
-                var revealedProductId by remember { mutableStateOf<String?>(null) }
-
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
@@ -248,6 +255,7 @@ fun CartScreen(
                             }
                     ) {
                         LazyColumn(
+                            state = lazyColumnState,
                             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                             modifier = modifier.fillMaxSize()
                         ) {
@@ -402,13 +410,15 @@ fun SwipeableCartItem(
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
-    val state = remember { AnchoredDraggableState(initialValue = DragValue.Settled) }
+    val dragState = remember(product.goodsId) {
+        AnchoredDraggableState(initialValue = DragValue.Settled)
+    }
 
     // 设置锚点（Anchors），为何使用监听的方式：https://chat.deepseek.com/share/hv5sfio9udh1lzjygi
     // Settled 对应 offset = 0，Revealed 对应 offset = -actionWidthPx
     LaunchedEffect(actionWidthPx) {
         // 设置两个槽点
-        state.updateAnchors(
+        dragState.updateAnchors(
             DraggableAnchors {
                 DragValue.Settled at 0f
                 DragValue.Revealed at -actionWidthPx
@@ -418,27 +428,31 @@ fun SwipeableCartItem(
 
     // 监听外部传入的 isRevealed，如果为 false 且当前是 Revealed，则收起
     LaunchedEffect(isRevealed) {
-        if (!isRevealed && state.currentValue == DragValue.Revealed) {
-            state.animateTo(DragValue.Settled)
+        if (!isRevealed && dragState.currentValue == DragValue.Revealed) {
+            dragState.animateTo(DragValue.Settled)
         }
     }
 
-    // 监听内部滑动状态，通知外部
-    LaunchedEffect(state.currentValue) {
-        onRevealedChange(state.currentValue == DragValue.Revealed)
+    // // 内部滑动结束后，通知外部
+    LaunchedEffect(dragState.currentValue) {
+        if (!dragState.isAnimationRunning) {
+            val revealed = dragState.currentValue == DragValue.Revealed
+            if (revealed != isRevealed) {
+                onRevealedChange(revealed)
+            }
+        }
     }
 
     // 计算当前是否真的处于滑出状态（用于控制点击）
-    // 注意：这里用 targetValue 而不是 currentValue，因为动画过程中也要禁止点击
-    val isCurrentlyRevealed = state.targetValue == DragValue.Revealed
+    // 注意：这里用 targetValue 而不是 currentValue，因为动画过程（包括处于锚点）中也要禁止点击
+    val isCurrentlyRevealed = dragState.targetValue == DragValue.Revealed
 
     Box(modifier = modifier.fillMaxWidth()) {
         // 背景层（收藏和删除按钮）
         Row(
             modifier = Modifier
                 .matchParentSize() // 不参与 Box 的高度测量，而是等前景层测量完，直接强行和前景层一样大
-                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
-                .background(Color(0xFFF5F6FA)),
+                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -486,14 +500,14 @@ fun SwipeableCartItem(
                 .fillMaxWidth()
                 .offset { // 根据偏移量移动
                     // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
-                    val offset = if (state.anchors.size > 0) state.requireOffset() else 0f
+                    val offset = if (dragState.anchors.size > 0) dragState.requireOffset() else 0f
                     IntOffset(offset.roundToInt(), 0)
                 }
                 .anchoredDraggable(
-                    state = state,
+                    state = dragState,
                     orientation = Orientation.Horizontal,
                     flingBehavior = AnchoredDraggableDefaults.flingBehavior(
-                        state = state,
+                        state = dragState,
                         positionalThreshold = { distance -> distance * 0.5f },
                         animationSpec = spring()
                     )

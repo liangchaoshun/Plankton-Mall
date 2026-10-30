@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FavorDao {
+    // userId 为 null 时，
+    // SQL 查不到数据，Room 会将这个空结果集转换为一个空的 List（即 emptyList()）
     @Query("SELECT * FROM favor WHERE userId = :userId")
-    fun getAllItems(userId: String): Flow<List<FavorEntity>>
+    fun getItemsFlowByUserId(userId: String?): Flow<List<FavorEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: FavorEntity)
@@ -24,21 +26,25 @@ interface FavorDao {
 
     // 删除某用户的所有记录
     @Query("DELETE FROM favor WHERE userId = :userId")
-    suspend fun clearItemsByUserId(userId: String)
+    suspend fun deleteItemsByUserId(userId: String)
 
-    @Query("DELETE FROM favor WHERE userId = :userId AND goodsId IN (:goodsIds)")
-    suspend fun deleteItems(userId: String, goodsIds: List<String>)
+    // 通过索引删除一条记录
+    @Query("DELETE FROM favor WHERE userId = :userId AND goodsId = :goodsId")
+    suspend fun deleteItemByIndices(userId: String, goodsId: String)
+
+    // 通过 id 删除多条记录
+    @Query("DELETE FROM favor WHERE id IN (:ids)")
+    suspend fun deleteItemsByIds(ids: List<String>)
 
     // 即使没有 LIMIT，只要返回类型是单对象，空表会返回 null
     // 若返回 List<ClassName> 则为 emptyList()
     @Query("SELECT * FROM favor WHERE userId = :userId AND goodsId = :goodsId LIMIT 1")
-    suspend fun getItem(userId: String, goodsId: String): FavorEntity?
+    suspend fun getItemByIndices(userId: String, goodsId: String): FavorEntity?
 
     // 返回 Boolean，只要存在就返回 true
     @Query("SELECT EXISTS(SELECT 1 FROM favor WHERE userId = :userId AND goodsId = :goodsId)")
-    suspend fun isFavorite(userId: String, goodsId: String): Boolean
+    suspend fun isExistByIndices(userId: String, goodsId: String): Boolean
 
     @Query("SELECT COUNT(*) FROM favor WHERE userId = :userId")
-    suspend fun getCount(userId: String): Int
-
+    suspend fun getCountByUserId(userId: String): Int
 }

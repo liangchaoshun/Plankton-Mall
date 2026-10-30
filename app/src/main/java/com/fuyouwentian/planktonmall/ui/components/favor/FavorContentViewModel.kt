@@ -3,7 +3,6 @@ package com.fuyouwentian.planktonmall.ui.components.favor
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
@@ -12,18 +11,16 @@ import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
-import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -40,16 +37,27 @@ class FavorContentViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FavorContentUiState(loading = true))
     val uiState: StateFlow<FavorContentUiState> = _uiState.asStateFlow()
 
+    private val _favorItems = MutableStateFlow<List<FavorRecord>>(emptyList())
+    val favorItems: StateFlow<List<FavorRecord>> = _favorItems.asStateFlow()
+
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
-    // 订阅 Room favor data Flow
-    val favorItems: StateFlow<List<FavorRecord>> = favorRepo.getAllLocalFavorItems()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+    init {
+        viewModelScope.launch {
+            val userId = userRepo.getCurrentUserId()
+            if (userId != null) {
+                favorRepo.getItemsFlowByUserId(userId)
+                    .distinctUntilChanged()
+                    // collect 解构出上游 Flow 发射的数据类型
+                    .collect { list ->
+                        _favorItems.value = list.sortedByDescending { it.createTime }
+                    }
+            } else {
+                _favorItems.value = emptyList()
+            }
+        }
+    }
 
     private var currentJob: Job? = null
 
@@ -85,14 +93,12 @@ class FavorContentViewModel @Inject constructor(
                 if (isLoadingMore) ++pageIndex
                 val response = favorRepo.getRemoteFavors(PaginationParameter(pageIndex = pageIndex))
                 if (id != requestId) return@launch // 避免上一次请求回来的（过期）数据，丢弃
-                response?.let { res ->
-                    lastPageParams = res
-                    _uiState.update {
-                        it.copy(
-                            hasMore = favorItems.value.size < res.total,
-                            error = null
-                        )
-                    }
+                lastPageParams = response
+                _uiState.update {
+                    it.copy(
+                        hasMore = favorItems.value.size < response.total,
+                        error = null
+                    )
                 }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
@@ -117,18 +123,13 @@ class FavorContentViewModel @Inject constructor(
         Log.d("FavorContentViewModel", "[cancelFavorite]")
         viewModelScope.launch {
             try {
-                if (!tokenRepo.hasToken()) {
+                val userId = userRepo.getCurrentUserId()
+                if (!tokenRepo.hasToken() || userId == null) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                val localUserProfile = userRepo.getLocalUserProfile()
-                if (localUserProfile == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("缺失用户数据"))
-                    return@launch
-                }
-                val userId = localUserProfile.id
-                    // 取消收藏
-                if (favorRepo.removeFromFavorites(userId = userId, goodsId = productId)) {
+                // 取消收藏
+                if (favorRepo.deleteItemByIndices(userId = userId, goodsId = productId)) {
                     _uiEvent.emit(UiEvent.ShowToast("取消收藏成功"))
                 }
             } catch (e: Exception) {

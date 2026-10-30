@@ -1,9 +1,15 @@
 package com.fuyouwentian.planktonmall.ui.components.favor
 
 import android.widget.Toast
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
 import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +30,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,7 +44,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,10 +54,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,86 +69,6 @@ import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-
-import android.graphics.Paint
-import android.graphics.Typeface
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
-import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
-import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TriStateCheckbox
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.state.ToggleableState
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.fuyouwentian.planktonmall.domain.model.CartProduct
-import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -150,9 +82,21 @@ fun FavorContent(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val favorItems by viewModel.favorItems.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
 
     // 定义下拉刷新状态
     val pullToRefreshState = rememberPullToRefreshState() // 实验性 API
+    val lazyColumnState = rememberLazyListState()
+
+    // 触底加载更多
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val last = lazyColumnState.layoutInfo.visibleItemsInfo.lastOrNull()
+                ?: return@derivedStateOf false
+            val total = lazyColumnState.layoutInfo.totalItemsCount
+            total > 0 && last.index >= total - 2
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadFavorites()
@@ -166,22 +110,19 @@ fun FavorContent(
             }
         }
     }
-    val lazyColumnState = rememberLazyListState()
-    // 触底加载更多
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val last = lazyColumnState.layoutInfo.visibleItemsInfo.lastOrNull()
-                ?: return@derivedStateOf false
-            val total = lazyColumnState.layoutInfo.totalItemsCount
-            total > 0 && last.index >= total - 3
-        }
-    }
 
     LaunchedEffect(lazyColumnState) {
         snapshotFlow { shouldLoadMore }
             .distinctUntilChanged()
             .filter { it }
             .collect { viewModel.loadMore() }
+    }
+
+    // 监听 LazyColumn 的滚动状态，如果在滑动，就收起已滑出的 Item
+    LaunchedEffect(lazyColumnState.isScrollInProgress) {
+        if (lazyColumnState.isScrollInProgress) {
+            revealedProductId = null
+        }
     }
 
     Column(
@@ -225,9 +166,6 @@ fun FavorContent(
             }
 
             else -> {
-                // 记录当前滑出的商品 ID
-                var revealedProductId by remember { mutableStateOf<String?>(null) }
-
                 // 实验性 API
                 PullToRefreshBox(
                     isRefreshing = uiState.isRefreshing,
@@ -238,7 +176,9 @@ fun FavorContent(
                     LazyColumn(
                         state = lazyColumnState,
                         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                        modifier = modifier.padding(top = dimensionResource(R.dimen.padding_medium))
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(top = dimensionResource(R.dimen.padding_medium))
                     ) {
                         if (favorItems.isEmpty()) {
                             item(key = "no_data") {
@@ -325,7 +265,9 @@ fun LazyColumnItem(
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
-    val dragState = remember { AnchoredDraggableState(initialValue = DragValue.Settled) }
+    val dragState = remember(favor.goodsId) {
+        AnchoredDraggableState(initialValue = DragValue.Settled)
+    }
 
     // 设置锚点（Anchors），为何使用监听的方式：https://chat.deepseek.com/share/hv5sfio9udh1lzjygi
     // Settled 对应 offset = 0，Revealed 对应 offset = -actionWidthPx
@@ -346,24 +288,29 @@ fun LazyColumnItem(
         }
     }
 
-    // 监听内部滑动状态，通知外部
+    // 内部滑动结束后，通知外部
     LaunchedEffect(dragState.currentValue) {
-        onRevealedChange(dragState.currentValue == DragValue.Revealed)
+        if (!dragState.isAnimationRunning) {
+            val revealed = dragState.currentValue == DragValue.Revealed
+            if (revealed != isRevealed) {
+                onRevealedChange(revealed)
+            }
+        }
     }
 
     // 计算当前是否真的处于滑出状态（用于控制点击）
-    // 注意：这里用 targetValue 而不是 currentValue，因为动画过程中也要禁止点击
+    // 注意：这里用 targetValue 而不是 currentValue，因为动画过程（包括处于锚点）中也要禁止点击
     val isCurrentlyRevealed = dragState.targetValue == DragValue.Revealed
 
-    Box {
+    Box(modifier = Modifier.fillMaxWidth()) {
         val isInvalid =
             !favor.isValid || favor.goodsOnSale == 0 || favor.goodsStock < 1
         // 背景层
         Row(
             modifier = Modifier
                 .matchParentSize() // 不参与 Box 的高度测量，而是等前景层测量完，直接强行和前景层一样大
-                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
-                .background(Color(0xFFF5F6FA)),
+                .height(116.dp)
+                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -379,7 +326,7 @@ fun LazyColumnItem(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Delete, contentDescription = "删除", tint = Color.White)
                     Text(
-                        text = "取消收藏",
+                        text = "取消\n收藏",
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                     )
@@ -391,8 +338,22 @@ fun LazyColumnItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min) // 自动撑满最高子项
+                .offset { // 根据偏移量移动
+                    // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
+                    val offset = if (dragState.anchors.size > 0) dragState.requireOffset() else 0f
+                    IntOffset(offset.roundToInt(), 0)
+                }
+                .anchoredDraggable(
+                    state = dragState,
+                    orientation = Orientation.Horizontal,
+                    flingBehavior = AnchoredDraggableDefaults.flingBehavior(
+                        state = dragState,
+                        positionalThreshold = { distance -> distance * 0.5f },
+                        animationSpec = spring()
+                    )
+                )
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color.White)
+                .background(Color.White) // 必须放在 .offset 之后
                 .padding(vertical = dimensionResource(R.dimen.padding_small))
                 .padding(
                     start = 0.dp,
@@ -462,7 +423,9 @@ fun LazyColumnItem(
                     Spacer(modifier = Modifier.weight(1f))
                     if (!isInvalid) {
                         IconButton(
-                            onClick = { onAdd2Cart(favor) },
+                            onClick = {
+                                if (isRevealed) onRevealedChange(false) else onAdd2Cart(favor)
+                            },
                             modifier = Modifier.size(20.dp) // 默认 48dp
                         ) {
                             Icon(

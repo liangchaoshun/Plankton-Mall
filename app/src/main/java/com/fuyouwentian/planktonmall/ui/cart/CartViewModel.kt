@@ -158,17 +158,12 @@ class CartViewModel @Inject constructor(
     fun add2Favorites(product: CartProduct) {
         viewModelScope.launch {
             try {
-                val localUserProfile = userRepo.getLocalUserProfile()
-                if (localUserProfile == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("缺失用户数据"))
+                val userId = userRepo.getCurrentUserId()
+                if (!tokenRepo.hasToken() || userId == null) {
+                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                val userId = localUserProfile.id
-                if (favorRepo.getItemCountByGoodsId(
-                        userId = userId,
-                        goodsId = product.goodsId
-                    ) > 0
-                ) {
+                if (favorRepo.isExist(userId = userId, goodsId = product.goodsId)) {
                     // 已存在，则只提示
                     _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
                 } else {

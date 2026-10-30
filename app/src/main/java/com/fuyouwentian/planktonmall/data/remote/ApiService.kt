@@ -10,10 +10,10 @@ import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.Product
 import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
-import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
@@ -76,4 +76,6 @@ interface ApiService {
     @POST("favor/list")
     suspend fun favorList(@Body param: PaginationParameter): BaseResponse<ProductsResponseData<FavorRecord>?>
 
+    @POST("favor/{id}")
+    suspend fun favorGetItem(@Path("id") id: String): BaseResponse<FavorRecord>
 }

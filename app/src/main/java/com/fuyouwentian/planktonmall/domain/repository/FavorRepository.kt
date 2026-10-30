@@ -6,9 +6,10 @@ import com.fuyouwentian.planktonmall.domain.model.PaginationWithTotal
 import kotlinx.coroutines.flow.Flow
 
 interface FavorRepository {
-    fun getAllLocalFavorItems(): Flow<List<FavorRecord>>
-    suspend fun getItemCountByGoodsId(userId: String, goodsId: String): Int
+    fun getItemsFlowByUserId(userId: String?): Flow<List<FavorRecord>>
     suspend fun add2Favorites(request: FavorRecord): Boolean
-    suspend fun removeFromFavorites(userId: String, goodsId: String): Boolean
-    suspend fun getRemoteFavors(params: PaginationParameter = PaginationParameter()): PaginationWithTotal?
+    suspend fun deleteItemByIndices(userId: String, goodsId: String): Boolean
+    suspend fun getCountByUserId(userId: String): Int
+    suspend fun isExist(userId: String, goodsId: String): Boolean
+    suspend fun getRemoteFavors(params: PaginationParameter = PaginationParameter()): PaginationWithTotal
 }

@@ -137,21 +137,16 @@ class DetailViewModel @Inject constructor(
         Log.d("Detail", "toggleFavorites")
         viewModelScope.launch {
             try {
-                val localUserProfile = userRepo.getLocalUserProfile()
-                if (!tokenRepo.hasToken()) {
+                val userId = userRepo.getCurrentUserId()
+                if (!tokenRepo.hasToken() || userId == null) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                if (localUserProfile == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("缺失用户数据"))
-                    return@launch
-                }
-                val userId = localUserProfile.id
                 _uiState.value.product?.let { product ->
                     val productId = product.id
-                    if (favorRepo.getItemCountByGoodsId(userId = userId, goodsId = productId) > 0) {
+                    if (favorRepo.isExist(userId = userId, goodsId = productId)) {
                         // 已存在，则取消收藏
-                        if (favorRepo.removeFromFavorites(userId = userId, goodsId = productId)) {
+                        if (favorRepo.deleteItemByIndices(userId = userId, goodsId = productId)) {
                             _uiEvent.emit(UiEvent.ShowToast("取消收藏成功"))
                             _uiState.update { it.copy(product = it.product?.copy(isFavorite = false)) }
                         }
