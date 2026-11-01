@@ -7,22 +7,39 @@ import androidx.room.Query
 
 @Dao
 interface HistoryDao {
-    // 若是复合键，则判断复合键
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(item: HistoryEntity)
-
-    // 若是复合键，则判断复合键
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMulti(items: List<HistoryEntity>)
-
-    @Query("DELETE FROM history WHERE goodsId IN (:ids)")
-    suspend fun deleteItemsByIds(ids: List<String>)
-
-    // 即使没有 LIMIT，只要返回类型是单对象（如 ProfileEntity），空表依然会返回 null
+    // 即使没有 LIMIT，只要返回类型是单对象（如 *Entity），空表依然会返回 null
     // 若返回 List<ClassName> 则为 emptyList()
-    @Query("SELECT * FROM history")
-    suspend fun getAllItems(): List<HistoryEntity>
+    @Query("SELECT * FROM history WHERE userId = :userId")
+    suspend fun getItemsByUserId(userId: String): List<HistoryEntity>
 
-    @Query("SELECT * FROM history WHERE goodsId IN (:ids)")
-    suspend fun getItemsByIds(ids: List<String>): List<HistoryEntity>
+    // 若是复合键，则判断复合键
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(item: HistoryEntity)
+
+    // 若是复合键，则判断复合键
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMulti(items: List<HistoryEntity>)
+
+    // 相同商品，不同用户、日期
+    @Query("SELECT * FROM history WHERE goodsId IN(:goodsId)")
+    suspend fun getItemsByGoodsIds(goodsId: List<String>): List<HistoryEntity>
+
+    // 删除某用户的所有记录
+    @Query("DELETE FROM history WHERE userId = :userId")
+    suspend fun deleteItemsByUserId(userId: String)
+
+    // 通过索引删除一条记录
+    @Query("DELETE FROM history WHERE userId = :userId AND goodsId = :goodsId AND createDate = :createDate")
+    suspend fun deleteItemByIndices(userId: String, goodsId: String, createDate: String)
+
+    // 删除某一天的所有记录
+    @Query("DELETE FROM history WHERE userId = :userId AND createDate = :createDate")
+    suspend fun deleteItemsByDate(userId: String, createDate: String)
+
+    // 返回 Boolean，只要存在就返回 true
+    @Query("SELECT EXISTS(SELECT 1 FROM history WHERE userId = :userId AND goodsId = :goodsId)")
+    suspend fun isExistByUGId(userId: String, goodsId: String): Boolean
+
+    @Query("SELECT COUNT(*) FROM history WHERE userId = :userId")
+    suspend fun getCountByUserId(userId: String): Int
 }

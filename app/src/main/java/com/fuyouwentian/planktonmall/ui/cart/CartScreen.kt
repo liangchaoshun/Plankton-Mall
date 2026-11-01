@@ -174,7 +174,13 @@ fun CartScreen(
                     ) {
                         Text(text = "${uiState.error}")
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = viewModel::fetchCartData) { Text("重试") }
+                        TextButton(onClick = viewModel::fetchCartData) {
+                            Text(
+                                text = "重试",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

@@ -48,6 +48,7 @@ class TokenRepositoryImpl @Inject constructor(
     override suspend fun clearToken() {
         dataStore.edit { prefs ->
             prefs.remove(PrefsKeys.TOKEN)
+            prefs.remove(PrefsKeys.USER_ID)
         }
     }
 

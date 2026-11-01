@@ -189,8 +189,8 @@ fun FavorContent(
                                 ) {
                                     Text(
                                         text = "暂无数据",
-                                        color = Color.Gray,
-                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
                             }
@@ -231,7 +231,7 @@ fun FavorContent(
                                 ) {
                                     Text(
                                         text = "没有更多了",
-                                        color = Color.Gray,
+                                        color = MaterialTheme.colorScheme.outline,
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }

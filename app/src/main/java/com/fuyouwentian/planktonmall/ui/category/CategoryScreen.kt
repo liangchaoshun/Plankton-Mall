@@ -89,7 +89,11 @@ fun CategoryScreen(
         categories.isEmpty() -> {
             // 请求成功但没有数据
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "暂无分类数据")
+                Text(
+                    text = "暂无分类数据",
+                    color = MaterialTheme.colorScheme.outline,
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
 

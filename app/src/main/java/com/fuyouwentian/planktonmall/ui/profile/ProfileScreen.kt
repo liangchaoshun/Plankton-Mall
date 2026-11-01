@@ -109,7 +109,13 @@ fun ProfileScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = viewModel::initScreen) { Text("重试") }
+                        TextButton(onClick = viewModel::initScreen) {
+                            Text(
+                                text = "重试",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

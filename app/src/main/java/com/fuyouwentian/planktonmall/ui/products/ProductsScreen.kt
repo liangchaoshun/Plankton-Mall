@@ -29,6 +29,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -90,7 +92,6 @@ fun ProductsScreen(
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                // shadowElevation = 2.dp, // 底部分层阴影
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -113,13 +114,7 @@ fun ProductsScreen(
                         onValueChangeEvent = { searchQuery = it },
                         onSearch = { qs ->
                             if (qs.isNotBlank()) {
-                                viewModel.fetchProductsData(
-                                    PaginationWithQuery(
-                                        pageIndex = 1,
-                                        pageSize = 10,
-                                        q = qs.trim()
-                                    )
-                                )
+                                viewModel.fetchProductsData(PaginationWithQuery(q = qs.trim()))
                             }
                         }
                     )
@@ -127,17 +122,17 @@ fun ProductsScreen(
             }
         }
     ) { padding ->
+        val finalQuery = searchQuery.ifBlank { q.trim() } // 传入当前搜索参数
         ProductsScreenContent(
             uiState = uiState,
             modifier = modifier.padding(padding),
             onClickRetry = {
-                val finalQuery = searchQuery.ifBlank { q } // 传入当前搜索参数
+                viewModel.fetchProductsData(PaginationWithQuery(q = finalQuery))
+            },
+            onRefresh = {
                 viewModel.fetchProductsData(
-                    PaginationWithQuery(
-                        pageIndex = 1,
-                        pageSize = 10,
-                        q = finalQuery.trim()
-                    )
+                    pagination = PaginationWithQuery(q = finalQuery),
+                    isRefresh = true
                 )
             },
             onLoadMore = viewModel::loadMore,
@@ -146,14 +141,36 @@ fun ProductsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsScreenContent(
     uiState: ProductsUiState,
     modifier: Modifier = Modifier,
     onClickRetry: () -> Unit = {},
+    onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onClickProduct: (String) -> Unit = { }
 ) {
+    // 定义下拉刷新状态
+    val pullToRefreshState = rememberPullToRefreshState() // 实验性 API
+    // 列表上滑加载更多 >> https://chat.deepseek.com/share/0xjyg6gtptec33rjt9
+    val lazyColumnState = rememberLazyListState() // 滚动状态控制
+
+    // 监听滚动：当倒数第 3 项可见时预加载（类似 H5 的距底部 100px）
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisible = lazyColumnState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val total = lazyColumnState.layoutInfo.totalItemsCount
+            total > 0 && lastVisible >= total - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore, uiState.hasMore) {
+        if (shouldLoadMore && uiState.hasMore) {
+            onLoadMore()
+        }
+    }
+
     // 根据状态展示不同 UI
     when {
         uiState.loading -> {
@@ -172,102 +189,103 @@ fun ProductsScreenContent(
                 ) {
                     Text(
                         text = uiState.error,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = onClickRetry) { Text("重试") }
+                    TextButton(onClick = onClickRetry) {
+                        Text(
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
         }
 
-        uiState.productsData.data.isEmpty() -> {
+        uiState.productsData.isEmpty() -> {
             // 请求成功但没有数据
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "暂无数据")
+                Text(
+                    text = "暂无数据",
+                    color = MaterialTheme.colorScheme.outline,
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
 
         else -> {
-            // 列表上滑加载更多 >> https://chat.deepseek.com/share/0xjyg6gtptec33rjt9
-            // LazyColumn 滚动状态控制器
-            val listState = rememberLazyListState()
-
-            // 监听滚动：当倒数第 3 项可见时预加载（类似 H5 的距底部 100px）
-            val shouldLoadMore by remember {
-                derivedStateOf {
-                    val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                    val total = listState.layoutInfo.totalItemsCount
-                    total > 0 && lastVisible >= total - 3
-                }
-            }
-            LaunchedEffect(shouldLoadMore, uiState.hasMore) {
-                if (shouldLoadMore && uiState.hasMore) {
-                    onLoadMore()
-                }
-            }
-            LazyColumn(
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                modifier = modifier.padding(top = dimensionResource(R.dimen.padding_medium))
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                state = pullToRefreshState,
+                modifier = Modifier.fillMaxSize()
             ) {
-                items(uiState.productsData.data) { product ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min) // 自动撑满最高子项
-                            .clickable { onClickProduct(product.id) }
-                            .padding(horizontal = dimensionResource(R.dimen.padding_medium)),
-                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        AsyncImage(
-                            model = product.iconUrl,
-                            contentDescription = product.nameZh,
+                LazyColumn(
+                    state = lazyColumnState,
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+                    modifier = modifier.padding(top = dimensionResource(R.dimen.padding_small))
+                ) {
+                    items(uiState.productsData) { product ->
+                        Row(
                             modifier = Modifier
-                                .size(120.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                            verticalArrangement = Arrangement.SpaceBetween
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min) // 自动撑满最高子项
+                                .clickable { onClickProduct(product.id) }
+                                .padding(horizontal = dimensionResource(R.dimen.padding_medium)),
+                            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Text(
-                                text = product.nameZh,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                            AsyncImage(
+                                model = product.iconUrl,
+                                contentDescription = product.nameZh,
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
                             )
-                            Text(
-                                text = "¥${product.price}",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight(),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = product.nameZh,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "¥${product.price}",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
-                }
-                // 底部状态：加载更多 / 没有更多了
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        when {
-                            uiState.loadingMore -> CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
 
-                            !uiState.hasMore -> Text(
-                                text = "没有更多了",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
-                            )
+                    // 底部状态：加载更多 / 没有更多了
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                uiState.loadingMore -> CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+
+                                !uiState.hasMore -> Text(
+                                    text = "没有更多了",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
                         }
                     }
                 }

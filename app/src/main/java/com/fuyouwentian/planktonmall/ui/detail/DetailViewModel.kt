@@ -96,7 +96,7 @@ class DetailViewModel @Inject constructor(
                             createDate = today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                             createTimeMillis = System.currentTimeMillis()
                         )
-                        historyRepo.insert(historyRecord)
+                        historyRepo.upsert(historyRecord)
                     }
                 }
             } catch (e: Exception) {

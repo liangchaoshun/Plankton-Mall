@@ -12,7 +12,6 @@ import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -69,7 +67,7 @@ class ProfileViewModel @Inject constructor(
                 val hasToken = tokenRepo.hasToken()
                 _uiState.update { it.copy(hasToken = hasToken) }
                 if (!hasToken) return@launch // 跳出
-                userRepo.getLocalUserProfile()?.let { localProfile ->
+                userRepo.getLocalProfile()?.let { localProfile ->
                     _uiState.update { it.copy(profile = localProfile) }
                 }
             } catch (e: Exception) {
@@ -112,10 +110,10 @@ class ProfileViewModel @Inject constructor(
                     _uiEvent.emit(UiEvent.ShowToast("退出登录成功"))
                     _uiEvent.emit(UiEvent.LogoutSuccess)
                     tokenRepo.clearToken()
-                    // TODO 是否要清理所有 Room 表
-                    withContext(Dispatchers.IO) {
+                    // 不要清空所有数据表
+                    /*withContext(Dispatchers.IO) {
                         appDatabase.clearAllTables()
-                    }
+                    }*/
                 }
             } catch (e: Exception) {
                 handleError(e)

@@ -4,7 +4,7 @@ import androidx.room.Entity
 
 @Entity(
     tableName = "history",
-    primaryKeys = ["createDate", "goodsId"] // 复合主键：日期 + 商品ID，前后顺序有区别
+    primaryKeys = ["userId", "goodsId", "createDate"] // 复合主键：前后顺序有区别
 )
 data class HistoryEntity(
     val userId: String,

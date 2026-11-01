@@ -118,8 +118,8 @@ fun HistoryContent(
             ) {
                 Text(
                     text = "暂无数据",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }

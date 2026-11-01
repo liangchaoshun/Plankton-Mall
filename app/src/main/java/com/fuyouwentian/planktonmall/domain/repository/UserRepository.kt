@@ -12,7 +12,7 @@ interface UserRepository {
     suspend fun logout(): Boolean?
     suspend fun getCurrentUserId(): String?
     fun getCurrentUserIdFlow(): Flow<String?>
-    suspend fun getLocalUserProfile(): UserProfile?
-    suspend fun getRemoteUserProfile(): UserProfile?
+    suspend fun getLocalProfile(): UserProfile?
+    suspend fun getRemoteProfile(): UserProfile?
     suspend fun isLoggedIn(): Boolean?
 }

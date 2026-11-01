@@ -356,7 +356,13 @@ fun ProductDescException(
                 ) {
                     Text(text = uiState.error)
                     Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                    TextButton(onClick = onClickRetry) { Text("重试") }
+                    TextButton(onClick = onClickRetry) {
+                        Text(
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
         }

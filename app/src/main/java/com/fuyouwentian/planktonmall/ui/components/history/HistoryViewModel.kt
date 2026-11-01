@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
+import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HistoryContentViewModel @Inject constructor(
+    private val userRepo: UserRepository,
     private val historyRepo: HistoryRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryContentUiState(loading = false))
@@ -40,15 +42,20 @@ class HistoryContentViewModel @Inject constructor(
     }
 
     fun loadBrowsingHistory() {
-        Log.d("HistoryContentViewModel", "loadBrowsingHistory")
         viewModelScope.launch {
             try {
-                val recordsMap = historyRepo.getAllItems()
+                val userId = userRepo.getCurrentUserId()
+                if (userId == null) {
+                    _uiState.update { it.copy(error = "丢失用户id") }
+                    return@launch
+                }
+                val recordsMap = historyRepo.getItemsByUserId(userId)
                     .groupBy { it.createDate }
                     .mapValues { (_, records) ->
                         // 列表中，按 createTimeMillis 字段倒序
                         records.sortedByDescending { it.createTimeMillis }
                     }
+                    // 转换成有序（按 key 倒序） map
                     .toSortedMap(compareByDescending { it })
                 _uiState.update { it.copy(histories = recordsMap) }
             } catch (e: Exception) {

@@ -41,28 +41,33 @@ class ProductsViewModel @Inject constructor(
 
     private val loadMoreMutex = Mutex()
 
-    // 初始化加载/刷新/搜索（重置列表）
-    fun fetchProductsData(params: PaginationWithQuery = PaginationWithQuery()) {
-        lastRequest = params
+    // 初始化加载/下拉刷新/搜索（重置列表）
+    fun fetchProductsData(
+        pagination: PaginationWithQuery = PaginationWithQuery(),
+        isRefresh: Boolean = false,
+    ) {
+        if (_uiState.value.loadingMore) return
         val id = ++requestId
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true) }
+            _uiState.update {
+                it.copy(
+                    loading = !isRefresh,
+                    isRefreshing = isRefresh,
+                    error = null,
+                )
+            }
             try {
-                val productsData = productRepo.getProducts(params)
-                /*// mock data
-                val productsData = ProductsResponseData<ProductLite>(
-                    data = emptyList(),
-                    total = 0,
-                    pageIndex = 1,
-                    pageSize = 10
-                )*/
+                lastRequest = pagination
+                val productsData = productRepo.getProducts(pagination)
+                // mock data
+                // val productsData = emptyList()
                 if (id != requestId) return@launch // 已过期
                 productsData?.let {
                     _uiState.update {
                         it.copy(
-                            productsData = productsData,
+                            productsData = productsData.data,
                             loading = false,
-                            loadingMore = false,
+                            isRefreshing = false,
                             hasMore = productsData.data.size < productsData.total
                         )
                     }
@@ -79,7 +84,7 @@ class ProductsViewModel @Inject constructor(
     fun loadMore() {
         val snapshot = _uiState.value
         // 防止重复触发
-        if (snapshot.loading || snapshot.loadingMore || !snapshot.hasMore) return
+        if (snapshot.loading || snapshot.isRefreshing || snapshot.loadingMore || !snapshot.hasMore) return
 
         viewModelScope.launch {
             // 防止并发，上一次上滑请求返回的数据迟于当前下滑返回的数据导致数据错乱，
@@ -90,22 +95,20 @@ class ProductsViewModel @Inject constructor(
             // https://chat.deepseek.com/share/i6r9hu4f3prgksds4d
             val id = requestId
             try {
-                _uiState.update { it.copy(loadingMore = true) }
-                val latest = _uiState.value // 协程内读取最新值
-                val nextPage = latest.productsData.pageIndex + 1
-                val params = lastRequest.copy(pageIndex = nextPage)
+                _uiState.update { it.copy(loadingMore = true, error = null) }
+                val params = lastRequest.copy(pageIndex = lastRequest.pageIndex + 1)
                 val newData = productRepo.getProducts(params)
                 if (id != requestId) return@launch // 期间刷新过数据，丢弃
                 newData?.let {
+                    // 更新分页
+                    lastRequest = lastRequest.copy(
+                        pageIndex = newData.pageIndex,
+                        pageSize = newData.pageSize,
+                    )
                     _uiState.update { state ->
-                        val mergedList = state.productsData.data + newData.data
+                        val mergedList = state.productsData + newData.data
                         state.copy(
-                            productsData = state.productsData.copy(
-                                data = mergedList,
-                                total = newData.total,
-                                pageIndex = newData.pageIndex,
-                                pageSize = newData.pageSize
-                            ),
+                            productsData = mergedList,
                             hasMore = mergedList.size < newData.total
                         )
                     }

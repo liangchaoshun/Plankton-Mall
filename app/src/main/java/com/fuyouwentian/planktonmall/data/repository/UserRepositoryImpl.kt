@@ -40,7 +40,7 @@ class UserRepositoryImpl @Inject constructor(
             dataStore.edit { prefs ->
                 prefs[PrefsKeys.USER_ID] = response.userInfo.id
             }
-            profileDao.insertUserProfile(response.userInfo.toEntity())
+            profileDao.upsertProfile(response.userInfo.toEntity())
         }
         return response
     }
@@ -72,14 +72,16 @@ class UserRepositoryImpl @Inject constructor(
             .map { prefs -> prefs[PrefsKeys.USER_ID] }
     }
 
-    override suspend fun getLocalUserProfile(): UserProfile? {
-        return profileDao.getUserProfile()?.toDomain()
+    override suspend fun getLocalProfile(): UserProfile? {
+        val userId = getCurrentUserId()
+        if (userId != null) return profileDao.getProfile(userId)?.toDomain()
+        return null
     }
 
-    override suspend fun getRemoteUserProfile(): UserProfile? {
+    override suspend fun getRemoteProfile(): UserProfile? {
         val result = safeApiCall { api.userGetProfile() }
         result?.let {
-            profileDao.insertUserProfile(result.toEntity()) // 缓存到本地
+            profileDao.upsertProfile(result.toEntity()) // 缓存到本地
         }
         return result
     }

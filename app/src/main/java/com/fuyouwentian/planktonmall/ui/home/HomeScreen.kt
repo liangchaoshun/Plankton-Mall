@@ -326,7 +326,7 @@ fun HomeContentGrid(
                 ) {
                     Text(
                         text = "暂无推荐商品",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.outline,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -364,7 +364,7 @@ fun HomeContentGrid(
                 ) {
                     Text(
                         text = "没有更多了",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.outline,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
