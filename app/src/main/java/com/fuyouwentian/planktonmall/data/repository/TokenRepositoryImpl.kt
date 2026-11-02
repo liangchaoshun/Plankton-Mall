@@ -8,7 +8,6 @@ import com.fuyouwentian.planktonmall.data.local.PrefsKeys
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,11 +25,10 @@ class TokenRepositoryImpl @Inject constructor(
     override suspend fun getToken(): String? {
         return dataStore.data
             .catch { e ->
-                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个空 Preferences 给下游，避免崩溃
+                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
                 if (e is IOException) emit(emptyPreferences()) else throw e
             }
-            .map { prefs -> prefs[PrefsKeys.TOKEN] }
-            .first()
+            .first()[PrefsKeys.TOKEN]
     }
 
     override suspend fun hasToken(): Boolean {

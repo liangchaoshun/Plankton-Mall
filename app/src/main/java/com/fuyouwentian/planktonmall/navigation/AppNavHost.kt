@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.navigation
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +44,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fuyouwentian.planktonmall.core.event.SystemEvent
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.di.GlobalEventBusEntryPoint
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
 import com.fuyouwentian.planktonmall.ui.detail.DetailScreen
@@ -52,14 +53,19 @@ import com.fuyouwentian.planktonmall.ui.login.LoginScreen
 import com.fuyouwentian.planktonmall.ui.products.ProductsScreen
 import com.fuyouwentian.planktonmall.ui.profile.ProfileScreen
 import com.fuyouwentian.planktonmall.ui.register.RegisterScreen
+import dagger.hilt.android.EntryPointAccessors
 
 @Composable
 fun AppNavHost(
-    modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     viewModel: AppNavHostViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
+    val eventBus = EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        GlobalEventBusEntryPoint::class.java
+    ).getGlobalEventBus()
+
     // 用 NavController 的 backStackEntry 驱动选中状态（推荐）
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute: String = backStackEntry?.destination?.route ?: Routes.HOME
@@ -67,8 +73,15 @@ fun AppNavHost(
     val showBottomBar = currentRoute in NAVI_ROUTES
     val cartTotalQuantity by viewModel.cartTotalQuantity.collectAsStateWithLifecycle()
 
+    /**
+     * 1. 在 Jetpack Compose 中，任何在 UI 层（@Composable 函数内）收集 Flow 并触发副作用（如跳转、弹 Toast）的操作，都必须放在 LaunchedEffect 中
+     * 2. 为什么必须用 LaunchedEffect？
+     *  2.1 需要协程环境：collect 是一个挂起函数（suspend），而 Composable 函数本身不能是挂起函数。LaunchedEffect 会为你提供一个与当前 Composable 生命周期绑定的协程作用域；
+     *  2.2 避免重复收集：如果不用 LaunchedEffect，每次 Composable 发生重组（Recomposition）时，代码都会重新执行一次，导致多次 collect，甚至引发多次页面跳转或弹窗；
+     *  2.3 生命周期绑定：当这个 Composable 离开屏幕（如跳转到其他页面）时，LaunchedEffect 里的协程会自动取消，防止内存泄漏。
+     */
     LaunchedEffect(Unit) {
-        viewModel.systemEvent.collect { event ->
+        eventBus.events.collect { event ->
             when (event) {
                 is SystemEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
@@ -76,24 +89,13 @@ fun AppNavHost(
 
                 // 强制踢出到登录页，就必须清空栈
                 is SystemEvent.ForceLogout -> {
+                    Log.d("AppNavHost", "SystemEvent.ForceLogout 收到，准备跳转")
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             inclusive = true // 清空整个回退栈
                         }
                         launchSingleTop = true
                     }
-                }
-
-                else -> {}
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
                 else -> {}

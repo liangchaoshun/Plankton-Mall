@@ -7,7 +7,7 @@ import javax.inject.Singleton
 
 @Singleton
 class GlobalEventBus @Inject constructor() {
-    // 缓冲和重放容量为 1
+    // extraBufferCapacity = 1，允许在没有订阅者时暂存 1 个事件
     private val _events = MutableSharedFlow<SystemEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
 

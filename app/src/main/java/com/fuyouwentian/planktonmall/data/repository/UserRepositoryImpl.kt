@@ -57,11 +57,10 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun getCurrentUserId(): String? {
         return dataStore.data
             .catch { e ->
-                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个空 Preferences 给下游，避免崩溃
+                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
                 if (e is IOException) emit(emptyPreferences()) else throw e
             }
-            .map { prefs -> prefs[PrefsKeys.USER_ID] }
-            .first()
+            .first()[PrefsKeys.USER_ID]
     }
 
     override fun getCurrentUserIdFlow(): Flow<String?> {
@@ -69,7 +68,7 @@ class UserRepositoryImpl @Inject constructor(
             .catch { e ->
                 if (e is IOException) emit(emptyPreferences()) else throw e
             }
-            .map { prefs -> prefs[PrefsKeys.USER_ID] }
+            .map { prefs -> prefs[PrefsKeys.USER_ID] } // 监听 userId 变化
     }
 
     override suspend fun getLocalProfile(): UserProfile? {
@@ -89,11 +88,10 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun isLoggedIn(): Boolean? {
         val token = dataStore.data
             .catch { e ->
-                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个空 Preferences 给下游，避免崩溃
+                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
                 if (e is IOException) emit(emptyPreferences()) else throw e
             }
-            .map { prefs -> prefs[PrefsKeys.TOKEN] }
-            .first()
+            .first()[PrefsKeys.TOKEN]
         if (token.isNullOrBlank()) return false
         return safeApiCall { api.userValidate() }
     }

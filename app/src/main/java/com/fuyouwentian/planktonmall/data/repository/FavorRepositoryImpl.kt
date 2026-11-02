@@ -97,11 +97,10 @@ class FavorRepositoryImpl @Inject constructor(
             if (list.isEmpty() || it.pageIndex == 1) {
                 val userId = dataStore.data
                     .catch { e ->
-                        // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个空 Preferences 给下游，避免崩溃
+                        // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
                         if (e is IOException) emit(emptyPreferences()) else throw e
                     }
-                    .map { prefs -> prefs[PrefsKeys.USER_ID] }
-                    .first()
+                    .first()[PrefsKeys.USER_ID]
                 userId?.let { favorDao.deleteItems(userId) }
             }
             favorDao.upsertMulti(list)

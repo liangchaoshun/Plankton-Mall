@@ -3,15 +3,18 @@ package com.fuyouwentian.planktonmall.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
 import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.data.local.PrefsKeys
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,12 +26,19 @@ class HttpInterceptor @Inject constructor(
 ) : Interceptor {
     private fun handleUnauthorized() {
         scope.launch {
-            dataStore.edit {
-                it.remove(PrefsKeys.TOKEN)
-                it.remove(PrefsKeys.USER_ID)
+            val token = dataStore.data
+                .catch { e ->
+                    if (e is IOException) emit(emptyPreferences()) else throw e
+                }
+                .first()[PrefsKeys.TOKEN]
+            if (token != null) {
+                dataStore.edit {
+                    it.remove(PrefsKeys.TOKEN)
+                    it.remove(PrefsKeys.USER_ID)
+                }
+                // 跳转 UI，广播一个全局事件
+                eventBus.postEvent(SystemEvent.ForceLogout)
             }
-            // 跳转 UI，广播一个全局事件
-            eventBus.postEvent(SystemEvent.ForceLogout)
         }
     }
 
@@ -37,8 +47,14 @@ class HttpInterceptor @Inject constructor(
         /** 头部带上 token userId */
         // runBlocking，必须先拿到 token 和 userId 才发请求
         val (userId, token) = runBlocking {
-            val prefs = dataStore.data.first()
-            prefs[PrefsKeys.USER_ID] to prefs[PrefsKeys.TOKEN]
+            try {
+                val prefs = dataStore.data.catch { e ->
+                    if (e is IOException) emit(emptyPreferences()) else throw e
+                }.first()
+                prefs[PrefsKeys.USER_ID] to prefs[PrefsKeys.TOKEN]
+            } catch (e: Exception) {
+                null to null
+            }
         }
 
         val request = chain
