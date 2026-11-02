@@ -3,7 +3,6 @@ package com.fuyouwentian.planktonmall.ui.profile
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.local.AppDatabase
 import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
@@ -28,7 +27,6 @@ import kotlin.coroutines.cancellation.CancellationException
 class ProfileViewModel @Inject constructor(
     private val userRepo: UserRepository,
     private val tokenRepo: TokenRepository,
-    private val appDatabase: AppDatabase,
     private val cartRepo: CartRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState(loading = false))
@@ -81,12 +79,14 @@ class ProfileViewModel @Inject constructor(
     fun onAdd2Cart(product: FavorRecord) {
         viewModelScope.launch {
             try {
-                if (!tokenRepo.hasToken()) {
+                val userId = userRepo.getCurrentUserId()
+                if (!tokenRepo.hasToken() || userId == null) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                val bool = cartRepo.insert(
-                    Add2CartProductParams(
+                val bool = cartRepo.upsert(
+                    userId = userId,
+                    params = Add2CartProductParams(
                         id = product.goodsId,
                         price = product.goodsPrice,
                         stock = product.goodsStock,
@@ -110,7 +110,7 @@ class ProfileViewModel @Inject constructor(
                     _uiEvent.emit(UiEvent.ShowToast("退出登录成功"))
                     _uiEvent.emit(UiEvent.LogoutSuccess)
                     tokenRepo.clearToken()
-                    // 不要清空所有数据表
+                    // 🌟 不要清空所有数据表
                     /*withContext(Dispatchers.IO) {
                         appDatabase.clearAllTables()
                     }*/

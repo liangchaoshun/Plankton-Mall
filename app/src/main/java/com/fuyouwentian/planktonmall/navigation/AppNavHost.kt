@@ -42,6 +42,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
 import com.fuyouwentian.planktonmall.ui.category.CategoryScreen
@@ -67,20 +68,32 @@ fun AppNavHost(
     val cartTotalQuantity by viewModel.cartTotalQuantity.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.tokenUiEvent.collect { event ->
+        viewModel.systemEvent.collect { event ->
             when (event) {
-                is UiEvent.ShowToast -> {
+                is SystemEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
                 // 强制踢出到登录页，就必须清空栈
-                is UiEvent.NavigateToLogin -> {
+                is SystemEvent.ForceLogout -> {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             inclusive = true // 清空整个回退栈
                         }
                         launchSingleTop = true
                     }
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
                 else -> {}

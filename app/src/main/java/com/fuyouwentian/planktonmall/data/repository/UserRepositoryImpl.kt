@@ -14,7 +14,6 @@ import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
-import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -28,14 +27,15 @@ import javax.inject.Singleton
 class UserRepositoryImpl @Inject constructor(
     private val api: ApiService,
     private val profileDao: ProfileDao,
-    private val tokenRepo: TokenRepository,
     private val dataStore: DataStore<Preferences>
 ) : UserRepository {
     override suspend fun login(param: LoginRequest): LoginResponse? {
         val response = safeApiCall { api.userLogin(param) }
         response?.let {
-            // 缓存到本地
-            tokenRepo.saveToken(response.token)
+            // 缓存 token
+            dataStore.edit { prefs ->
+                prefs[PrefsKeys.TOKEN] = response.token
+            }
             // 保存当前登录的账号的 userId
             dataStore.edit { prefs ->
                 prefs[PrefsKeys.USER_ID] = response.userInfo.id
@@ -87,7 +87,14 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isLoggedIn(): Boolean? {
-        if (!tokenRepo.hasToken()) return false
+        val token = dataStore.data
+            .catch { e ->
+                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个空 Preferences 给下游，避免崩溃
+                if (e is IOException) emit(emptyPreferences()) else throw e
+            }
+            .map { prefs -> prefs[PrefsKeys.TOKEN] }
+            .first()
+        if (token.isNullOrBlank()) return false
         return safeApiCall { api.userValidate() }
     }
 

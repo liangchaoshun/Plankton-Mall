@@ -44,9 +44,9 @@ class FavorContentViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val favorItems: StateFlow<List<FavorRecord>> = userRepo.getCurrentUserIdFlow()
-        .flatMapLatest { userId ->
+        .flatMapLatest { userId -> // 实验性 API
             if (userId != null) {
-                favorRepo.getItemsFlowByUserId(userId)
+                favorRepo.getItemsFlow(userId)
                     .map { list -> list.sortedByDescending { it.createTime } }
             } else {
                 flowOf(emptyList())

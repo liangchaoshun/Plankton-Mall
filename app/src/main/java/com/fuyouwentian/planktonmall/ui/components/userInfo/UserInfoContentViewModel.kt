@@ -33,7 +33,7 @@ class UserInfoContentViewModel @Inject constructor(
     fun getRemoteUserProfile() {
         viewModelScope.launch {
             try {
-                val profile = userRepo.getRemoteUserProfile()
+                val profile = userRepo.getRemoteProfile()
                 profile?.let {
                     Log.d("UserInfoContentViewModel", "$profile")
                 }

@@ -49,7 +49,7 @@ class HistoryContentViewModel @Inject constructor(
                     _uiState.update { it.copy(error = "丢失用户id") }
                     return@launch
                 }
-                val recordsMap = historyRepo.getItemsByUserId(userId)
+                val recordsMap = historyRepo.getItems(userId)
                     .groupBy { it.createDate }
                     .mapValues { (_, records) ->
                         // 列表中，按 createTimeMillis 字段倒序

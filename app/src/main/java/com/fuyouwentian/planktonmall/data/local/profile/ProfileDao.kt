@@ -17,7 +17,7 @@ interface ProfileDao {
 
     // 清空整张数据表（慎用）
     @Query("DELETE FROM profile")
-    suspend fun clearUserProfile()
+    suspend fun clearProfile()
 
     // 删除某个用户的信息
     @Query("DELETE FROM profile WHERE id = :id")

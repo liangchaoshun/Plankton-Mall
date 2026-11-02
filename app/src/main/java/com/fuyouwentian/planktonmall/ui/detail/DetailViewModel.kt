@@ -67,23 +67,17 @@ class DetailViewModel @Inject constructor(
                 // mock data
                 // val product = null
                 // val product = MockProducts.ProductDetail
-                val localUserProfile = userRepo.getLocalUserProfile()
-                val userId = localUserProfile?.id ?: ""
-                val product = productRepo.getProductDetail(
-                    ProductDetailRequest(
-                        userId = userId,
-                        goodsId = pid
-                    )
-                )
+                val product = productRepo.getProductDetail(pid)
                 if (id != requestId) return@launch // 已过期
                 product?.let { nonNullProduct ->
                     _uiState.update { it.copy(product = nonNullProduct, error = null) }
                     // 登录后存在用户信息时，才加入历史数据表
-                    if (tokenRepo.hasToken() && localUserProfile != null) {
+                    val userId = userRepo.getCurrentUserId()
+                    if (tokenRepo.hasToken() && userId != null) {
                         // 未被物理删除的商品都可加入浏览历史（即使逻辑删除、下架、售罄）
                         val today = LocalDate.now()
                         val historyRecord = HistoryRecord(
-                            userId = localUserProfile.id,
+                            userId = userId,
                             goodsId = nonNullProduct.id,
                             isValid = nonNullProduct.deleted == 0,
                             goodsNameZh = nonNullProduct.nameZh,
@@ -110,12 +104,14 @@ class DetailViewModel @Inject constructor(
     fun add2Cart(product: Product) {
         viewModelScope.launch {
             try {
-                if (!tokenRepo.hasToken()) {
+                val userId = userRepo.getCurrentUserId()
+                if (!tokenRepo.hasToken() || userId == null) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                val bool = cartRepo.insert(
-                    Add2CartProductParams(
+                val bool = cartRepo.upsert(
+                    userId = userId,
+                    params = Add2CartProductParams(
                         id = product.id,
                         price = product.price,
                         stock = product.stock,

@@ -10,7 +10,7 @@ interface HistoryDao {
     // 即使没有 LIMIT，只要返回类型是单对象（如 *Entity），空表依然会返回 null
     // 若返回 List<ClassName> 则为 emptyList()
     @Query("SELECT * FROM history WHERE userId = :userId")
-    suspend fun getItemsByUserId(userId: String): List<HistoryEntity>
+    suspend fun getItems(userId: String): List<HistoryEntity>
 
     // 若是复合键，则判断复合键
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -26,7 +26,7 @@ interface HistoryDao {
 
     // 删除某用户的所有记录
     @Query("DELETE FROM history WHERE userId = :userId")
-    suspend fun deleteItemsByUserId(userId: String)
+    suspend fun deleteItems(userId: String)
 
     // 通过索引删除一条记录
     @Query("DELETE FROM history WHERE userId = :userId AND goodsId = :goodsId AND createDate = :createDate")
@@ -41,5 +41,5 @@ interface HistoryDao {
     suspend fun isExistByUGId(userId: String, goodsId: String): Boolean
 
     @Query("SELECT COUNT(*) FROM history WHERE userId = :userId")
-    suspend fun getCountByUserId(userId: String): Int
+    suspend fun getCount(userId: String): Int
 }

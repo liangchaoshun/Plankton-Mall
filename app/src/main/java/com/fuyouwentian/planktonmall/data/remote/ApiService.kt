@@ -34,8 +34,8 @@ interface ApiService {
     @POST("goods/list")
     suspend fun getProducts(@Body param: PaginationWithQuery): BaseResponse<ProductsResponseData<ProductLite>?>
 
-    @POST("goods/detail")
-    suspend fun getProductDetail(@Body param: ProductDetailRequest): BaseResponse<Product?>
+    @POST("goods/{id}")
+    suspend fun getProductDetail(@Path("id") id: String): BaseResponse<Product?>
 
     @GET("category/list")
     suspend fun getCategories(): BaseResponse<CategoryData<Category>?>

@@ -6,10 +6,10 @@ import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
 interface HistoryRepository {
     suspend fun upsert(record: HistoryRecord)
     suspend fun upsertMulti(items: List<HistoryEntity>)
-    suspend fun getItemsByUserId(id: String): List<HistoryRecord>
-    suspend fun deleteItemsByUserId(userId: String)
+    suspend fun getItems(id: String): List<HistoryRecord>
+    suspend fun deleteItems(userId: String)
     suspend fun deleteItemByIndices(userId: String, goodsId: String, createDate: String)
     suspend fun deleteItemsByDate(userId: String, createDate: String)
     suspend fun isExistByUGId(userId: String, goodsId: String): Boolean
-    suspend fun getCountByUserId(userId: String): Int
+    suspend fun getCount(userId: String): Int
 }

@@ -145,12 +145,14 @@ class HomeViewModel @Inject constructor(
     fun add2Cart(product: ProductLite) {
         viewModelScope.launch {
             try {
-                if (!tokenRepo.hasToken()) {
+                val userId = userRepo.getCurrentUserId()
+                if (!tokenRepo.hasToken() || userId == null) {
                     _uiEvent.emit(UiEvent.ShowToast("请先登录"))
                     return@launch
                 }
-                val bool = cartRepo.insert(
-                    Add2CartProductParams(
+                val bool = cartRepo.upsert(
+                    userId = userId,
+                    params = Add2CartProductParams(
                         id = product.id,
                         price = product.price,
                         stock = product.stock,

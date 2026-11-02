@@ -15,6 +15,7 @@ import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,6 +26,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,7 +48,16 @@ class CartViewModel @Inject constructor(
     val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
 
     // 订阅 Room cart data Flow
-    val cartItems: StateFlow<List<CartProduct>> = cartRepo.getAllLocalCartItems()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val cartItems: StateFlow<List<CartProduct>> = userRepo.getCurrentUserIdFlow()
+        .flatMapLatest { userId -> // 实验性 API
+            if (userId != null) {
+                cartRepo.getItemsFlow(userId)
+                    .map { list -> list.sortedByDescending { it.createTime } }
+            } else {
+                flowOf(emptyList())
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -66,11 +79,12 @@ class CartViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            val userId = userRepo.getCurrentUserId()
             syncTrigger
                 .debounce(400.milliseconds)
                 .collect {
                     runCatching {
-                        cartRepo.syncLocalUpdate2Server()
+                        cartRepo.syncLocalUpdate2Server(userId)
                     }.onFailure { e -> handleError(e) }
                 }
         }
@@ -114,7 +128,7 @@ class CartViewModel @Inject constructor(
     // 切换选中某项
     fun toggleSelect(id: String, bool: Boolean) {
         viewModelScope.launch {
-            safeUpdateAndSync { cartRepo.updateMultiLocalChecked(ids = listOf(id), checked = bool) }
+            safeUpdateAndSync { cartRepo.updateMultiChecked(ids = listOf(id), checked = bool) }
         }
     }
 
@@ -124,7 +138,7 @@ class CartViewModel @Inject constructor(
         _uiState.update { state -> state.copy(allSelected = target) }
         viewModelScope.launch {
             safeUpdateAndSync {
-                cartRepo.updateMultiLocalChecked(
+                cartRepo.updateMultiChecked(
                     ids = cartItems.value.filter { it.isValid && it.goodsStock > 0 }.map { it.id },
                     checked = target
                 )
@@ -140,7 +154,7 @@ class CartViewModel @Inject constructor(
         if (legacyValue == value) return
 
         viewModelScope.launch {
-            safeUpdateAndSync { cartRepo.updateLocalQuantity(id, value) }
+            safeUpdateAndSync { cartRepo.updateQuantity(id, value) }
         }
     }
 
@@ -195,13 +209,13 @@ class CartViewModel @Inject constructor(
         // Log.d("Cart", "[syncData2Server] id: $id")
         viewModelScope.launch {
             try {
-                cartRepo.syncLocalUpdate2Server() // 全量（checked、quantity）提交的
+                val userId = userRepo.getCurrentUserId()
+                cartRepo.syncLocalUpdate2Server(userId) // 全量（checked、quantity）提交的
             } catch (e: Exception) {
                 handleError(e)
             }
         }
     }
-
 
     private suspend fun handleError(e: Throwable) {
         if (e is CancellationException) throw e // 协程取消时会抛出

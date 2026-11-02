@@ -31,7 +31,7 @@ class ProductRepositoryImpl @Inject constructor(
         return safeApiCall { apiService.getRecommendProducts(actualRequest) }
     }
 
-    override suspend fun getProductDetail(param: ProductDetailRequest): Product? {
-        return safeApiCall { apiService.getProductDetail(param) }
+    override suspend fun getProductDetail(id: String): Product? {
+        return safeApiCall { apiService.getProductDetail(id) }
     }
 }

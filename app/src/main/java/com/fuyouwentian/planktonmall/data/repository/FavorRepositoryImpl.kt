@@ -1,10 +1,13 @@
 package com.fuyouwentian.planktonmall.data.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import com.fuyouwentian.planktonmall.data.local.PrefsKeys
 import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.local.favor.FavorDao
 import com.fuyouwentian.planktonmall.data.local.favor.toDomain
 import com.fuyouwentian.planktonmall.data.local.favor.toEntity
-import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.Add2FavorRequest
@@ -14,7 +17,10 @@ import com.fuyouwentian.planktonmall.domain.model.PaginationWithTotal
 import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
@@ -23,10 +29,10 @@ import kotlin.time.Duration.Companion.milliseconds
 class FavorRepositoryImpl @Inject constructor(
     private val apiService: ApiService, // Hilt 会自动提供
     private val favorDao: FavorDao,
-    private val profileDao: ProfileDao,
+    private val dataStore: DataStore<Preferences>
 ) : FavorRepository {
-    override fun getItemsFlowByUserId(userId: String?): Flow<List<FavorRecord>> {
-        return favorDao.getItemsFlowByUserId(userId).map { entities ->
+    override fun getItemsFlow(userId: String?): Flow<List<FavorRecord>> {
+        return favorDao.getItemsFlow(userId).map { entities ->
             entities.map { it.toDomain() }
         }
     }
@@ -34,7 +40,7 @@ class FavorRepositoryImpl @Inject constructor(
     override suspend fun add2Favorites(request: FavorRecord): Boolean {
         try {
             // 先处理本地数据
-            favorDao.insert(request.toEntity())
+            favorDao.upsert(request.toEntity())
             // 再同步到服务器
             safeApiCall {
                 apiService.favorInsert(
@@ -44,7 +50,7 @@ class FavorRepositoryImpl @Inject constructor(
                     )
                 )
             }?.let {
-                favorDao.insert(it.toEntity().copy(syncState = SyncRecordState.SYNCED))
+                favorDao.upsert(it.toEntity().copy(syncState = SyncRecordState.SYNCED))
                 return true
             }
         } catch (e: Exception) {
@@ -67,15 +73,15 @@ class FavorRepositoryImpl @Inject constructor(
                 // 再同步到服务器
                 safeApiCall { apiService.favorDelete(listOf(legacyEntity!!.id)) }?.let { return true }
             } catch (e: Exception) {
-                favorDao.insert(legacyEntity!!) // 同步到服务器失败，还原
+                favorDao.upsert(legacyEntity!!) // 同步到服务器失败，还原
                 throw e
             }
         }
         return false
     }
 
-    override suspend fun getCountByUserId(userId: String): Int {
-        return favorDao.getCountByUserId(userId)
+    override suspend fun getCount(userId: String): Int {
+        return favorDao.getCount(userId)
     }
 
     override suspend fun isExist(userId: String, goodsId: String): Boolean {
@@ -89,10 +95,16 @@ class FavorRepositoryImpl @Inject constructor(
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
             // 清理旧数据
             if (list.isEmpty() || it.pageIndex == 1) {
-                val userId = profileDao.getUserProfile()!!.id
-                favorDao.deleteItemsByUserId(userId)
+                val userId = dataStore.data
+                    .catch { e ->
+                        // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个空 Preferences 给下游，避免崩溃
+                        if (e is IOException) emit(emptyPreferences()) else throw e
+                    }
+                    .map { prefs -> prefs[PrefsKeys.USER_ID] }
+                    .first()
+                userId?.let { favorDao.deleteItems(userId) }
             }
-            favorDao.insertMulti(list)
+            favorDao.upsertMulti(list)
             delay(200.milliseconds) // 让 favorDao getItemsFlowByUserId 先发送信号
             return PaginationWithTotal(
                 total = it.total,

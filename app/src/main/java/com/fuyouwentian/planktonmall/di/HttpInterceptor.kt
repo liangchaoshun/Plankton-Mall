@@ -1,8 +1,13 @@
 package com.fuyouwentian.planktonmall.di
 
-import android.util.Log
-import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
+import com.fuyouwentian.planktonmall.core.event.SystemEvent
+import com.fuyouwentian.planktonmall.data.local.PrefsKeys
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -12,20 +17,39 @@ import javax.inject.Singleton
 
 @Singleton
 class HttpInterceptor @Inject constructor(
-    private val tokenRepo: TokenRepository,
+    private val eventBus: GlobalEventBus,
+    private val dataStore: DataStore<Preferences>,
     @ApplicationScope private val scope: CoroutineScope, // 自定义 Hilt Qualifier: QualifierModule
 ) : Interceptor {
+    private fun handleUnauthorized() {
+        scope.launch {
+            dataStore.edit {
+                it.remove(PrefsKeys.TOKEN)
+                it.remove(PrefsKeys.USER_ID)
+            }
+            // 跳转 UI，广播一个全局事件
+            eventBus.postEvent(SystemEvent.ForceLogout)
+        }
+    }
+
     // 拦截器：加 token、处理 401（比如跳登录）
     override fun intercept(chain: Interceptor.Chain): Response {
-        /** 头部带上 token */
-        // runBlocking，必须先拿到 token 才发请求
-        val token = runBlocking { tokenRepo.getToken() }
+        /** 头部带上 token userId */
+        // runBlocking，必须先拿到 token 和 userId 才发请求
+        val (userId, token) = runBlocking {
+            val prefs = dataStore.data.first()
+            prefs[PrefsKeys.USER_ID] to prefs[PrefsKeys.TOKEN]
+        }
+
         val request = chain
             .request()
             .newBuilder()
             .apply {
                 token?.takeIf { it.isNotBlank() }?.let {
                     addHeader("Authorization", "Bearer $it")
+                }
+                userId?.takeIf { it.isNotBlank() }?.let {
+                    addHeader("user-id", userId)
                 }
             }
             .build()
@@ -37,7 +61,7 @@ class HttpInterceptor @Inject constructor(
          * 提示文案，safeApiCall 中将异常传到 *ViewModel 再到 Compose UI 弹出提示
          */
         if (response.code == 401) {
-            scope.launch { tokenRepo.onUnauthorized() }
+            handleUnauthorized()
         }
         // 只有 200-299 且有 body 才尝试解析
         if (response.code in 200..299) {
@@ -45,7 +69,7 @@ class HttpInterceptor @Inject constructor(
             val bodyString = response.peekBody(100).string() // 100 字节数足够了
             // Log.d("HttpInterceptor", "Response Body: $bodyString")
             if (bodyString.contains("\"status_code\":\"40001\"")) {
-                scope.launch { tokenRepo.onUnauthorized() }
+                handleUnauthorized()
             }
         }
 

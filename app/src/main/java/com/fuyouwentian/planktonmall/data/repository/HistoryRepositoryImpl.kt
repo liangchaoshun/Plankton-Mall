@@ -36,12 +36,12 @@ class HistoryRepositoryImpl @Inject constructor(
         historyDao.upsertMulti(items)
     }
 
-    override suspend fun getItemsByUserId(id: String): List<HistoryRecord> {
-        return historyDao.getItemsByUserId(id).map { it.toDomain() }
+    override suspend fun getItems(id: String): List<HistoryRecord> {
+        return historyDao.getItems(id).map { it.toDomain() }
     }
 
-    override suspend fun deleteItemsByUserId(userId: String) {
-        historyDao.deleteItemsByUserId(userId)
+    override suspend fun deleteItems(userId: String) {
+        historyDao.deleteItems(userId)
     }
 
     override suspend fun deleteItemByIndices(
@@ -67,7 +67,7 @@ class HistoryRepositoryImpl @Inject constructor(
         return historyDao.isExistByUGId(userId, goodsId)
     }
 
-    override suspend fun getCountByUserId(userId: String): Int {
-        return historyDao.getCountByUserId(userId)
+    override suspend fun getCount(userId: String): Int {
+        return historyDao.getCount(userId)
     }
 }

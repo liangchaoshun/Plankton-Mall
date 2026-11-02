@@ -11,14 +11,14 @@ interface FavorDao {
     // userId 为 null 时，
     // SQL 查不到数据，Room 会将这个空结果集转换为一个空的 List（即 emptyList()）
     @Query("SELECT * FROM favor WHERE userId = :userId")
-    fun getItemsFlowByUserId(userId: String?): Flow<List<FavorEntity>>
+    fun getItemsFlow(userId: String?): Flow<List<FavorEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(item: FavorEntity)
+    suspend fun upsert(item: FavorEntity)
 
     // 若是复合键，则判断复合键
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMulti(items: List<FavorEntity>)
+    suspend fun upsertMulti(items: List<FavorEntity>)
 
     // 清空 favor 数据表，无论是谁的数据（慎用）
     @Query("DELETE FROM favor")
@@ -26,7 +26,7 @@ interface FavorDao {
 
     // 删除某用户的所有记录
     @Query("DELETE FROM favor WHERE userId = :userId")
-    suspend fun deleteItemsByUserId(userId: String)
+    suspend fun deleteItems(userId: String)
 
     // 通过索引删除一条记录
     @Query("DELETE FROM favor WHERE userId = :userId AND goodsId = :goodsId")
@@ -46,5 +46,5 @@ interface FavorDao {
     suspend fun isExistByIndices(userId: String, goodsId: String): Boolean
 
     @Query("SELECT COUNT(*) FROM favor WHERE userId = :userId")
-    suspend fun getCountByUserId(userId: String): Int
+    suspend fun getCount(userId: String): Int
 }

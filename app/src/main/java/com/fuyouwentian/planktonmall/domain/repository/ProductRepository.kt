@@ -12,5 +12,6 @@ interface ProductRepository {
     suspend fun getProducts(request: PaginationWithQuery): ProductsResponseData<ProductLite>?
     suspend fun getHomeCarousel(): List<ProductLite>?
     suspend fun getRecommendProducts(request: PaginationParameter? = null): ProductsResponseData<ProductLite>?
-    suspend fun getProductDetail(param: ProductDetailRequest): Product?
+    suspend fun getProductDetail(id: String): Product?
 }
+
