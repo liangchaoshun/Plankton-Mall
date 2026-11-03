@@ -1,13 +1,13 @@
 package com.fuyouwentian.planktonmall.ui.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.core.error.ErrorHandler
+import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
+import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
@@ -15,17 +15,13 @@ import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -33,14 +29,12 @@ class HomeViewModel @Inject constructor(
     private val userRepo: UserRepository,
     private val tokenRepo: TokenRepository,
     private val productRepo: ProductRepository,
+    private val eventBus: GlobalEventBus,
+    private val errorHandler: ErrorHandler
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(HomeUiState(loading = true))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-
-    // UI 事件（用于 Toast、导航等一次性动作）
-    private val _uiEvent = MutableSharedFlow<UiEvent>()
-    val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     private var currentJob: Job? = null
 
@@ -147,7 +141,7 @@ class HomeViewModel @Inject constructor(
             try {
                 val userId = userRepo.getCurrentUserId()
                 if (!tokenRepo.hasToken() || userId == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
+                    eventBus.postEvent(SystemEvent.ShowToast("请先登录"))
                     return@launch
                 }
                 val bool = cartRepo.upsert(
@@ -162,7 +156,7 @@ class HomeViewModel @Inject constructor(
                         iconUrl = product.iconUrl
                     )
                 )
-                if (bool) _uiEvent.emit(UiEvent.ShowToast("加入购物车成功"))
+                if (bool) eventBus.postEvent(SystemEvent.ShowToast("加入购物车成功"))
             } catch (e: Exception) {
                 handleError(e)
             }
@@ -170,19 +164,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private suspend fun handleError(e: Exception) {
-        if (e is CancellationException) throw e // 协程取消时抛出
-        val msg = when (e) {
-            /**
-             * 都一起了：
-             * 业务错误（status_code != 20000）
-             * HTTP 协议错误（404, 500 等）
-             * 网络错误（断网、超时）
-             */
-            is FriendlyException -> e.friendlyMessage
-            else -> e.message ?: "请稍后重试"
-        }
-        Log.d("HandleError", msg)
-        _uiState.update { it.copy(exceptionInfo = msg) }
-        _uiEvent.emit(UiEvent.ShowToast(msg))
+        val message = errorHandler.handle(e)
+        _uiState.update { it.copy(exceptionInfo = message) }
     }
 }

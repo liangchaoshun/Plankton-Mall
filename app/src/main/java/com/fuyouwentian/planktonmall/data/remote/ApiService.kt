@@ -9,10 +9,11 @@ import com.fuyouwentian.planktonmall.domain.model.CategoryData
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
+import com.fuyouwentian.planktonmall.domain.model.MakeOrderRequest
+import com.fuyouwentian.planktonmall.domain.model.OrderRecord
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
 import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.Product
-import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
@@ -67,11 +68,20 @@ interface ApiService {
     @GET("cart/list")
     suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>
 
+    @POST("order/insert")
+    suspend fun orderInsert(@Body param: MakeOrderRequest): BaseResponse<OrderRecord>
+
+    @POST("order/delete")
+    suspend fun orderDelete(@Body param: List<String>): BaseResponse<Boolean>
+
+    @POST("order/list")
+    suspend fun orderList(@Body param: PaginationWithQuery): BaseResponse<OrderRecord>
+
     @POST("favor/insert")
     suspend fun favorInsert(@Body param: Add2FavorRequest): BaseResponse<FavorRecord>
 
     @POST("favor/delete")
-    suspend fun favorDelete(@Body ids: List<String>): BaseResponse<Boolean>
+    suspend fun favorDelete(@Body param: List<String>): BaseResponse<Boolean>
 
     @POST("favor/list")
     suspend fun favorList(@Body param: PaginationParameter): BaseResponse<ProductsResponseData<FavorRecord>?>

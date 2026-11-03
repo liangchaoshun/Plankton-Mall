@@ -85,6 +85,13 @@ fun NavHostController.navigate2HomeClearAll() {
     }
 }
 
+fun NavHostController.navigate2Login() {
+    navigate(Routes.LOGIN) {
+        popUpTo(graph.findStartDestination().id) { inclusive = true } // 清空整个回退栈
+        launchSingleTop = true
+    }
+}
+
 // 跳转到普通页面（Detail Products Login Register）
 // 这种页面不破坏主栈结构，直接压栈即可
 fun NavHostController.navigate2Normal(route: String) {

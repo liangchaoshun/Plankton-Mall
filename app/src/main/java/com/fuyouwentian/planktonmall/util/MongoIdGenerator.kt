@@ -8,6 +8,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * 4 字节：Unix 时间戳（秒级）
  * 5 字节：随机值（机器/进程标识）
  * 3 字节：自增计数器
+ * 计算机中，1 个字节（8 bits） 恰好可以用 2 个十六进制字符来表示（2^4 = 16），
+ * 例如：字节 0110 0001（十进制 97，字符 'a'），转换成十六进制是 61。
+ *
  */
 object MongoIdGenerator {
     private val random = SecureRandom()
@@ -34,7 +37,7 @@ object MongoIdGenerator {
         // 合并字节：4(时间) + 5(机器) + 3(计数)
         val allBytes = timestampBytes + machineId + counterBytes
 
-        // 转成 16 进制字符串
+        // 转成 16 进制字符串，得到长度为 24 的字符串
         return allBytes.joinToString("") { "%02x".format(it) }
     }
 }

@@ -1,34 +1,29 @@
 package com.fuyouwentian.planktonmall.ui.components.history
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.remote.FriendlyException
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.core.auth.AuthManager
+import com.fuyouwentian.planktonmall.core.error.ErrorHandler
+import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
+import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
-import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HistoryContentViewModel @Inject constructor(
-    private val userRepo: UserRepository,
     private val historyRepo: HistoryRepository,
+    private val eventBus: GlobalEventBus,
+    private val errorHandler: ErrorHandler,
+    private val authManager: AuthManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryContentUiState(loading = false))
     val uiState: StateFlow<HistoryContentUiState> = _uiState.asStateFlow()
-
-    private val _uiEvent = MutableSharedFlow<UiEvent>()
-    val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     fun initContent() {
         _uiState.update {
@@ -44,11 +39,7 @@ class HistoryContentViewModel @Inject constructor(
     fun loadBrowsingHistory() {
         viewModelScope.launch {
             try {
-                val userId = userRepo.getCurrentUserId()
-                if (userId == null) {
-                    _uiState.update { it.copy(error = "丢失用户id") }
-                    return@launch
-                }
+                val userId = authManager.getCurrentUserId() ?: return@launch
                 val recordsMap = historyRepo.getItems(userId)
                     .groupBy { it.createDate }
                     .mapValues { (_, records) ->
@@ -67,19 +58,8 @@ class HistoryContentViewModel @Inject constructor(
     }
 
     private suspend fun handleError(e: Exception) {
-        if (e is CancellationException) throw e // 协程取消时抛出
-        val msg = when (e) {
-            /**
-             * 都一起了：
-             * 业务错误（status_code != 20000）
-             * HTTP 协议错误（404, 500 等）
-             * 网络错误（断网、超时）
-             */
-            is FriendlyException -> e.friendlyMessage
-            else -> e.message ?: "请稍后重试"
-        }
-        Log.d("HandleError", msg)
-        _uiState.update { it.copy(error = msg) }
-        _uiEvent.emit(UiEvent.ShowToast(msg))
+        val message = errorHandler.handle(e)
+        _uiState.update { it.copy(error = message) }
+        eventBus.postEvent(SystemEvent.ShowToast(message))
     }
 }

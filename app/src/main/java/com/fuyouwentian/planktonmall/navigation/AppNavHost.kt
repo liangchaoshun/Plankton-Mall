@@ -1,7 +1,5 @@
 package com.fuyouwentian.planktonmall.navigation
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,7 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -72,6 +71,7 @@ fun AppNavHost(
     // 只有当前路由在底部导航的目的地里，才显示底部栏
     val showBottomBar = currentRoute in NAVI_ROUTES
     val cartTotalQuantity by viewModel.cartTotalQuantity.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     /**
      * 1. 在 Jetpack Compose 中，任何在 UI 层（@Composable 函数内）收集 Flow 并触发副作用（如跳转、弹 Toast）的操作，都必须放在 LaunchedEffect 中
@@ -84,19 +84,20 @@ fun AppNavHost(
         eventBus.events.collect { event ->
             when (event) {
                 is SystemEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    /**
+                     * 用 Snackbar 的好处：
+                     * 1. 它是 Compose 原生组件，完全跟着 UI 树走，不存在 Context 失效问题；
+                     * 2. 它只会显示在当前屏幕的最上层，页面销毁它自动消失；
+                     * 3. 它的 UI 完全自定义（可以通过 MaterialTheme 统一控制样式），比系统原生的黑白 Toast 好看得多；
+                     * 4. 排队机制：如果连续发了 3 个 Toast 事件，Snackbar 会依次显示，不会像系统 Toast 那样重叠在一起看不清。
+                     */
+                    // Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    snackbarHostState.showSnackbar(event.message)
                 }
-
-                // 强制踢出到登录页，就必须清空栈
-                is SystemEvent.ForceLogout -> {
-                    Log.d("AppNavHost", "SystemEvent.ForceLogout 收到，准备跳转")
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            inclusive = true // 清空整个回退栈
-                        }
-                        launchSingleTop = true
-                    }
-                }
+                // 主动退出
+                is SystemEvent.Loggedout -> navController.navigate2HomeClearAll()
+                // 强制踢出到登录页
+                is SystemEvent.ForceLogout -> navController.navigate2Login()
 
                 else -> {}
             }
@@ -104,6 +105,7 @@ fun AppNavHost(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 // 自定义底部导航栏布局
@@ -235,7 +237,6 @@ fun AppNavHost(
                 ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
                     onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
-                    onLogoutSuccess = { navController.navigate2HomeClearAll() },
                     onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
                 )
             }

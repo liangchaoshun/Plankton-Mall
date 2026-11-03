@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.core.event
 
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
@@ -7,12 +8,17 @@ import javax.inject.Singleton
 
 @Singleton
 class GlobalEventBus @Inject constructor() {
-    // extraBufferCapacity = 1，允许在没有订阅者时暂存 1 个事件
-    private val _events = MutableSharedFlow<SystemEvent>(extraBufferCapacity = 1)
+    // replay = 0：不重放给新订阅者
+    // extraBufferCapacity = 64 + DROP_OLDEST：订阅者短暂缺席时缓冲 64 条，超了丢最旧
+    // 注意：emit 是挂起函数，没有订阅者时会在缓冲满后挂起，不会丢
+    private val _events = MutableSharedFlow<SystemEvent>(
+        replay = 0,
+        extraBufferCapacity = 64, // 更大的缓冲
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val events = _events.asSharedFlow()
 
-    fun postEvent(event: SystemEvent) {
-        // 使用 tryEmit 因为 SharedFlow 默认没有缓冲，防止阻塞
-        _events.tryEmit(event) // 不阻塞，发完即走
+    suspend fun postEvent(event: SystemEvent) {
+        _events.emit(event)
     }
 }

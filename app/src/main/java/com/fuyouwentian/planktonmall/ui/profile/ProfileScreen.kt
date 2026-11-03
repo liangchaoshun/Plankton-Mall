@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.profile
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +31,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,22 +38,17 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
-import com.fuyouwentian.planktonmall.domain.model.FavorRecord
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 import com.fuyouwentian.planktonmall.ui.components.favor.FavorContent
 import com.fuyouwentian.planktonmall.ui.components.history.HistoryContent
 import com.fuyouwentian.planktonmall.ui.components.order.OrderContent
 import com.fuyouwentian.planktonmall.ui.components.userInfo.UserInfoContent
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 
@@ -64,27 +57,12 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
     onNavigate2Login: () -> Unit = {},
-    onLogoutSuccess: () -> Unit = {},
     onProductClick: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.initScreen() // 初始化
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                is UiEvent.LogoutSuccess -> {
-                    onLogoutSuccess()
-                }
-
-                else -> {}
-            }
-        }
     }
 
     Surface(modifier = modifier.fillMaxSize()) {
@@ -129,6 +107,7 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = "请先登录，以获取数据",
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
@@ -139,6 +118,7 @@ fun ProfileScreen(
                         ) {
                             Text(
                                 text = "去登录",
+                                color = MaterialTheme.colorScheme.primary,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -149,14 +129,10 @@ fun ProfileScreen(
             else -> {
                 ProfileContent(
                     uiState = uiState,
-                    loadOrders = viewModel::loadOrders,
-                    onLogout = viewModel::logout,
                     onClickProduct = onProductClick,
-                    onClickAdd2Cart = viewModel::onAdd2Cart
                 )
             }
         }
-
     }
 }
 
@@ -206,26 +182,11 @@ fun ProfileHeader(profile: UserProfile?) {
 @Composable
 fun ProfileContent(
     uiState: ProfileUiState,
-    loadOrders: () -> Unit = {},
-    onLogout: () -> Unit = {},
     onClickProduct: (String) -> Unit = {},
-    onClickAdd2Cart: (FavorRecord) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val tabs = listOf("订单", "足迹", "收藏", "个人信息")
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabs.size })
-
-    // 🔥监听页面切换，触发对应 Tab 的初始化请求
-    // 利用 snapshotFlow 确保只有真正切换到该页才触发
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }
-            .distinctUntilChanged()
-            .collectLatest { page ->
-                when (page) {
-                    0 -> loadOrders()
-                }
-            }
-    }
 
     Column(
         modifier = Modifier
@@ -286,15 +247,8 @@ fun ProfileContent(
             when (page) {
                 0 -> OrderContent()
                 1 -> HistoryContent(onClickProduct = onClickProduct)
-                2 -> FavorContent(
-                    onClickProductPicture = onClickProduct,
-                    onAdd2Cart = onClickAdd2Cart
-                )
-
-                3 -> UserInfoContent(
-                    userInfo = uiState.profile,
-                    onLogout = onLogout,
-                )
+                2 -> FavorContent(onClickProductPicture = onClickProduct)
+                3 -> UserInfoContent(userInfo = uiState.profile)
             }
         }
     }

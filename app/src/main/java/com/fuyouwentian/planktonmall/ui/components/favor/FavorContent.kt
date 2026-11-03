@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.components.favor
 
-import android.widget.Toast
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,7 +51,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,7 +63,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlin.math.roundToInt
@@ -76,11 +73,9 @@ fun FavorContent(
     modifier: Modifier = Modifier,
     viewModel: FavorContentViewModel = hiltViewModel(),
     onClickProductPicture: (String) -> Unit = {},
-    onAdd2Cart: (FavorRecord) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val favorItems by viewModel.favorItems.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
 
     // 定义下拉刷新状态
@@ -99,15 +94,6 @@ fun FavorContent(
 
     LaunchedEffect(Unit) {
         viewModel.loadFavorites()
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                else -> {}
-            }
-        }
     }
 
     LaunchedEffect(lazyColumnState) {
@@ -198,7 +184,7 @@ fun FavorContent(
                         items(items = favorItems, key = { it.goodsId }) { favor ->
                             LazyColumnItem(
                                 favor = favor,
-                                onAdd2Cart = onAdd2Cart,
+                                onAdd2Cart = { product -> viewModel.add2Cart(product) },
                                 isRevealed = revealedProductId == favor.goodsId,
                                 onRevealedChange = { isRevealed ->
                                     revealedProductId = if (isRevealed) favor.goodsId else null

@@ -19,14 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
+import com.fuyouwentian.planktonmall.ui.components.favor.FavorContentViewModel
 
 @Composable
 fun UserInfoContent(
     modifier: Modifier = Modifier,
     userInfo: UserProfile? = null,
-    onLogout: () -> Unit = {},
+    viewModel: UserInfoContentViewModel = hiltViewModel(),
 ) {
 
     Surface(
@@ -63,7 +65,7 @@ fun UserInfoContent(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
                     enabled = true,
-                    onClick = onLogout
+                    onClick = viewModel::logout
                 ) {
                     Text(
                         text = "退出登录",

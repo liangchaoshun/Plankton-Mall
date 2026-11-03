@@ -159,14 +159,6 @@ data class ProductsResponseData<T>(
 )
 
 @Serializable
-data class ProductDetailRequest(
-    @SerialName("user_id")
-    val userId: String = "",
-    @SerialName("goods_id")
-    val goodsId: String
-)
-
-@Serializable
 data class CartProductsResponseData<T>(
     val data: List<T>,
     val total: Int
@@ -223,6 +215,21 @@ data class Add2FavorRequest(
     val id: String,
     @SerialName("goods_id")
     val goodsId: String,
+)
+
+@Serializable
+data class MakeOrderRequest(
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("goods_id")
+    val goodsId: String,
+    val quantity: Int,
+    @SerialName("receiver_name")
+    val receiverName: String,
+    @SerialName("receiver_phone")
+    val receiverPhone: String,
+    @SerialName("receiver_address")
+    val receiverAddress: String,
 )
 
 @Serializable

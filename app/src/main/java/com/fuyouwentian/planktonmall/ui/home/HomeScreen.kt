@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.home
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.components.widgets.Searchbar
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -76,10 +73,9 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     // 将 ViewModel 中的 StateFlow 转换为 Compose 可观察的 State
-    // collectAsState: 前台/后台都收集
-    // collectAsStateWithLifecycle: 后台自动停止收集，省电
+    // collectAsState: app 位于前台/后台都收集
+    // collectAsStateWithLifecycle: app 位于后台自动停止收集，省电
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     // 定义下拉刷新状态
     val pullToRefreshState = rememberPullToRefreshState() // 实验性 API
@@ -87,24 +83,6 @@ fun HomeScreen(
     // 初始化
     LaunchedEffect(Unit) {
         viewModel.loadHomeData()
-    }
-
-    // 订阅事件
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast
-                        .makeText(
-                            context, event.message,
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
-                }
-
-                else -> {}
-            }
-        }
     }
 
     Column(
@@ -119,6 +97,7 @@ fun HomeScreen(
             )
     ) {
         var searchQuery by rememberSaveable { mutableStateOf("") }
+        val isDataEmpty = uiState.recommendProducts.data.isEmpty()
         Searchbar(
             query = searchQuery,
             onValueChangeEvent = { searchQuery = it },
@@ -126,13 +105,13 @@ fun HomeScreen(
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
         when {
-            uiState.loading && uiState.recommendProducts.data.isEmpty() -> {
+            uiState.loading && isDataEmpty -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
 
-            !uiState.exceptionInfo.isNullOrBlank() && uiState.recommendProducts.data.isEmpty() -> {
+            !uiState.exceptionInfo.isNullOrBlank() && isDataEmpty -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -141,7 +120,7 @@ fun HomeScreen(
                     ) {
                         Text(text = uiState.exceptionInfo!!)
                         Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = viewModel::loadHomeData) {
+                        TextButton(onClick = { viewModel.loadHomeData() }) {
                             Text(
                                 text = "重试",
                                 color = MaterialTheme.colorScheme.primary,
