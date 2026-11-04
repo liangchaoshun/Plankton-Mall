@@ -8,8 +8,6 @@ import kotlinx.serialization.Serializable
 data class MakeOrderRequest(
     @SerialName("_id")
     val id: String,
-    @SerialName("user_id")
-    val userId: String,
     @SerialName("goods_id")
     val goodsId: String,
     val quantity: Int,

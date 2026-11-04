@@ -46,7 +46,6 @@ class OrderRepositoryImpl @Inject constructor(
                 requestList.plus(
                     MakeOrderRequest(
                         id = it.id,
-                        userId = it.userId,
                         goodsId = it.goodsId,
                         quantity = it.quantity,
                         receiverName = it.receiverName,
