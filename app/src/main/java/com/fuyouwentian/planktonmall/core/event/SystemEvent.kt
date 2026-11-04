@@ -1,6 +1,8 @@
 package com.fuyouwentian.planktonmall.core.event
 
 sealed class SystemEvent {
+    data object LoginSuccess : SystemEvent()
+    data object RegisterSuccess : SystemEvent()
     data object Loggedout : SystemEvent() // 主动登出
     data object ForceLogout : SystemEvent() // 强制登出
     data object NetworkUnavailable : SystemEvent() // 网络断开

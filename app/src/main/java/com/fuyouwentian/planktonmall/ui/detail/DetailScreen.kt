@@ -1,7 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.detail
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -51,7 +50,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,7 +60,6 @@ import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.common.Constants
 import com.fuyouwentian.planktonmall.domain.model.Product
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +68,7 @@ fun DetailScreen(
     id: String = "",
     onBackClick: () -> Unit = {},
     onCartIconClick: () -> Unit = {},
-    onBuyNowClick: () -> Unit = {}
+    afterBuyNowClick: () -> Unit = {}
 ) {
     val isQId = Constants.OBJECT_ID_REGEX.matches(id)
     if (!isQId) {
@@ -84,7 +81,7 @@ fun DetailScreen(
             id = id,
             onBackClick = onBackClick,
             onCartIconClick = onCartIconClick,
-            onBuyNowClick = onBuyNowClick
+            afterBuyNowClick = afterBuyNowClick
         )
     }
 }
@@ -95,26 +92,19 @@ fun DetailContent(
     id: String = "",
     onBackClick: () -> Unit = {},
     onCartIconClick: () -> Unit = {},
-    onBuyNowClick: () -> Unit = {},
+    afterBuyNowClick: () -> Unit = {},
     viewModel: DetailViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    Log.d("Detail", "isMadeOrder: ${uiState.isMadeOrder}")
 
     LaunchedEffect(id) {
         viewModel.fetchProductDetail(id.trim())
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                else -> {}
-            }
-        }
     }
+
+    LaunchedEffect(uiState.isMakeOrderDone) {
+        if (uiState.isMakeOrderDone) afterBuyNowClick()
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -151,6 +141,7 @@ fun DetailContent(
             // 底部操作栏
             BottomActionBar(
                 product = uiState.product,
+                committing = uiState.committingOrder,
                 modifier = Modifier.align(Alignment.BottomCenter),
                 onFavorIconClick = {
                     uiState.product?.let {
@@ -163,13 +154,7 @@ fun DetailContent(
                         viewModel.add2Cart(uiState.product!!)
                     }
                 },
-                onClickBuyNow = {
-                    uiState.product?.let {
-                        // 下单后再跳路由
-                        viewModel.immediatelyMadeAnOrder(uiState.product!!.id)
-                        if (uiState.isMadeOrder) onBuyNowClick() // 路由跳转
-                    }
-                }
+                makeOrder = viewModel::immediatelyMakeAnOrder
             )
 
             // 蒙版：商品被删除或下架了，售罄不用出现蒙版
@@ -373,10 +358,11 @@ fun ProductDescException(
 fun BottomActionBar(
     product: Product?,
     modifier: Modifier = Modifier,
+    committing: Boolean = false,
     onFavorIconClick: () -> Unit,
     onCartIconClick: () -> Unit,
     onClickAdd2Cart: () -> Unit,
-    onClickBuyNow: () -> Unit
+    makeOrder: () -> Unit
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -442,16 +428,23 @@ fun BottomActionBar(
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 enabled = product?.isInvalid == false && product.stock != 0,
-                onClick = onClickBuyNow,
+                onClick = makeOrder,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(38.dp)
             ) {
+                if (committing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
                 Text(
                     text = "立即购买",
                     color = Color.White,
                     style = MaterialTheme.typography.bodySmall,
-                )
+                )}
             }
         }
     }

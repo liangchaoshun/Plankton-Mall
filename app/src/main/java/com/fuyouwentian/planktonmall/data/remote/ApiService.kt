@@ -48,7 +48,7 @@ interface ApiService {
     suspend fun userRegister(@Body param: RegisterRequest): BaseResponse<Boolean?>
 
     @GET("user/profile")
-    suspend fun userGetProfile(): BaseResponse<UserProfile?>
+    suspend fun userGetCurrentProfile(): BaseResponse<UserProfile?>
 
     @GET("auth/logout")
     suspend fun userLogout(): BaseResponse<Boolean?>
@@ -69,13 +69,16 @@ interface ApiService {
     suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>
 
     @POST("order/insert")
-    suspend fun orderInsert(@Body param: MakeOrderRequest): BaseResponse<OrderRecord>
+    suspend fun orderInsert(@Body param: List<MakeOrderRequest>): BaseResponse<List<OrderRecord>?>
 
     @POST("order/delete")
     suspend fun orderDelete(@Body param: List<String>): BaseResponse<Boolean>
 
+    @POST("order/clear")
+    suspend fun orderClear(): BaseResponse<Boolean>
+
     @POST("order/list")
-    suspend fun orderList(@Body param: PaginationWithQuery): BaseResponse<OrderRecord>
+    suspend fun orderList(@Body param: PaginationWithQuery): BaseResponse<ProductsResponseData<OrderRecord>?>
 
     @POST("favor/insert")
     suspend fun favorInsert(@Body param: Add2FavorRequest): BaseResponse<FavorRecord>

@@ -23,7 +23,7 @@ class CartRepositoryImpl @Inject constructor(
 ) : CartRepository {
     // Room 框架在底层实现时，对于返回 Flow<List<T>> 的查询，
     // 如果数据库表中没有任何数据，它发射（emit）的是一个空的列表 emptyList()，而不是 null
-    override fun getItemsFlow(userId: String?): Flow<List<CartProduct>> {
+    override fun getRecordsFlow(userId: String?): Flow<List<CartProduct>> {
         return cartDao.getItemsFlow(userId).map { entities ->
             // 如果为空，entities 就是 emptyList，直接 map 返回空列表即可
             entities.map { it.toDomain() }

@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.core.auth.AuthManager
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
-import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
-import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +16,6 @@ import javax.inject.Inject
 @HiltViewModel
 class HistoryContentViewModel @Inject constructor(
     private val historyRepo: HistoryRepository,
-    private val eventBus: GlobalEventBus,
     private val errorHandler: ErrorHandler,
     private val authManager: AuthManager
 ) : ViewModel() {
@@ -60,6 +57,5 @@ class HistoryContentViewModel @Inject constructor(
     private suspend fun handleError(e: Exception) {
         val message = errorHandler.handle(e)
         _uiState.update { it.copy(error = message) }
-        eventBus.postEvent(SystemEvent.ShowToast(message))
     }
 }

@@ -3,36 +3,33 @@ package com.fuyouwentian.planktonmall.ui.detail
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fuyouwentian.planktonmall.core.auth.AuthManager
+import com.fuyouwentian.planktonmall.core.error.ErrorHandler
+import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
+import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.data.local.SyncRecordState
-import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
 import com.fuyouwentian.planktonmall.domain.model.HistoryRecord
+import com.fuyouwentian.planktonmall.domain.model.OrderRecord
 import com.fuyouwentian.planktonmall.domain.model.Product
-import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
+import com.fuyouwentian.planktonmall.domain.repository.OrderRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
@@ -42,14 +39,20 @@ class DetailViewModel @Inject constructor(
     private val productRepo: ProductRepository,
     private val historyRepo: HistoryRepository,
     private val favorRepo: FavorRepository,
+    private val orderRepo: OrderRepository,
+    private val eventBus: GlobalEventBus,
+    private val errorHandler: ErrorHandler,
+    private val authManager: AuthManager
 ) : ViewModel() {
     // UI 状态
-    private val _uiState = MutableStateFlow(DetailUiState(loading = true))
+    private val _uiState = MutableStateFlow(
+        DetailUiState(
+            loading = true,
+            committingOrder = false,
+            isMakeOrderDone = false
+        )
+    )
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
-
-    // UI 事件（用于 Toast、导航等一次性动作）
-    private val _uiEvent = MutableSharedFlow<UiEvent>()
-    val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     // 防止竞态：间隔太短“下拉刷新”
     private var requestId = 0
@@ -104,11 +107,7 @@ class DetailViewModel @Inject constructor(
     fun add2Cart(product: Product) {
         viewModelScope.launch {
             try {
-                val userId = userRepo.getCurrentUserId()
-                if (!tokenRepo.hasToken() || userId == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
-                    return@launch
-                }
+                val userId = authManager.getCurrentUserId() ?: return@launch
                 val bool = cartRepo.upsert(
                     userId = userId,
                     params = Add2CartProductParams(
@@ -121,7 +120,7 @@ class DetailViewModel @Inject constructor(
                         iconUrl = product.iconUrl
                     )
                 )
-                if (bool) _uiEvent.emit(UiEvent.ShowToast("加入购物车成功"))
+                if (bool) eventBus.postEvent(SystemEvent.ShowToast("加入购物车成功"))
             } catch (e: Exception) {
                 handleError(e)
             }
@@ -133,17 +132,13 @@ class DetailViewModel @Inject constructor(
         Log.d("Detail", "toggleFavorites")
         viewModelScope.launch {
             try {
-                val userId = userRepo.getCurrentUserId()
-                if (!tokenRepo.hasToken() || userId == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
-                    return@launch
-                }
+                val userId = authManager.getCurrentUserId() ?: return@launch
                 _uiState.value.product?.let { product ->
                     val productId = product.id
                     if (favorRepo.isExist(userId = userId, goodsId = productId)) {
                         // 已存在，则取消收藏
-                        if (favorRepo.deleteItemByIndices(userId = userId, goodsId = productId)) {
-                            _uiEvent.emit(UiEvent.ShowToast("取消收藏成功"))
+                        if (favorRepo.deleteRecordByIndices(userId = userId, goodsId = productId)) {
+                            eventBus.postEvent(SystemEvent.ShowToast("取消收藏成功"))
                             _uiState.update { it.copy(product = it.product?.copy(isFavorite = false)) }
                         }
                     } else {
@@ -162,7 +157,7 @@ class DetailViewModel @Inject constructor(
                             syncState = SyncRecordState.PENDING_INSERT
                         )
                         if (favorRepo.add2Favorites(request = req)) {
-                            _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
+                            eventBus.postEvent(SystemEvent.ShowToast("加入收藏成功"))
                             _uiState.update { it.copy(product = it.product?.copy(isFavorite = true)) }
                         }
                     }
@@ -173,38 +168,46 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun immediatelyMadeAnOrder(productId: String) {
-        Log.d("Detail", "immediately make an order: $productId")
-        _uiState.update { it.copy(isMadeOrder = false) }
-        viewModelScope.launch {
-            try {
-                if (!tokenRepo.hasToken()) {
-                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
-                    return@launch
+    fun immediatelyMakeAnOrder() {
+        _uiState.value.product?.let { product ->
+            _uiState.update { it.copy(committingOrder = true, isMakeOrderDone = false) }
+            viewModelScope.launch {
+                try {
+                    val userId = authManager.getCurrentUserId() ?: return@launch
+                    val receiverInfo = userRepo.getCurrentReceiverInfo()
+                    val params = OrderRecord(
+                        id = MongoIdGenerator.generate(),
+                        userId = userId,
+                        goodsId = product.id,
+                        goodsNameZh = product.nameZh,
+                        goodsNameEn = product.nameEn,
+                        goodsIcon = product.iconUrl,
+                        goodsPrice = product.price,
+                        quantity = 1,
+                        actualPay = product.price,
+                        receiverName = receiverInfo.name,
+                        receiverPhone = receiverInfo.phone,
+                        receiverAddress = receiverInfo.address,
+                        orderStatus = 1, // 1：待付款，2：待发货，3：待收货，4：已完成，5：已取消，6：已关闭
+                        paymentStatus = 0, // 0：未支付，1：已支付，2：部分退款，3：全额退款
+                        afterSalesStatus = 0, // 0：无售后，1：退款/退货中，2：售后完成
+                        paymentTime = "",
+                        deleted = 0,
+                        syncState = SyncRecordState.PENDING_INSERT
+                    )
+                    orderRepo.makeOrder(listOf(params))
+                    _uiState.update { it.copy(isMakeOrderDone = true) }
+                } catch (e: Exception) {
+                    handleError(e)
+                } finally {
+                    _uiState.update { it.copy(committingOrder = false) }
                 }
-                // TODO 创建订单
-                delay(5.seconds)
-                _uiState.update { it.copy(isMadeOrder = true) } // 跳转到下单页
-            } catch (e: Exception) {
-                handleError(e)
             }
         }
     }
 
     private suspend fun handleError(e: Exception) {
-        if (e is CancellationException) throw e // 协程取消时会抛出
-        val msg = when (e) {
-            /**
-             * 都一起了：
-             * 业务错误（status_code != 20000）
-             * HTTP 协议错误（404, 500 等）
-             * 网络错误（断网、超时）
-             */
-            is FriendlyException -> e.friendlyMessage
-            else -> e.message ?: "请稍后重试"
-        }
-        Log.d("HandleError", msg)
-        _uiState.update { it.copy(error = msg) }
-        _uiEvent.emit(UiEvent.ShowToast(msg))
+        val message = errorHandler.handle(e)
+        _uiState.update { it.copy(error = message) }
     }
 }

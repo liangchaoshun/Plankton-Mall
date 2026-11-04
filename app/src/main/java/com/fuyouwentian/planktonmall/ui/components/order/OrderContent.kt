@@ -1,21 +1,7 @@
 package com.fuyouwentian.planktonmall.ui.components.order
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
-import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,54 +19,45 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
-import com.fuyouwentian.planktonmall.domain.model.FavorRecord
-import com.fuyouwentian.planktonmall.ui.components.favor.FavorContentViewModel
-import com.fuyouwentian.planktonmall.ui.components.favor.LazyColumnItem
+import com.fuyouwentian.planktonmall.domain.model.OrderRecord
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderContent(
     modifier: Modifier = Modifier,
     viewModel: OrderContentViewModel = hiltViewModel(),
+    onClickProductPicture: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val favorItems by viewModel.favorItems.collectAsStateWithLifecycle()
-    var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
+    val orderRecords by viewModel.orderRecords.collectAsStateWithLifecycle()
 
     // 定义下拉刷新状态
     val pullToRefreshState = rememberPullToRefreshState() // 实验性 API
@@ -108,16 +84,7 @@ fun OrderContent(
             .collect { viewModel.loadMore() }
     }
 
-    // 监听 LazyColumn 的滚动状态，如果在滑动，就收起已滑出的 Item
-    LaunchedEffect(lazyColumnState.isScrollInProgress) {
-        if (lazyColumnState.isScrollInProgress) {
-            revealedProductId = null
-        }
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         when {
             uiState.loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -144,7 +111,7 @@ fun OrderContent(
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = viewModel::loadFavorites) {
+                        TextButton(onClick = viewModel::loadData) {
                             Text(
                                 text = "重试",
                                 color = MaterialTheme.colorScheme.primary,
@@ -170,7 +137,7 @@ fun OrderContent(
                             .fillMaxSize()
                             .padding(top = dimensionResource(R.dimen.padding_medium))
                     ) {
-                        if (favorItems.isEmpty()) {
+                        if (orderRecords.isEmpty()) {
                             item(key = "no_data") {
                                 Box(
                                     modifier = Modifier
@@ -186,15 +153,9 @@ fun OrderContent(
                                 }
                             }
                         }
-                        items(items = favorItems, key = { it.goodsId }) { favor ->
+                        items(items = orderRecords, key = { it.id }) { order ->
                             LazyColumnItem(
-                                favor = favor,
-                                onAdd2Cart = { product -> viewModel.add2Cart(product) },
-                                isRevealed = revealedProductId == favor.goodsId,
-                                onRevealedChange = { isRevealed ->
-                                    revealedProductId = if (isRevealed) favor.goodsId else null
-                                },
-                                cancelFavorite = viewModel::cancelFavorite,
+                                order = order,
                                 onClickProductPicture = onClickProductPicture
                             )
                         }
@@ -214,7 +175,7 @@ fun OrderContent(
                         }
 
                         // 到底了（放在最外层）
-                        if (!uiState.hasMore && favorItems.isNotEmpty()) {
+                        if (!uiState.hasMore && orderRecords.isNotEmpty()) {
                             item(key = "no_more") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth(),
@@ -235,116 +196,18 @@ fun OrderContent(
     }
 }
 
-// 定义滑动状态
-enum class DragValue {
-    Settled, // 初始状态，未露出按钮
-    Revealed // 露出按钮状态
-}
-
 @Composable
 fun LazyColumnItem(
-    favor: FavorRecord,
-    isRevealed: Boolean = false,
-    onRevealedChange: (Boolean) -> Unit,
-    onAdd2Cart: (FavorRecord) -> Unit = {},
-    cancelFavorite: (String) -> Unit = {},
+    order: OrderRecord,
     onClickProductPicture: (String) -> Unit = {},
 ) {
-    val density = LocalDensity.current
-    val actionWidth = 60.dp // 按钮区域的总宽度（例如一个按钮，宽 60dp）
-    val actionWidthPx = with(density) { actionWidth.toPx() }
-
-    // 创建 AnchoredDraggableState
-    val dragState = remember(favor.goodsId) {
-        AnchoredDraggableState(initialValue = DragValue.Settled)
-    }
-
-    // 设置锚点（Anchors），为何使用监听的方式：https://chat.deepseek.com/share/hv5sfio9udh1lzjygi
-    // Settled 对应 offset = 0，Revealed 对应 offset = -actionWidthPx
-    LaunchedEffect(actionWidthPx) {
-        // 设置两个槽点
-        dragState.updateAnchors(
-            DraggableAnchors {
-                DragValue.Settled at 0f
-                DragValue.Revealed at -actionWidthPx
-            }
-        )
-    }
-
-    // 监听外部传入的 isRevealed，如果为 false 且当前是 Revealed，则收起
-    LaunchedEffect(isRevealed) {
-        if (!isRevealed && dragState.currentValue == DragValue.Revealed) {
-            dragState.animateTo(DragValue.Settled)
-        }
-    }
-
-    // 内部滑动结束后，通知外部
-    LaunchedEffect(dragState.currentValue) {
-        if (!dragState.isAnimationRunning) {
-            val revealed = dragState.currentValue == DragValue.Revealed
-            if (revealed != isRevealed) {
-                onRevealedChange(revealed)
-            }
-        }
-    }
-
-    // 计算当前是否真的处于滑出状态（用于控制点击）
-    // 注意：这里用 targetValue 而不是 currentValue，因为动画过程（包括处于锚点）中也要禁止点击
-    val isCurrentlyRevealed = dragState.targetValue == DragValue.Revealed
-
     Box(modifier = Modifier.fillMaxWidth()) {
-        val isInvalid =
-            !favor.isValid || favor.goodsOnSale == 0 || favor.goodsStock < 1
-        // 背景层
-        Row(
-            modifier = Modifier
-                .matchParentSize() // 不参与 Box 的高度测量，而是等前景层测量完，直接强行和前景层一样大
-                .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 取消收藏
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(60.dp)
-                    .background(Color(0xFFF40E21))
-                    .clickable(enabled = isRevealed) { cancelFavorite(favor.goodsId) },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "取消\n收藏",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-            }
-        }
-        // 前景层，应用 anchoredDraggable
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min) // 自动撑满最高子项
-                .offset { // 根据偏移量移动
-                    // 判断锚点是否已初始化，避免在 LaunchedEffect 执行前读取 offset 导致崩溃
-                    val offset = if (dragState.anchors.size > 0) dragState.requireOffset() else 0f
-                    IntOffset(if (offset.isNaN()) 0 else offset.roundToInt(), 0)
-                }
-                .anchoredDraggable( // 先接收手势
-                    state = dragState,
-                    orientation = Orientation.Horizontal,
-                    flingBehavior = AnchoredDraggableDefaults.flingBehavior(
-                        state = dragState,
-                        positionalThreshold = { distance ->
-                            if (distance.isNaN() || distance == 0f) actionWidthPx / 2
-                            else distance * 0.5f
-                        },
-                        animationSpec = spring()
-                    )
-                )
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color.White) // 确保放 .offset 之后，否则背景覆盖背景层
+                .background(Color.White)
                 .padding(vertical = dimensionResource(R.dimen.padding_small))
                 .padding(
                     start = 0.dp,
@@ -352,40 +215,16 @@ fun LazyColumnItem(
                 ),
             verticalAlignment = Alignment.Top
         ) {
-            Column(modifier = Modifier.size(100.dp)) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    AsyncImage(
-                        model = favor.goodsIcon,
-                        contentDescription = favor.goodsNameZh,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable(
-                                enabled = !isInvalid && !isCurrentlyRevealed,
-                                onClick = { onClickProductPicture(favor.goodsId) }),
-                        contentScale = ContentScale.Crop,
-                    )
-                    if (isInvalid) {
-                        Box(
-                            modifier = Modifier
-                                .height(25.dp)
-                                .fillMaxWidth()
-                                .background(Color.Black.copy(0.6f)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = if (!favor.isValid) "无效" else if (favor.goodsOnSale == 0) "下架" else "无货",
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelSmall,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-            }
+            AsyncImage(
+                model = order.goodsIcon,
+                contentDescription = order.goodsNameZh,
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(
+                        onClick = { onClickProductPicture(order.goodsId) }),
+                contentScale = ContentScale.Crop,
+            )
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
             Column(
                 modifier = Modifier
@@ -393,12 +232,7 @@ fun LazyColumnItem(
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = favor.goodsNameZh,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -406,25 +240,29 @@ fun LazyColumnItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "￥${favor.goodsPrice}",
+                        text = order.goodsNameZh,
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Red
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
-                    if (!isInvalid) {
-                        IconButton(
-                            onClick = {
-                                if (isRevealed) onRevealedChange(false) else onAdd2Cart(favor)
-                            },
-                            modifier = Modifier.size(20.dp) // 默认 48dp
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "加入购物车",
-                                tint = Color.Red
-                            )
-                        }
+                    Column(modifier = Modifier.width(20.dp)) {
+                        Text(
+                            text = "￥${order.goodsPrice}",
+                            color = Color(0xFF333333),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "共${order.quantity}件",
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                        Text(
+                            text = if (order.orderStatus == 1) "待付款" else "待发货",
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
                     }
                 }
             }

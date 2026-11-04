@@ -4,6 +4,7 @@ import com.fuyouwentian.planktonmall.data.repository.CartRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.CategoryRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.FavorRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.HistoryRepositoryImpl
+import com.fuyouwentian.planktonmall.data.repository.OrderRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.ProductRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.TokenRepositoryImpl
 import com.fuyouwentian.planktonmall.data.repository.UserRepositoryImpl
@@ -11,6 +12,7 @@ import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.CategoryRepository
 import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
 import com.fuyouwentian.planktonmall.domain.repository.HistoryRepository
+import com.fuyouwentian.planktonmall.domain.repository.OrderRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
@@ -75,4 +77,9 @@ abstract class RepositoryModule {
     abstract fun bindFavorRepository(
         impl: FavorRepositoryImpl
     ): FavorRepository
+
+    @Binds
+    abstract fun bindOrderRepository(
+        impl: OrderRepositoryImpl
+    ): OrderRepository
 }

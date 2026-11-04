@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import com.fuyouwentian.planktonmall.common.GlobalConfig
 import com.fuyouwentian.planktonmall.data.local.PrefsKeys
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
 import com.fuyouwentian.planktonmall.data.local.profile.toDomain
@@ -12,6 +13,7 @@ import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
+import com.fuyouwentian.planktonmall.domain.model.ReceiverInfo
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
@@ -31,16 +33,23 @@ class UserRepositoryImpl @Inject constructor(
 ) : UserRepository {
     override suspend fun login(param: LoginRequest): LoginResponse? {
         val response = safeApiCall { api.userLogin(param) }
-        response?.let {
+        response?.let { data ->
+            val userInfo = data.userInfo
             // 缓存 token
             dataStore.edit { prefs ->
-                prefs[PrefsKeys.TOKEN] = response.token
+                prefs[PrefsKeys.TOKEN] = data.token
             }
             // 保存当前登录的账号的 userId
             dataStore.edit { prefs ->
-                prefs[PrefsKeys.USER_ID] = response.userInfo.id
+                prefs[PrefsKeys.USER_ID] = userInfo.id
             }
-            profileDao.upsertProfile(response.userInfo.toEntity())
+            if (!userInfo.receiverInfo.isNullOrEmpty()) {
+                dataStore.edit { prefs ->
+                    prefs[PrefsKeys.RECEIVER_INFO] =
+                        GlobalConfig.json.encodeToString(userInfo.receiverInfo)
+                }
+            }
+            profileDao.upsertProfile(userInfo.toEntity())
         }
         return response
     }
@@ -53,7 +62,7 @@ class UserRepositoryImpl @Inject constructor(
         return safeApiCall { api.userLogout() }
     }
 
-    // Preferences 类似 Map 对象，找不到键名时返回 null
+    // Preferences 类似 Map 对象，找不到键名（key）时返回 null
     override suspend fun getCurrentUserId(): String? {
         return dataStore.data
             .catch { e ->
@@ -61,6 +70,23 @@ class UserRepositoryImpl @Inject constructor(
                 if (e is IOException) emit(emptyPreferences()) else throw e
             }
             .first()[PrefsKeys.USER_ID]
+    }
+
+    override suspend fun getCurrentReceiverInfo(): ReceiverInfo {
+        val jsonString = dataStore.data
+            .catch { e ->
+                // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
+                if (e is IOException) emit(emptyPreferences()) else throw e
+            }
+            .first()[PrefsKeys.RECEIVER_INFO]
+
+        return runCatching {
+            // 先解析
+            GlobalConfig.json.decodeFromString<ReceiverInfo>(jsonString ?: "")
+        }.getOrElse {
+            // 无论是 "" 还是损坏的 JSON，若解析失败，则返回默认对象
+            ReceiverInfo()
+        }
     }
 
     override fun getCurrentUserIdFlow(): Flow<String?> {
@@ -71,14 +97,14 @@ class UserRepositoryImpl @Inject constructor(
             .map { prefs -> prefs[PrefsKeys.USER_ID] } // 监听 userId 变化
     }
 
-    override suspend fun getLocalProfile(): UserProfile? {
+    override suspend fun getCurrentLocalProfile(): UserProfile? {
         val userId = getCurrentUserId()
         if (userId != null) return profileDao.getProfile(userId)?.toDomain()
         return null
     }
 
-    override suspend fun getRemoteProfile(): UserProfile? {
-        val result = safeApiCall { api.userGetProfile() }
+    override suspend fun getCurrentRemoteProfile(): UserProfile? {
+        val result = safeApiCall { api.userGetCurrentProfile() }
         result?.let {
             profileDao.upsertProfile(result.toEntity()) // 缓存到本地
         }

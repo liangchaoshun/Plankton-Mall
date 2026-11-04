@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.login
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,7 +35,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +46,6 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.fuyouwentian.planktonmall.R
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
 @Composable
 fun LoginScreen(
@@ -71,23 +67,6 @@ fun LoginScreen(
     onNavigate2Home: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                is UiEvent.LoginSuccess -> {
-                    onNavigate2Home() // 登录成功
-                }
-
-                else -> {}
-            }
-        }
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
         // 背景图
@@ -183,9 +162,9 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
-                enabled = !uiState.commiting
+                enabled = !uiState.committing
             ) {
-                if (uiState.commiting) {
+                if (uiState.committing) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         color = Color.White,

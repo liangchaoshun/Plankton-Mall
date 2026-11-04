@@ -3,27 +3,27 @@ package com.fuyouwentian.planktonmall.ui.cart
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fuyouwentian.planktonmall.core.auth.AuthManager
+import com.fuyouwentian.planktonmall.core.error.ErrorHandler
+import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
+import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.data.local.SyncRecordState
-import com.fuyouwentian.planktonmall.data.remote.FriendlyException
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.model.FavorRecord
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
+import com.fuyouwentian.planktonmall.domain.model.OrderRecord
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
-import com.fuyouwentian.planktonmall.domain.repository.TokenRepository
+import com.fuyouwentian.planktonmall.domain.repository.OrderRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -40,8 +42,11 @@ import kotlin.time.Duration.Companion.milliseconds
 class CartViewModel @Inject constructor(
     private val cartRepo: CartRepository,
     private val userRepo: UserRepository,
-    private val tokenRepo: TokenRepository,
     private val favorRepo: FavorRepository,
+    private val orderRepo: OrderRepository,
+    private val eventBus: GlobalEventBus,
+    private val errorHandler: ErrorHandler,
+    private val authManager: AuthManager
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
@@ -49,10 +54,10 @@ class CartViewModel @Inject constructor(
 
     // 订阅 Room cart data Flow
     @OptIn(ExperimentalCoroutinesApi::class)
-    val cartItems: StateFlow<List<CartProduct>> = userRepo.getCurrentUserIdFlow()
+    val cartRecords: StateFlow<List<CartProduct>> = userRepo.getCurrentUserIdFlow()
         .flatMapLatest { userId -> // 实验性 API
             if (userId != null) {
-                cartRepo.getItemsFlow(userId)
+                cartRepo.getRecordsFlow(userId)
                     .map { list -> list.sortedByDescending { it.createTime } }
             } else {
                 flowOf(emptyList())
@@ -65,8 +70,6 @@ class CartViewModel @Inject constructor(
         )
 
     // UI 事件
-    private val _uiEvent = MutableSharedFlow<UiEvent>()
-    val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
     private var currentJob: Job? = null
 
     // 防止竞态：fetchProductsData
@@ -83,9 +86,11 @@ class CartViewModel @Inject constructor(
             syncTrigger
                 .debounce(400.milliseconds)
                 .collect {
-                    runCatching {
+                    try {
                         cartRepo.syncLocalUpdate2Server(userId)
-                    }.onFailure { e -> handleError(e) }
+                    } catch (e: Exception) {
+                        handleError(e)
+                    }
                 }
         }
     }
@@ -103,9 +108,11 @@ class CartViewModel @Inject constructor(
                 )
             }
             try {
-                val hasToken = tokenRepo.hasToken()
-                _uiState.update { it.copy(hasToken = hasToken) }
-                if (!hasToken) return@launch // 跳出
+                val userId = authManager.getCurrentUserId(false)
+                if (userId == null) {
+                    _uiState.update { it.copy(hasToken = false) }
+                    return@launch
+                }
                 cartRepo.fetchData() // 请求，成功后写入 Room cart
                 if (id != requestId) return@launch // 已过期
             } catch (e: Exception) {
@@ -120,7 +127,7 @@ class CartViewModel @Inject constructor(
         try {
             updateLocal() // 先更新本地
             syncTrigger.tryEmit(Unit) // 再同步到服务器
-        } catch (e: Throwable) {
+        } catch (e: Exception) {
             handleError(e)
         }
     }
@@ -139,7 +146,8 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch {
             safeUpdateAndSync {
                 cartRepo.updateMultiChecked(
-                    ids = cartItems.value.filter { it.isValid && it.goodsStock > 0 }.map { it.id },
+                    ids = cartRecords.value.filter { it.isValid && it.goodsStock > 0 && it.goodsOnSale == 1 }
+                        .map { it.id },
                     checked = target
                 )
             }
@@ -150,7 +158,7 @@ class CartViewModel @Inject constructor(
     fun changeQuantity(id: String, value: Int) {
         if (value !in 1 until 1000) return
         // 取旧值用于失败回滚
-        val legacyValue = cartItems.value.firstOrNull { it.id == id }?.quantity ?: return
+        val legacyValue = cartRecords.value.firstOrNull { it.id == id }?.quantity ?: return
         if (legacyValue == value) return
 
         viewModelScope.launch {
@@ -158,11 +166,11 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun deleteCartItems(ids: List<String>) {
-        Log.d("CartViewModel", "deleteCartItems: $ids")
+    fun deleteCartRecords(ids: List<String>) {
+        Log.d("CartViewModel", "deleteCartRecords: $ids")
         viewModelScope.launch {
             try {
-                if (cartRepo.delete(ids)) _uiEvent.emit(UiEvent.ShowToast("删除成功"))
+                if (cartRepo.delete(ids)) eventBus.postEvent(SystemEvent.ShowToast("删除成功"))
             } catch (e: Exception) {
                 handleError(e)
             }
@@ -172,14 +180,10 @@ class CartViewModel @Inject constructor(
     fun add2Favorites(product: CartProduct) {
         viewModelScope.launch {
             try {
-                val userId = userRepo.getCurrentUserId()
-                if (!tokenRepo.hasToken() || userId == null) {
-                    _uiEvent.emit(UiEvent.ShowToast("请先登录"))
-                    return@launch
-                }
+                val userId = authManager.getCurrentUserId() ?: return@launch
                 if (favorRepo.isExist(userId = userId, goodsId = product.goodsId)) {
                     // 已存在，则只提示
-                    _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
+                    eventBus.postEvent(SystemEvent.ShowToast("加入收藏成功"))
                 } else {
                     // 不存在，则加入收藏
                     val req = FavorRecord(
@@ -196,7 +200,7 @@ class CartViewModel @Inject constructor(
                         syncState = SyncRecordState.PENDING_INSERT
                     )
                     if (favorRepo.add2Favorites(request = req)) {
-                        _uiEvent.emit(UiEvent.ShowToast("加入收藏成功"))
+                        eventBus.postEvent(SystemEvent.ShowToast("加入收藏成功"))
                     }
                 }
             } catch (e: Exception) {
@@ -217,19 +221,56 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handleError(e: Throwable) {
-        if (e is CancellationException) throw e // 协程取消时会抛出
-        val msg = when (e) {
-            /**
-             * 都一起了：
-             * 业务错误（status_code != 20000）
-             * HTTP 协议错误（404, 500 等）
-             * 网络错误（断网、超时）
-             */
-            is FriendlyException -> e.friendlyMessage
-            else -> e.message ?: "请稍后重试"
+    fun makeOrder() {
+        val records =
+            cartRecords.value.filter { it.isValid && it.goodsStock > 0 && it.goodsOnSale == 1 && it.checked }
+        _uiState.update { it.copy(committingOrder = true, isMakeOrderDone = false) }
+        viewModelScope.launch {
+            val userId = authManager.getCurrentUserId()
+            if (userId == null) {
+                _uiState.update { it.copy(committingOrder = false, isMakeOrderDone = false) }
+                return@launch
+            }
+            try {
+                val receiverInfo = userRepo.getCurrentReceiverInfo()
+                val params = records.map { record ->
+                    val price = record.goodsPrice.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                    val actualPay = (price * record.quantity.toBigDecimal())
+                        .setScale(2, RoundingMode.HALF_UP)
+                        .toPlainString()
+                    OrderRecord(
+                        id = MongoIdGenerator.generate(),
+                        userId = userId,
+                        goodsId = record.id,
+                        goodsNameZh = record.goodsNameZh,
+                        goodsNameEn = record.goodsNameEn,
+                        goodsIcon = record.goodsIcon,
+                        goodsPrice = record.goodsPrice,
+                        quantity = record.quantity,
+                        actualPay = actualPay,
+                        receiverName = receiverInfo.name,
+                        receiverPhone = receiverInfo.phone,
+                        receiverAddress = receiverInfo.address,
+                        orderStatus = 1, // 1：待付款，2：待发货，3：待收货，4：已完成，5：已取消，6：已关闭
+                        paymentStatus = 0, // 0：未支付，1：已支付，2：部分退款，3：全额退款
+                        afterSalesStatus = 0, // 0：无售后，1：退款/退货中，2：售后完成
+                        paymentTime = "",
+                        deleted = 0,
+                        syncState = SyncRecordState.PENDING_INSERT
+                    )
+                }
+                orderRepo.makeOrder(params)
+                _uiState.update { it.copy(isMakeOrderDone = true) }
+            } catch (e: Exception) {
+                handleError(e)
+            } finally {
+                _uiState.update { it.copy(committingOrder = false) }
+            }
         }
-        Log.d("HandleError", msg)
-        _uiEvent.emit(UiEvent.ShowToast(msg))
+    }
+
+    private suspend fun handleError(e: Exception) {
+        val message = errorHandler.handle(e)
+        _uiState.update { it.copy(error = message) }
     }
 }

@@ -26,9 +26,9 @@ data class RegisterRequest(
 
 @Serializable
 data class ReceiverInfo(
-    val name: String,
-    val phone: String,
-    val address: String
+    val name: String = "",
+    val phone: String = "",
+    val address: String = ""
 )
 
 @Serializable

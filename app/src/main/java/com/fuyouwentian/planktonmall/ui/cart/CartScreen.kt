@@ -109,21 +109,21 @@ enum class DragValue {
 fun CartScreen(
     modifier: Modifier = Modifier,
     onProductClick: (String) -> Unit = {},
-    onSettleClick: () -> Unit = {},
+    afterClickSettleBtn: () -> Unit = {},
     onNavigate2Login: () -> Unit = {},
     onNavigate2Pickup: () -> Unit = {},
     viewModel: CartViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val cartRecords by viewModel.cartRecords.collectAsStateWithLifecycle()
     var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
     val lazyColumnState = rememberLazyListState()
 
-    // cartItems 是缓存值，当 key1，即 cartItems 发生引用变化（即数据更新）时，会重新排序
-    val sortedCartItems = remember(cartItems) {
-        // 即使 cartItems 为 emptyList()，也会调用 sortedWith 方法，返回结果也为 emptyList()
-        cartItems.sortedWith(
+    // cartRecords 是缓存值，当 key1，即 cartRecords 发生引用变化（即数据更新）时，会重新排序
+    val sortedCartRecords = remember(cartRecords) {
+        // 即使 cartRecords 为 emptyList()，也会调用 sortedWith 方法，返回结果也为 emptyList()
+        cartRecords.sortedWith(
             compareByDescending<CartProduct> { it.createTime } // 第一排序字段（倒序）
                 .thenBy { it.id } // 若第一排序字段相同，则使用第二排序字段（正序），一次类推 .thenBy
         )
@@ -133,18 +133,6 @@ fun CartScreen(
         viewModel.fetchCartData()
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                else -> {}
-            }
-        }
-    }
-
     // 监听 LazyColumn 的滚动状态，如果在滑动，就收起已滑出的 Item
     LaunchedEffect(lazyColumnState.isScrollInProgress) {
         if (lazyColumnState.isScrollInProgress) {
@@ -152,9 +140,13 @@ fun CartScreen(
         }
     }
 
+    LaunchedEffect(uiState.isMakeOrderDone) {
+        if (uiState.isMakeOrderDone) afterClickSettleBtn()
+    }
+
     Surface(
         modifier = modifier,
-        color = if (cartItems.isEmpty()) Color.White else Color(0xFFF5F6FA) // background
+        color = if (cartRecords.isEmpty()) Color.White else Color(0xFFF5F6FA) // background
     ) {
         // 根据状态展示不同 UI
         when {
@@ -211,7 +203,7 @@ fun CartScreen(
                 }
             }
 
-            cartItems.isEmpty() -> {
+            cartRecords.isEmpty() -> {
                 // 请求成功但没有数据
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
@@ -265,7 +257,7 @@ fun CartScreen(
                             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                             modifier = modifier.fillMaxSize()
                         ) {
-                            items(sortedCartItems, key = { it.id }) { product ->
+                            items(sortedCartRecords, key = { it.id }) { product ->
                                 SwipeableCartItem(
                                     product = product,
                                     isRevealed = revealedProductId == product.id,
@@ -276,7 +268,7 @@ fun CartScreen(
                                     onToggleSelect = viewModel::toggleSelect,
                                     onQuantityChange = viewModel::changeQuantity,
                                     onCollect = viewModel::add2Favorites,
-                                    onDelete = viewModel::deleteCartItems,
+                                    onDelete = viewModel::deleteCartRecords,
                                     onSyncClick = viewModel::syncData2Server
                                 )
                             }
@@ -285,8 +277,9 @@ fun CartScreen(
 
                     // 底部结算栏
                     SettleColumn(
-                        cartItems = sortedCartItems,
-                        onSettleBtnClick = onSettleClick,
+                        cartRecords = sortedCartRecords,
+                        committing = uiState.committingOrder,
+                        makeOrder = viewModel::makeOrder,
                         onToggleSelectAll = viewModel::toggleSelectAll
                     )
                 }
@@ -522,9 +515,9 @@ fun SwipeableCartItem(
                 )
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                 .background(Color.White) // 确保放 .offset 之后，否则背景覆盖背景层
-                // 无效商品蒙版和水印
+                // 无效或下架的商品蒙版和水印
                 .then(
-                    if (!product.isValid) {
+                    if (!product.isValid || product.goodsOnSale == 0) {
                         Modifier.drawWithContent {
                             // 先绘制原本的内容
                             drawContent()
@@ -552,7 +545,7 @@ fun SwipeableCartItem(
                                     centerY
                                 )
                                 canvas.nativeCanvas.drawText(
-                                    "无效",
+                                    if (!product.isValid) "无效" else "已下架",
                                     centerX,
                                     centerY,
                                     paint
@@ -669,17 +662,19 @@ fun SwipeableCartItem(
 
 @Composable
 fun SettleColumn(
-    cartItems: List<CartProduct>,
-    onSettleBtnClick: () -> Unit = {},
+    cartRecords: List<CartProduct>,
+    committing: Boolean = false,
+    makeOrder: () -> Unit = {},
     onToggleSelectAll: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val allSelected = cartItems.filter { it.isValid && it.goodsStock > 0 }.all { it.checked }
-    val anySelected = cartItems.filter { it.isValid && it.goodsStock > 0 }.any { it.checked }
-    val someSelected =
-        cartItems.filter { it.isValid && it.goodsStock > 0 }.any { it.checked } && !allSelected
-    val grandTotal = cartItems
-        .filter { it.isValid && it.checked }
+    val validRecords = cartRecords.filter { it.isValid && it.goodsStock > 0 && it.goodsOnSale == 1 }
+    val allSelected = validRecords.all { it.checked }
+    val anySelected = validRecords.any { it.checked }
+    val someSelected = !allSelected && anySelected
+
+    val grandTotal = validRecords
+        .filter { it.checked }
         .fold(BigDecimal.ZERO) { acc, product ->
             val price = product.goodsPrice.toBigDecimalOrNull() ?: BigDecimal.ZERO
             acc + price * product.quantity.toBigDecimal()
@@ -724,9 +719,10 @@ fun SettleColumn(
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
             Button(
                 modifier = Modifier.width(100.dp),
+                enabled = !committing,
                 onClick = {
                     if (anySelected) {
-                        onSettleBtnClick()
+                        makeOrder()
                     } else {
                         Toast.makeText(
                             context,
@@ -740,11 +736,19 @@ fun SettleColumn(
                 ),
                 shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
             ) {
+                if (committing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
                 Text(
                     text = "去结算",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.bodyMedium,
                 )
+                }
             }
         }
     }

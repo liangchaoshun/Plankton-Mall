@@ -44,10 +44,10 @@ class FavorContentViewModel @Inject constructor(
     val uiState: StateFlow<FavorContentUiState> = _uiState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val favorItems: StateFlow<List<FavorRecord>> = userRepo.getCurrentUserIdFlow()
+    val favorRecords: StateFlow<List<FavorRecord>> = userRepo.getCurrentUserIdFlow()
         .flatMapLatest { userId -> // 实验性 API
             if (userId != null) {
-                favorRepo.getItemsFlow(userId)
+                favorRepo.getRecordsFlow(userId)
                     .map { list -> list.sortedByDescending { it.createTime } }
             } else {
                 flowOf(emptyList())
@@ -75,11 +75,11 @@ class FavorContentViewModel @Inject constructor(
     ) {
         val id = ++requestId
         currentJob?.cancel() // 重置
-        if (!isLoadingMore) lastPageParams = PaginationWithTotal() // 重置
         currentJob = viewModelScope.launch {
             // 防止并发，上一次上滑请求返回的数据迟于当前下滑返回的数据导致数据错乱，
             // tryLock 非阻塞：拿不到锁说明已有加载在跑，直接返回
             if (!loadMoreMutex.tryLock()) return@launch
+            if (!isLoadingMore) lastPageParams = PaginationWithTotal() // 重置
             _uiState.update {
                 // 下拉刷新，不清空数据，也不显示全屏 loading
                 it.copy(
@@ -92,12 +92,13 @@ class FavorContentViewModel @Inject constructor(
             try {
                 var pageIndex = lastPageParams.pageIndex
                 if (isLoadingMore) ++pageIndex
-                val response = favorRepo.getRemoteFavors(PaginationParameter(pageIndex = pageIndex))
+                val response =
+                    favorRepo.getRemoteRecords(PaginationParameter(pageIndex = pageIndex))
                 if (id != requestId) return@launch // 避免上一次请求回来的（过期）数据，丢弃
                 lastPageParams = response
                 _uiState.update {
                     it.copy(
-                        hasMore = favorItems.value.size < response.total,
+                        hasMore = (response.pageIndex * response.pageSize) < response.total,
                         error = null
                     )
                 }
@@ -125,7 +126,7 @@ class FavorContentViewModel @Inject constructor(
             try {
                 val userId = authManager.getCurrentUserId() ?: return@launch
                 // 取消收藏
-                if (favorRepo.deleteItemByIndices(userId = userId, goodsId = productId)) {
+                if (favorRepo.deleteRecordByIndices(userId = userId, goodsId = productId)) {
                     eventBus.postEvent(SystemEvent.ShowToast("取消收藏成功"))
                 }
             } catch (e: Exception) {
@@ -160,6 +161,5 @@ class FavorContentViewModel @Inject constructor(
     private suspend fun handleError(e: Exception) {
         val message = errorHandler.handle(e)
         _uiState.update { it.copy(error = message) }
-        eventBus.postEvent(SystemEvent.ShowToast(message))
     }
 }

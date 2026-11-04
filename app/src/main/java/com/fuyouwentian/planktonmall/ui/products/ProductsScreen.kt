@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.products
 
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,7 +52,6 @@ import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.common.Constants
 import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.ui.components.widgets.Searchbar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,15 +74,6 @@ fun ProductsScreen(
         //  不过和“搜索框”统一使用 goods/list 也好，性能差了一些而已！
         // 页面初始化，加载列表数据
         viewModel.fetchProductsData(PaginationWithQuery(q = searchQuery.ifBlank { q.trim() }))
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                else -> {}
-            }
-        }
     }
 
     Scaffold(

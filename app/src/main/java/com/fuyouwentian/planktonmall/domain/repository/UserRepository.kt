@@ -2,6 +2,7 @@ package com.fuyouwentian.planktonmall.domain.repository
 
 import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.LoginResponse
+import com.fuyouwentian.planktonmall.domain.model.ReceiverInfo
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
@@ -12,7 +13,8 @@ interface UserRepository {
     suspend fun logout(): Boolean?
     suspend fun getCurrentUserId(): String?
     fun getCurrentUserIdFlow(): Flow<String?>
-    suspend fun getLocalProfile(): UserProfile?
-    suspend fun getRemoteProfile(): UserProfile?
+    suspend fun getCurrentReceiverInfo(): ReceiverInfo
+    suspend fun getCurrentLocalProfile(): UserProfile?
+    suspend fun getCurrentRemoteProfile(): UserProfile?
     suspend fun isLoggedIn(): Boolean?
 }

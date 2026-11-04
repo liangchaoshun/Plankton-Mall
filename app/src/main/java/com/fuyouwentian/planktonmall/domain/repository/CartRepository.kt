@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CartRepository {
     // 返回类型，List: 一次性异步获取、单次网络请求，Flow: 持续的异步数据流、监听数据库变化
-    fun getItemsFlow(userId: String?): Flow<List<CartProduct>>
+    fun getRecordsFlow(userId: String?): Flow<List<CartProduct>>
     fun getTotalQuantityFlow(userId: String): Flow<Int?>
     suspend fun syncLocalUpdate2Server(userId: String?)
     suspend fun upsert(userId: String, params: Add2CartProductParams): Boolean

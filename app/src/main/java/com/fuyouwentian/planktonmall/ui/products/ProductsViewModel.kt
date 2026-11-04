@@ -1,19 +1,13 @@
 package com.fuyouwentian.planktonmall.ui.products
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.data.remote.FriendlyException
+import com.fuyouwentian.planktonmall.core.error.ErrorHandler
 import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,15 +17,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
-    private val productRepo: ProductRepository
+    private val productRepo: ProductRepository,
+    private val errorHandler: ErrorHandler,
 ) : ViewModel() {
     // UI 状态
     private val _uiState = MutableStateFlow(ProductsUiState(loading = true))
     val uiState: StateFlow<ProductsUiState> = _uiState.asStateFlow()
-
-    // UI 事件（用于 Toast、导航等一次性动作）
-    private val _uiEvent = MutableSharedFlow<UiEvent>()
-    val uiEvent: SharedFlow<UiEvent> = _uiEvent.asSharedFlow()
 
     // 防止竞态：fetchProductsData 和 loadMore
     private var requestId = 0
@@ -124,18 +115,7 @@ class ProductsViewModel @Inject constructor(
     }
 
     private suspend fun handleError(e: Exception) {
-        if (e is CancellationException) throw e // 协程取消时会抛出
-        val msg = when (e) {
-            /**
-             * 都一起了：
-             * 业务错误（status_code != 20000）
-             * HTTP 协议错误（404, 500 等）
-             * 网络错误（断网、超时）
-             */
-            is FriendlyException -> e.friendlyMessage
-            else -> e.message ?: "请稍后重试"
-        }
-        Log.d("HandleError", msg)
-        _uiEvent.emit(UiEvent.ShowToast(msg))
+        val message = errorHandler.handle(e)
+        _uiState.update { it.copy(error = message) }
     }
 }

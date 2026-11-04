@@ -86,7 +86,7 @@ data class CartProduct(
     val goodsPrice: String,
     val quantity: Int,
     @SerialName("is_valid")
-    val isValid: Boolean,
+    val isValid: Boolean, // isValid 仅由 deleted 判断即可
     val checked: Boolean,
     @SerialName("goods_stock")
     val goodsStock: Int,
@@ -215,59 +215,4 @@ data class Add2FavorRequest(
     val id: String,
     @SerialName("goods_id")
     val goodsId: String,
-)
-
-@Serializable
-data class MakeOrderRequest(
-    @SerialName("user_id")
-    val userId: String,
-    @SerialName("goods_id")
-    val goodsId: String,
-    val quantity: Int,
-    @SerialName("receiver_name")
-    val receiverName: String,
-    @SerialName("receiver_phone")
-    val receiverPhone: String,
-    @SerialName("receiver_address")
-    val receiverAddress: String,
-)
-
-@Serializable
-data class OrderRecord(
-    @SerialName("_id")
-    val id: String,
-    @SerialName("user_id")
-    val userId: String,
-    @SerialName("goods_id")
-    val goodsId: String,
-    @SerialName("goods_name_zh")
-    val goodsNameZh: String,
-    @SerialName("goods_name_en")
-    val goodsNameEn: String,
-    @SerialName("goods_icon")
-    val goodsIcon: String,
-    @SerialName("goods_price")
-    val goodsPrice: String,
-    val quantity: Int,
-    @SerialName("actual_pay")
-    val actualPay: String,
-    @SerialName("receiver_name")
-    val receiverName: String,
-    @SerialName("receiver_phone")
-    val receiverPhone: String,
-    @SerialName("receiver_address")
-    val receiverAddress: String,
-    @SerialName("order_status")
-    val orderStatus: Int,
-    @SerialName("payment_status")
-    val paymentStatus: Int,
-    @SerialName("after_sales_status")
-    val afterSalesStatus: Int,
-    val deleted: Int,
-    @SerialName("payment_time")
-    val paymentTime: String,
-    @SerialName("create_time")
-    val createTime: String? = null,
-    @SerialName("update_time")
-    val updateTime: String? = null,
 )

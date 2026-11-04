@@ -2,28 +2,18 @@ package com.fuyouwentian.planktonmall.ui.components.order
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuyouwentian.planktonmall.core.auth.AuthManager
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
-import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
-import com.fuyouwentian.planktonmall.core.event.SystemEvent
-import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
-import com.fuyouwentian.planktonmall.domain.model.FavorRecord
-import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
+import com.fuyouwentian.planktonmall.domain.model.OrderRecord
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
 import com.fuyouwentian.planktonmall.domain.model.PaginationWithTotal
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
-import com.fuyouwentian.planktonmall.domain.repository.CartRepository
-import com.fuyouwentian.planktonmall.domain.repository.FavorRepository
+import com.fuyouwentian.planktonmall.domain.repository.OrderRepository
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
-import com.fuyouwentian.planktonmall.ui.components.favor.FavorContentUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -35,22 +25,19 @@ import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
 @HiltViewModel
-class OrderContentViewModel  @Inject constructor(
+class OrderContentViewModel @Inject constructor(
     private val userRepo: UserRepository,
-    private val favorRepo: FavorRepository,
-    private val cartRepo: CartRepository,
-    private val eventBus: GlobalEventBus,
+    private val orderRepo: OrderRepository,
     private val errorHandler: ErrorHandler,
-    private val authManager: AuthManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(OrderContentUiState(loading = true))
     val uiState: StateFlow<OrderContentUiState> = _uiState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val favorItems: StateFlow<List<FavorRecord>> = userRepo.getCurrentUserIdFlow()
+    val orderRecords: StateFlow<List<OrderRecord>> = userRepo.getCurrentUserIdFlow()
         .flatMapLatest { userId -> // 实验性 API
             if (userId != null) {
-                favorRepo.getItemsFlow(userId)
+                orderRepo.getRecordsFlow(userId)
                     .map { list -> list.sortedByDescending { it.createTime } }
             } else {
                 flowOf(emptyList())
@@ -78,11 +65,11 @@ class OrderContentViewModel  @Inject constructor(
     ) {
         val id = ++requestId
         currentJob?.cancel() // 重置
-        if (!isLoadingMore) lastPageParams = PaginationWithTotal() // 重置
         currentJob = viewModelScope.launch {
             // 防止并发，上一次上滑请求返回的数据迟于当前下滑返回的数据导致数据错乱，
             // tryLock 非阻塞：拿不到锁说明已有加载在跑，直接返回
             if (!loadMoreMutex.tryLock()) return@launch
+            if (!isLoadingMore) lastPageParams = PaginationWithTotal() // 重置
             _uiState.update {
                 // 下拉刷新，不清空数据，也不显示全屏 loading
                 it.copy(
@@ -95,12 +82,13 @@ class OrderContentViewModel  @Inject constructor(
             try {
                 var pageIndex = lastPageParams.pageIndex
                 if (isLoadingMore) ++pageIndex
-                val response = favorRepo.getRemoteFavors(PaginationParameter(pageIndex = pageIndex))
+                val params = PaginationWithQuery(pageIndex = pageIndex, q = _uiState.value.q)
+                val response = orderRepo.getRemoteRecords(params)
                 if (id != requestId) return@launch // 避免上一次请求回来的（过期）数据，丢弃
                 lastPageParams = response
                 _uiState.update {
                     it.copy(
-                        hasMore = favorItems.value.size < response.total,
+                        hasMore = (response.pageIndex * response.pageSize) < response.total,
                         error = null
                     )
                 }
@@ -126,6 +114,5 @@ class OrderContentViewModel  @Inject constructor(
     private suspend fun handleError(e: Exception) {
         val message = errorHandler.handle(e)
         _uiState.update { it.copy(error = message) }
-        eventBus.postEvent(SystemEvent.ShowToast(message))
     }
 }

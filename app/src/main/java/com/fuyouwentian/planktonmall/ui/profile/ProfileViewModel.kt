@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.core.auth.AuthManager
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
-import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
-import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +17,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepo: UserRepository,
-    private val eventBus: GlobalEventBus,
     private val errorHandler: ErrorHandler,
     private val authManager: AuthManager
 ) : ViewModel() {
@@ -47,7 +44,7 @@ class ProfileViewModel @Inject constructor(
                     return@launch
                 }
                 _uiState.update { it.copy(loading = true) }
-                userRepo.getLocalProfile()?.let { profile ->
+                userRepo.getCurrentLocalProfile()?.let { profile ->
                     _uiState.update { it.copy(profile = profile) }
                 }
             } catch (e: Exception) {
@@ -58,10 +55,8 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // 需在 launch 中调用
     private suspend fun handleError(e: Exception) {
         val message = errorHandler.handle(e)
         _uiState.update { it.copy(error = message) }
-        eventBus.postEvent(SystemEvent.ShowToast(message))
     }
 }

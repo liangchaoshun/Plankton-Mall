@@ -30,7 +30,7 @@ class UserInfoContentViewModel @Inject constructor(
     fun getRemoteUserProfile() {
         viewModelScope.launch {
             try {
-                val profile = userRepo.getRemoteProfile()
+                val profile = userRepo.getCurrentRemoteProfile()
                 profile?.let {
                     Log.d("UserInfoContentViewModel", "$profile")
                 }
@@ -61,6 +61,5 @@ class UserInfoContentViewModel @Inject constructor(
     private suspend fun handleError(e: Exception) {
         val message = errorHandler.handle(e)
         _uiState.update { it.copy(error = message) }
-        eventBus.postEvent(SystemEvent.ShowToast(message))
     }
 }

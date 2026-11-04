@@ -245,7 +245,7 @@ fun ProfileContent(
             beyondViewportPageCount = 0
         ) { page ->
             when (page) {
-                0 -> OrderContent()
+                0 -> OrderContent(onClickProductPicture = onClickProduct)
                 1 -> HistoryContent(onClickProduct = onClickProduct)
                 2 -> FavorContent(onClickProductPicture = onClickProduct)
                 3 -> UserInfoContent(userInfo = uiState.profile)

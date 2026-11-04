@@ -94,11 +94,11 @@ fun AppNavHost(
                     // Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     snackbarHostState.showSnackbar(event.message)
                 }
-                // 主动退出
-                is SystemEvent.Loggedout -> navController.navigate2HomeClearAll()
-                // 强制踢出到登录页
-                is SystemEvent.ForceLogout -> navController.navigate2Login()
 
+                is SystemEvent.LoginSuccess -> navController.navigate2HomeClearAll()
+                is SystemEvent.RegisterSuccess -> navController.navigate2HomeClearAll()
+                is SystemEvent.Loggedout -> navController.navigate2HomeClearAll() // 主动退出
+                is SystemEvent.ForceLogout -> navController.navigate2Login() // 强制踢出到登录页
                 else -> {}
             }
         }
@@ -228,7 +228,7 @@ fun AppNavHost(
                 CartScreen(
                     modifier = Modifier.fillMaxSize(),
                     onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
-                    onSettleClick = { navController.navigate2Tab(Routes.PROFILE) },
+                    afterClickSettleBtn = { navController.navigate2Tab(Routes.PROFILE) },
                     onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
                     onNavigate2Pickup = { navController.navigate2Tab(Routes.HOME) }
                 )
@@ -258,7 +258,6 @@ fun AppNavHost(
                 RegisterScreen(
                     modifier = Modifier.fillMaxSize(),
                     onNavigateToLogin = { navController.navigate2Normal(Routes.LOGIN) },
-                    onRegisterSuccess = { navController.navigate2HomeClearAll() }
                 )
             }
             composable(
@@ -282,7 +281,7 @@ fun AppNavHost(
                     id = id,
                     onBackClick = { navController.popBackStack() },
                     onCartIconClick = { navController.navigate2Tab(Routes.CART) },
-                    onBuyNowClick = { navController.navigate2Tab(Routes.PROFILE) },
+                    afterBuyNowClick = { navController.navigate2Tab(Routes.PROFILE) },
                 )
             }
         }

@@ -75,7 +75,7 @@ fun FavorContent(
     onClickProductPicture: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val favorItems by viewModel.favorItems.collectAsStateWithLifecycle()
+    val favorRecords by viewModel.favorRecords.collectAsStateWithLifecycle()
     var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
 
     // 定义下拉刷新状态
@@ -165,7 +165,7 @@ fun FavorContent(
                             .fillMaxSize()
                             .padding(top = dimensionResource(R.dimen.padding_medium))
                     ) {
-                        if (favorItems.isEmpty()) {
+                        if (favorRecords.isEmpty()) {
                             item(key = "no_data") {
                                 Box(
                                     modifier = Modifier
@@ -181,7 +181,7 @@ fun FavorContent(
                                 }
                             }
                         }
-                        items(items = favorItems, key = { it.goodsId }) { favor ->
+                        items(items = favorRecords, key = { it.id }) { favor ->
                             LazyColumnItem(
                                 favor = favor,
                                 onAdd2Cart = { product -> viewModel.add2Cart(product) },
@@ -209,7 +209,7 @@ fun FavorContent(
                         }
 
                         // 到底了（放在最外层）
-                        if (!uiState.hasMore && favorItems.isNotEmpty()) {
+                        if (!uiState.hasMore && favorRecords.isNotEmpty()) {
                             item(key = "no_more") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth(),

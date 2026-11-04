@@ -7,7 +7,7 @@ import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 // 关于 syncState 字段的类型，
 // 在 Room 中，如果要保存枚举类型，
 // 默认行为是将枚举的 name 属性（即常量名，如 "PENDING_INSERT"）作为 String 存入数据库。
-@Entity(tableName = "order")
+@Entity(tableName = "orders")
 data class OrderEntity(
     @PrimaryKey
     val id: String,
@@ -18,7 +18,15 @@ data class OrderEntity(
     val goodsIcon: String,
     val goodsPrice: String,
     val quantity: Int,
-    val totalPrice: String,
+    val actualPay: String,
+    val receiverName: String,
+    val receiverPhone: String,
+    val receiverAddress: String,
+    val orderStatus: Int,
+    val paymentStatus: Int,
+    val afterSalesStatus: Int,
+    val paymentTime: String,
+    val deleted: Int,
     val createTime: String? = null,
     val updateTime: String? = null,
     val syncState: SyncRecordState? = SyncRecordState.SYNCED,

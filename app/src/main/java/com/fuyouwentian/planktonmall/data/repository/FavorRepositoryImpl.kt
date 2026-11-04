@@ -31,8 +31,8 @@ class FavorRepositoryImpl @Inject constructor(
     private val favorDao: FavorDao,
     private val dataStore: DataStore<Preferences>
 ) : FavorRepository {
-    override fun getItemsFlow(userId: String?): Flow<List<FavorRecord>> {
-        return favorDao.getItemsFlow(userId).map { entities ->
+    override fun getRecordsFlow(userId: String?): Flow<List<FavorRecord>> {
+        return favorDao.getRecordsFlow(userId).map { entities ->
             entities.map { it.toDomain() }
         }
     }
@@ -54,7 +54,7 @@ class FavorRepositoryImpl @Inject constructor(
                 return true
             }
         } catch (e: Exception) {
-            favorDao.deleteItemByIndices(
+            favorDao.deleteRecordByIndices(
                 userId = request.userId,
                 goodsId = request.goodsId
             ) // 同步到服务器失败，还原
@@ -63,13 +63,13 @@ class FavorRepositoryImpl @Inject constructor(
         return false
     }
 
-    override suspend fun deleteItemByIndices(userId: String, goodsId: String): Boolean {
+    override suspend fun deleteRecordByIndices(userId: String, goodsId: String): Boolean {
         val isExist = favorDao.isExistByIndices(userId = userId, goodsId = goodsId)
         if (isExist) {
-            val legacyEntity = favorDao.getItemByIndices(userId = userId, goodsId = goodsId)
+            val legacyEntity = favorDao.getRecordByIndices(userId = userId, goodsId = goodsId)
             try {
                 // 先处理本地数据
-                favorDao.deleteItemByIndices(userId = userId, goodsId = goodsId)
+                favorDao.deleteRecordByIndices(userId = userId, goodsId = goodsId)
                 // 再同步到服务器
                 safeApiCall { apiService.favorDelete(listOf(legacyEntity!!.id)) }?.let { return true }
             } catch (e: Exception) {
@@ -88,12 +88,12 @@ class FavorRepositoryImpl @Inject constructor(
         return favorDao.isExistByIndices(userId, goodsId)
     }
 
-    override suspend fun getRemoteFavors(params: PaginationParameter): PaginationWithTotal {
+    override suspend fun getRemoteRecords(params: PaginationParameter): PaginationWithTotal {
         val response = safeApiCall { apiService.favorList(params) }
         response?.let {
             val list =
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
-            // 清理旧数据
+            // TODO 清理旧数据
             if (list.isEmpty() || it.pageIndex == 1) {
                 val userId = dataStore.data
                     .catch { e ->
@@ -101,16 +101,16 @@ class FavorRepositoryImpl @Inject constructor(
                         if (e is IOException) emit(emptyPreferences()) else throw e
                     }
                     .first()[PrefsKeys.USER_ID]
-                userId?.let { favorDao.deleteItems(userId) }
+                userId?.let { favorDao.deleteRecordsByUser(userId) }
             }
             favorDao.upsertMulti(list)
-            delay(200.milliseconds) // 让 favorDao getItemsFlowByUserId 先发送信号
+            delay(200.milliseconds) // 让 favorDao getRecordsFlow 先发送信号
             return PaginationWithTotal(
                 total = it.total,
                 pageIndex = it.pageIndex,
                 pageSize = it.pageSize
             )
         }
-        return getRemoteFavors()
+        return PaginationWithTotal()
     }
 }
