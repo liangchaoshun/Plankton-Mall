@@ -35,7 +35,7 @@ class ProfileViewModel @Inject constructor(
         loadUserInfo()
     }
 
-    private fun loadUserInfo() {
+    fun loadUserInfo() {
         viewModelScope.launch {
             try {
                 val userId = authManager.getCurrentUserId(false)

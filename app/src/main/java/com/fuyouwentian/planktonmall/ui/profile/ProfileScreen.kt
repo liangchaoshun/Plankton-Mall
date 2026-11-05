@@ -113,12 +113,12 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                         Button(
                             onClick = { onNavigate2Login() },
-                            modifier = Modifier.width(100.dp),
+                            modifier = Modifier.width(150.dp),
                             shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
                         ) {
                             Text(
                                 text = "去登录",
-                                color = MaterialTheme.colorScheme.primary,
+                                color = Color.White,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -130,6 +130,7 @@ fun ProfileScreen(
                 ProfileContent(
                     uiState = uiState,
                     onClickProduct = onProductClick,
+                    loadUserInfo = viewModel::loadUserInfo
                 )
             }
         }
@@ -183,6 +184,7 @@ fun ProfileHeader(profile: UserProfile?) {
 fun ProfileContent(
     uiState: ProfileUiState,
     onClickProduct: (String) -> Unit = {},
+    loadUserInfo: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val tabs = listOf("订单", "足迹", "收藏", "个人信息")
@@ -248,7 +250,7 @@ fun ProfileContent(
                 0 -> OrderContent(onClickProductPicture = onClickProduct)
                 1 -> HistoryContent(onClickProduct = onClickProduct)
                 2 -> FavorContent(onClickProductPicture = onClickProduct)
-                3 -> UserInfoContent(userInfo = uiState.profile)
+                3 -> UserInfoContent(userInfo = uiState.profile, loadUserInfo = loadUserInfo)
             }
         }
     }

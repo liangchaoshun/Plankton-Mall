@@ -64,6 +64,7 @@ class OrderContentViewModel @Inject constructor(
         isRefresh: Boolean = false,
         isLoadingMore: Boolean = false,
     ) {
+        Log.d("[OrderContentViewModel]", "loadData")
         val id = ++requestId
         currentJob?.cancel() // 重置
         currentJob = viewModelScope.launch {
@@ -84,11 +85,8 @@ class OrderContentViewModel @Inject constructor(
                 var pageIndex = lastPageParams.pageIndex
                 if (isLoadingMore) ++pageIndex
                 val params = PaginationWithQuery(pageIndex = pageIndex, q = _uiState.value.q)
-                Log.d("aaa", "$params")
                 val response = orderRepo.getRemoteRecords(params)
-                Log.d("bbb", "$response") // TODO 被吞了？？？
                 if (id != requestId) return@launch // 避免上一次请求回来的（过期）数据，丢弃
-                Log.d("ccc", "$id, $requestId")
                 lastPageParams = response
                 _uiState.update {
                     it.copy(
@@ -99,7 +97,7 @@ class OrderContentViewModel @Inject constructor(
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
-                if (id == requestId) _uiState.update { it.copy(loading = false) }
+                _uiState.update { it.copy(loading = false) }
                 // 无条件清：避免过期请求把 loadingMore 挂住
                 _uiState.update { it.copy(loadingMore = false) } // 统一清理
                 loadMoreMutex.unlock()
@@ -107,11 +105,12 @@ class OrderContentViewModel @Inject constructor(
         }
     }
 
-    // 加载更多
+    // TODO 加载更多
     fun loadMore() {
         val current = _uiState.value
         // 防止重复触发
         if (current.loading || current.loadingMore || !current.hasMore) return
+        Log.d("[OrderContentViewModel]", "loadMore")
         loadData(isLoadingMore = true)
     }
 

@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.components.userInfo
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
@@ -26,19 +25,6 @@ class UserInfoContentViewModel @Inject constructor(
     private val _uiState =
         MutableStateFlow(UserInfoContentUiState(loading = false, commiting = false))
     val uiState: StateFlow<UserInfoContentUiState> = _uiState.asStateFlow()
-
-    fun getRemoteUserProfile() {
-        viewModelScope.launch {
-            try {
-                val profile = userRepo.getCurrentRemoteProfile()
-                profile?.let {
-                    Log.d("UserInfoContentViewModel", "$profile")
-                }
-            } catch (e: Exception) {
-                handleError(e)
-            }
-        }
-    }
 
     fun logout() {
         viewModelScope.launch {

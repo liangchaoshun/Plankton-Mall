@@ -46,7 +46,7 @@ class UserRepositoryImpl @Inject constructor(
             if (!userInfo.receiverInfo.isNullOrEmpty()) {
                 dataStore.edit { prefs ->
                     prefs[PrefsKeys.RECEIVER_INFO] =
-                        GlobalConfig.json.encodeToString(userInfo.receiverInfo)
+                        GlobalConfig.json.encodeToString(userInfo.receiverInfo[0])
                 }
             }
             profileDao.upsertProfile(userInfo.toEntity())
@@ -106,6 +106,15 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun getCurrentRemoteProfile(): UserProfile? {
         val result = safeApiCall { api.userGetCurrentProfile() }
         result?.let {
+            dataStore.edit { prefs ->
+                prefs[PrefsKeys.USER_ID] = it.id
+            }
+            if (!it.receiverInfo.isNullOrEmpty()) {
+                dataStore.edit { prefs ->
+                    prefs[PrefsKeys.RECEIVER_INFO] =
+                        GlobalConfig.json.encodeToString(it.receiverInfo[0])
+                }
+            }
             profileDao.upsertProfile(result.toEntity()) // 缓存到本地
         }
         return result

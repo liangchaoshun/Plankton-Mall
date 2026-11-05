@@ -93,7 +93,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.roundToInt
@@ -114,7 +113,6 @@ fun CartScreen(
     onNavigate2Pickup: () -> Unit = {},
     viewModel: CartViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cartRecords by viewModel.cartRecords.collectAsStateWithLifecycle()
     var revealedProductId by remember { mutableStateOf<String?>(null) } // 记录当前滑出的商品 ID
@@ -186,16 +184,18 @@ fun CartScreen(
                     ) {
                         Text(
                             text = "请先登录，以获取数据",
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                         Button(
                             onClick = { onNavigate2Login() },
-                            modifier = Modifier.width(100.dp),
+                            modifier = Modifier.width(150.dp),
                             shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
                         ) {
                             Text(
                                 text = "去登录",
+                                color = Color.White,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -743,11 +743,11 @@ fun SettleColumn(
                         strokeWidth = 2.dp
                     )
                 } else {
-                Text(
-                    text = "去结算",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                    Text(
+                        text = "去结算",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             }
         }

@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.profile
 
-import com.fuyouwentian.planktonmall.domain.model.OrderRecord
 import com.fuyouwentian.planktonmall.domain.model.UserProfile
 
 

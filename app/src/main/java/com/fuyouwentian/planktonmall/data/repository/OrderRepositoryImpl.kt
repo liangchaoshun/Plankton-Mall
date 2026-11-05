@@ -115,7 +115,6 @@ class OrderRepositoryImpl @Inject constructor(
 
     override suspend fun getRemoteRecords(params: PaginationWithQuery): PaginationWithTotal {
         val response = safeApiCall { apiService.orderList(params) }
-        Log.d("[getRemoteRecords]", "response: $response")
         response?.let {
             val list =
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
