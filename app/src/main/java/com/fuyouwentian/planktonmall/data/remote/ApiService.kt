@@ -69,7 +69,7 @@ interface ApiService {
     suspend fun cartList(): BaseResponse<CartProductsResponseData<CartProduct>?>
 
     @POST("order/insert")
-    suspend fun orderInsert(@Body param: List<MakeOrderRequest>): BaseResponse<List<OrderRecord>?>
+    suspend fun orderInsert(@Body param: List<MakeOrderRequest>): BaseResponse<List<OrderRecord>>
 
     @POST("order/delete")
     suspend fun orderDelete(@Body param: List<String>): BaseResponse<Boolean>

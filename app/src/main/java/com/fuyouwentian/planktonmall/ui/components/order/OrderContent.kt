@@ -246,7 +246,7 @@ fun LazyColumnItem(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Column(modifier = Modifier.width(20.dp)) {
+                    Column(modifier = Modifier.width(100.dp)) {
                         Text(
                             text = "￥${order.goodsPrice}",
                             color = Color(0xFF333333),

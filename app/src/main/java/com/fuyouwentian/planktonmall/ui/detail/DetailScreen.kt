@@ -110,84 +110,119 @@ fun DetailContent(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        // 加载中和错误状态的处理
-        if (uiState.loading || !uiState.error.isNullOrBlank()) {
-            ProductDescException(
-                uiState = uiState,
-                onClickRetry = { viewModel.fetchProductDetail(id) }
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                // 底部留出空间，防止内容被底部悬浮栏遮挡
-                contentPadding = PaddingValues(bottom = 42.dp)
-            ) {
-                // 轮播图
-                item { CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList()) }
-                // 商品标题和描述
-                item { ProductInfoSection(product = uiState.product) }
-                // 商品详情描述 (多张图片)
-                // 使用 items 直接渲染图片列表，避免嵌套滚动冲突
-                items(uiState.product?.descUrl ?: emptyList()) { url ->
-                    AsyncImage(
-                        model = url,
-                        contentDescription = "product desc",
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.FillWidth
-                    )
+
+        when {
+
+            uiState.loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimensionResource(R.dimen.padding_small)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
 
-            // 底部操作栏
-            BottomActionBar(
-                product = uiState.product,
-                committing = uiState.committingOrder,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                onFavorIconClick = {
-                    uiState.product?.let {
-                        viewModel.toggleFavorites()
-                    }
-                },
-                onCartIconClick = onCartIconClick, // 跳转到购物车页面
-                onClickAdd2Cart = {
-                    uiState.product?.let {
-                        viewModel.add2Cart(uiState.product!!)
-                    }
-                },
-                makeOrder = viewModel::immediatelyMakeAnOrder
-            )
-
-            // 蒙版：商品被删除或下架了，售罄不用出现蒙版
-            uiState.product?.let { product ->
-                if (product.isInvalid) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White.copy(0.7f))
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null // 去除波纹
-                            ) { Log.d("Detail", "click cover") },
-                        contentAlignment = Alignment.Center
+            !uiState.error.isNullOrBlank() && uiState.product?.descUrl?.isEmpty() == true -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimensionResource(R.dimen.padding_small)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(0.7f)),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Text(
+                            text = uiState.error!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                        TextButton(onClick = { viewModel.fetchProductDetail(id) }) {
                             Text(
-                                text = if (product.isDeleted) "商品无效" else "商品已下架",
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodyLarge
+                                text = "重试",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         }
                     }
                 }
             }
-        }
 
+            uiState.product?.descUrl?.isNotEmpty() == true -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    // 底部留出空间，防止内容被底部悬浮栏遮挡
+                    contentPadding = PaddingValues(bottom = 42.dp)
+                ) {
+                    // 轮播图
+                    item { CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList()) }
+                    // 商品标题和描述
+                    item { ProductInfoSection(product = uiState.product) }
+                    // 商品详情描述 (多张图片)
+                    // 使用 items 直接渲染图片列表，避免嵌套滚动冲突
+                    items(uiState.product?.descUrl ?: emptyList()) { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "product desc",
+                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.FillWidth
+                        )
+                    }
+                }
+
+                // 底部操作栏
+                BottomActionBar(
+                    product = uiState.product,
+                    committing = uiState.committingOrder,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    onFavorIconClick = {
+                        uiState.product?.let {
+                            viewModel.toggleFavorites()
+                        }
+                    },
+                    onCartIconClick = onCartIconClick, // 跳转到购物车页面
+                    onClickAdd2Cart = {
+                        uiState.product?.let {
+                            viewModel.add2Cart(uiState.product!!)
+                        }
+                    },
+                    makeOrder = viewModel::immediatelyMakeAnOrder
+                )
+
+                // 蒙版：商品被删除或下架了，售罄不用出现蒙版
+                uiState.product?.let { product ->
+                    if (product.isInvalid) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White.copy(0.7f))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null // 去除波纹
+                                ) { Log.d("Detail", "click cover") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(0.7f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (product.isDeleted) "商品无效" else "商品已下架",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
         // 返回按钮
         IconButton(
             onClick = onBackClick,
@@ -206,9 +241,7 @@ fun DetailContent(
             )
         }
     }
-
 }
-
 
 @Composable
 fun CarouselSection(
@@ -320,49 +353,14 @@ fun ProductInfoSection(product: Product?) {
 }
 
 @Composable
-fun ProductDescException(
-    uiState: DetailUiState,
-    onClickRetry: () -> Unit = {},
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(dimensionResource(R.dimen.padding_small)),
-        contentAlignment = Alignment.Center
-    ) {
-        when {
-            uiState.loading -> {
-                CircularProgressIndicator()
-            }
-
-            !uiState.error.isNullOrBlank() -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(text = uiState.error)
-                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                    TextButton(onClick = onClickRetry) {
-                        Text(
-                            text = "重试",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun BottomActionBar(
     product: Product?,
     modifier: Modifier = Modifier,
     committing: Boolean = false,
-    onFavorIconClick: () -> Unit,
-    onCartIconClick: () -> Unit,
-    onClickAdd2Cart: () -> Unit,
-    makeOrder: () -> Unit
+    onFavorIconClick: () -> Unit = {},
+    onCartIconClick: () -> Unit = {},
+    onClickAdd2Cart: () -> Unit = {},
+    makeOrder: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -417,7 +415,9 @@ fun BottomActionBar(
                 onClick = onClickAdd2Cart,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(38.dp)
+                modifier = Modifier
+                    .size(width = 90.dp, height = 38.dp),
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
             ) {
                 Text(
                     text = "加入购物车",
@@ -431,7 +431,8 @@ fun BottomActionBar(
                 onClick = makeOrder,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(38.dp)
+                modifier = Modifier.size(width = 90.dp, height = 38.dp),
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
             ) {
                 if (committing) {
                     CircularProgressIndicator(
@@ -440,11 +441,12 @@ fun BottomActionBar(
                         strokeWidth = 2.dp
                     )
                 } else {
-                Text(
-                    text = "立即购买",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                )}
+                    Text(
+                        text = "立即购买",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         }
     }

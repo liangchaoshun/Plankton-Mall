@@ -6,6 +6,7 @@ import com.fuyouwentian.planktonmall.data.local.AppDatabase
 import com.fuyouwentian.planktonmall.data.local.cart.CartDao
 import com.fuyouwentian.planktonmall.data.local.favor.FavorDao
 import com.fuyouwentian.planktonmall.data.local.history.HistoryDao
+import com.fuyouwentian.planktonmall.data.local.order.OrderDao
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
 import dagger.Module
 import dagger.Provides
@@ -42,4 +43,8 @@ object DatabaseModule {
 
     @Provides
     fun provideFavorDao(db: AppDatabase): FavorDao = db.favorDao()
+
+    @Provides
+    fun provideOrderDao(db: AppDatabase): OrderDao = db.orderDao()
+
 }

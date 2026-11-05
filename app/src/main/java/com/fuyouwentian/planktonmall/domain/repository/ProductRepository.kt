@@ -1,10 +1,9 @@
 package com.fuyouwentian.planktonmall.domain.repository
 
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
-import com.fuyouwentian.planktonmall.domain.model.Product
-import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
-import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
+import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 
 interface ProductRepository {

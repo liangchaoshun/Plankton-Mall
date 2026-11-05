@@ -8,6 +8,8 @@ import com.fuyouwentian.planktonmall.data.local.favor.FavorDao
 import com.fuyouwentian.planktonmall.data.local.favor.FavorEntity
 import com.fuyouwentian.planktonmall.data.local.history.HistoryDao
 import com.fuyouwentian.planktonmall.data.local.history.HistoryEntity
+import com.fuyouwentian.planktonmall.data.local.order.OrderDao
+import com.fuyouwentian.planktonmall.data.local.order.OrderEntity
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileDao
 import com.fuyouwentian.planktonmall.data.local.profile.ProfileEntity
 
@@ -17,9 +19,10 @@ import com.fuyouwentian.planktonmall.data.local.profile.ProfileEntity
         CartEntity::class,
         ProfileEntity::class,
         HistoryEntity::class,
-        FavorEntity::class
+        FavorEntity::class,
+        OrderEntity::class,
     ],
-    version = 14,
+    version = 16,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,4 +30,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun historyDao(): HistoryDao
     abstract fun favorDao(): FavorDao
+    abstract fun orderDao(): OrderDao
 }

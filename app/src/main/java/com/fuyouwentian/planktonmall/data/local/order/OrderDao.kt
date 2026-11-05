@@ -1,9 +1,11 @@
 package com.fuyouwentian.planktonmall.data.local.order
 
+import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+@Dao
 interface OrderDao {
     // userId 为 null 时，
     // SQL 查不到数据，Room 会将这个空结果集转换为一个空的 List（即 emptyList()）

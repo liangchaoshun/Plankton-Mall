@@ -50,9 +50,9 @@ data class OrderRecord(
     val paymentStatus: Int,
     @SerialName("after_sales_status")
     val afterSalesStatus: Int,
-    @SerialName("payment_time")
-    val paymentTime: String,
     val deleted: Int,
+    @SerialName("payment_time")
+    val paymentTime: String? = null,
     @SerialName("create_time")
     val createTime: String? = null,
     @SerialName("update_time")

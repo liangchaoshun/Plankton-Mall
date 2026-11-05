@@ -3,10 +3,9 @@ package com.fuyouwentian.planktonmall.data.repository
 import com.fuyouwentian.planktonmall.data.remote.ApiService
 import com.fuyouwentian.planktonmall.data.remote.safeApiCall
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
-import com.fuyouwentian.planktonmall.domain.model.Product
-import com.fuyouwentian.planktonmall.domain.model.ProductDetailRequest
-import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.PaginationWithQuery
+import com.fuyouwentian.planktonmall.domain.model.Product
+import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.model.ProductsResponseData
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
 import javax.inject.Inject

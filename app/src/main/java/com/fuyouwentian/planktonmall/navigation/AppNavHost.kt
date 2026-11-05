@@ -204,7 +204,7 @@ fun AppNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.HOME, // ⚠✨🔥
+            startDestination = Routes.PROFILE, // ⚠✨🔥
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

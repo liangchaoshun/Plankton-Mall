@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.data.repository
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
@@ -38,12 +39,12 @@ class OrderRepositoryImpl @Inject constructor(
 
     override suspend fun makeOrder(params: List<OrderRecord>): Boolean {
         try {
-            val localList: List<OrderEntity> = emptyList()
-            val requestList: List<MakeOrderRequest> = emptyList()
+            val localList = mutableListOf<OrderEntity>()
+            val requestList = mutableListOf<MakeOrderRequest>()
 
             params.forEach {
-                localList + it.toEntity()
-                requestList.plus(
+                localList.add(it.toEntity())
+                requestList.add(
                     MakeOrderRequest(
                         id = it.id,
                         goodsId = it.goodsId,
@@ -60,9 +61,10 @@ class OrderRepositoryImpl @Inject constructor(
             safeApiCall {
                 apiService.orderInsert(requestList)
             }?.let { list ->
-                orderDao.upsertMulti(list.map {
+                val records = list.map {
                     it.toEntity().copy(syncState = SyncRecordState.SYNCED)
-                })
+                }
+                orderDao.upsertMulti(records)
                 return true
             }
         } catch (e: Exception) {
@@ -113,10 +115,12 @@ class OrderRepositoryImpl @Inject constructor(
 
     override suspend fun getRemoteRecords(params: PaginationWithQuery): PaginationWithTotal {
         val response = safeApiCall { apiService.orderList(params) }
+        Log.d("[getRemoteRecords]", "response: $response")
         response?.let {
             val list =
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
             // TODO 清理旧数据
+            Log.d("[getRemoteRecords]", "list: $list")
             if (list.isEmpty() || it.pageIndex == 1) {
                 val userId = dataStore.data
                     .catch { e ->

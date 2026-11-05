@@ -1,5 +1,6 @@
 package com.fuyouwentian.planktonmall.ui.components.order
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
@@ -83,8 +84,11 @@ class OrderContentViewModel @Inject constructor(
                 var pageIndex = lastPageParams.pageIndex
                 if (isLoadingMore) ++pageIndex
                 val params = PaginationWithQuery(pageIndex = pageIndex, q = _uiState.value.q)
+                Log.d("aaa", "$params")
                 val response = orderRepo.getRemoteRecords(params)
+                Log.d("bbb", "$response") // TODO 被吞了？？？
                 if (id != requestId) return@launch // 避免上一次请求回来的（过期）数据，丢弃
+                Log.d("ccc", "$id, $requestId")
                 lastPageParams = response
                 _uiState.update {
                     it.copy(
