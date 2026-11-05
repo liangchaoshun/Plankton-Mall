@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.data.repository
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
@@ -118,9 +117,7 @@ class OrderRepositoryImpl @Inject constructor(
         response?.let {
             val list =
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
-            // TODO 清理旧数据
-            Log.d("[getRemoteRecords]", "list: $list")
-            if (list.isEmpty() || it.pageIndex == 1) {
+            if (list.isEmpty() && it.pageIndex == 1) {
                 val userId = dataStore.data
                     .catch { e ->
                         // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃

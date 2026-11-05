@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.components.order
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
@@ -64,7 +63,6 @@ class OrderContentViewModel @Inject constructor(
         isRefresh: Boolean = false,
         isLoadingMore: Boolean = false,
     ) {
-        Log.d("[OrderContentViewModel]", "loadData")
         val id = ++requestId
         currentJob?.cancel() // 重置
         currentJob = viewModelScope.launch {
@@ -105,12 +103,10 @@ class OrderContentViewModel @Inject constructor(
         }
     }
 
-    // TODO 加载更多
     fun loadMore() {
         val current = _uiState.value
         // 防止重复触发
         if (current.loading || current.loadingMore || !current.hasMore) return
-        Log.d("[OrderContentViewModel]", "loadMore")
         loadData(isLoadingMore = true)
     }
 

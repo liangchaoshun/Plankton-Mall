@@ -92,7 +92,7 @@ fun OrderContent(
                 }
             }
 
-            !uiState.error.isNullOrBlank() -> {
+            !uiState.error.isNullOrBlank() && orderRecords.isEmpty() -> {
                 // 加载失败，显示错误提示和重试按钮
                 Box(
                     modifier = Modifier
@@ -214,12 +214,13 @@ fun LazyColumnItem(
                     end = dimensionResource(R.dimen.padding_small)
                 ),
             verticalAlignment = Alignment.Top
-        ) {
+        )
+        {
             AsyncImage(
                 model = order.goodsIcon,
                 contentDescription = order.goodsNameZh,
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(width = 100.dp, height = 110.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(
                         onClick = { onClickProductPicture(order.goodsId) }),
@@ -232,37 +233,93 @@ fun LazyColumnItem(
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(IntrinsicSize.Min),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                    verticalAlignment = Alignment.Top,
+                )
+                {
                     Text(
                         text = order.goodsNameZh,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 2,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Column(modifier = Modifier.width(100.dp)) {
+                    Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+                    Column(
+                        modifier = Modifier.width(100.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
                         Text(
                             text = "￥${order.goodsPrice}",
                             color = Color(0xFF333333),
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "共${order.quantity}件",
                             color = MaterialTheme.colorScheme.outline,
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
                         )
                         Text(
-                            text = if (order.orderStatus == 1) "待付款" else "待发货",
-                            color = MaterialTheme.colorScheme.outline,
-                            style = MaterialTheme.typography.labelSmall,
+                            text = if (order.paymentStatus == 0) "待付款" else "待发货",
+                            color = if (order.paymentStatus == 0) Color(0xFFFF9800) else MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.labelLarge,
                         )
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalAlignment = Alignment.Bottom,
+                )
+                {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (order.paymentStatus == 0) "应付款" else "实付款",
+                                color = MaterialTheme.colorScheme.outline,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            Column {
+                                Row {
+                                    Text(
+                                        text = "合计",
+                                        color = Color(0xFF333333),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = "￥${order.actualPay}",
+                                        color = Color(0xFF333333),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "订单编号",
+                                color = MaterialTheme.colorScheme.outline,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            Text(
+                                text = order.id,
+                                color = Color(0xFF333333),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

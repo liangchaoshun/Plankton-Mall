@@ -93,8 +93,7 @@ class FavorRepositoryImpl @Inject constructor(
         response?.let {
             val list =
                 it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
-            // TODO 清理旧数据
-            if (list.isEmpty() || it.pageIndex == 1) {
+            if (list.isEmpty() && it.pageIndex == 1) {
                 val userId = dataStore.data
                     .catch { e ->
                         // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃

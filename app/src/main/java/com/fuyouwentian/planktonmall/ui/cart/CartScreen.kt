@@ -154,9 +154,14 @@ fun CartScreen(
                 }
             }
 
-            !uiState.error.isNullOrBlank() -> {
+            !uiState.error.isNullOrBlank() && cartRecords.isEmpty() -> {
                 // 加载失败，显示错误提示和重试按钮
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimensionResource(R.dimen.padding_small)),
+                    contentAlignment = Alignment.Center
+                ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
@@ -515,7 +520,7 @@ fun SwipeableCartItem(
                 )
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                 .background(Color.White) // 确保放 .offset 之后，否则背景覆盖背景层
-                // 无效或下架的商品蒙版和水印
+                // TODO 无效或下架的商品蒙版和水印
                 .then(
                     if (!product.isValid || product.goodsOnSale == 0) {
                         Modifier.drawWithContent {
@@ -592,7 +597,7 @@ fun SwipeableCartItem(
                 model = product.goodsIcon,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
+                    .size(width = 100.dp, height = 120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
                     .padding(
                         horizontal = 0.dp,
                         vertical = dimensionResource(R.dimen.padding_small)

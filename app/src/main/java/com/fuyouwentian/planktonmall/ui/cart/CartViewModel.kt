@@ -221,6 +221,7 @@ class CartViewModel @Inject constructor(
         }
     }
 
+    // TODO 结算成功后，从购物车中删除
     fun makeOrder() {
         val records =
             cartRecords.value.filter { it.isValid && it.goodsStock > 0 && it.goodsOnSale == 1 && it.checked }
@@ -241,7 +242,7 @@ class CartViewModel @Inject constructor(
                     OrderRecord(
                         id = MongoIdGenerator.generate(),
                         userId = userId,
-                        goodsId = record.id,
+                        goodsId = record.goodsId,
                         goodsNameZh = record.goodsNameZh,
                         goodsNameEn = record.goodsNameEn,
                         goodsIcon = record.goodsIcon,
