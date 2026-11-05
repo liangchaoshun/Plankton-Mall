@@ -209,11 +209,10 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun syncData2Server(id: String = "") {
-        // Log.d("Cart", "[syncData2Server] id: $id")
+    fun syncCartData2Server() {
         viewModelScope.launch {
             try {
-                val userId = userRepo.getCurrentUserId()
+                val userId = authManager.getCurrentUserId() ?: return@launch
                 cartRepo.syncLocalUpdate2Server(userId) // 全量（checked、quantity）提交的
             } catch (e: Exception) {
                 handleError(e)

@@ -274,7 +274,7 @@ fun CartScreen(
                                     onQuantityChange = viewModel::changeQuantity,
                                     onCollect = viewModel::add2Favorites,
                                     onDelete = viewModel::deleteCartRecords,
-                                    onSyncClick = viewModel::syncData2Server
+                                    onSyncClick = viewModel::syncCartData2Server
                                 )
                             }
                         }
@@ -404,7 +404,7 @@ fun SwipeableCartItem(
     onQuantityChange: (String, Int) -> Unit,
     onCollect: (CartProduct) -> Unit,
     onDelete: (List<String>) -> Unit,
-    onSyncClick: (String) -> Unit,
+    onSyncClick: () -> Unit,
     modifier: Modifier = Modifier,
     isSyncFiled: Boolean = false,
 ) {
@@ -581,9 +581,10 @@ fun SwipeableCartItem(
                     )
                 )
                 // 若该商品（checked、quantity）同步失败，则显示一个刷新的 icon
+                // 点击该 icon，会同步所有的待同步项！
                 if (isSyncFiled) {
                     Spacer(modifier = Modifier.weight(1f))
-                    IconButton(onClick = { onSyncClick(product.id) }) {
+                    IconButton(onClick = onSyncClick) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "同步",
