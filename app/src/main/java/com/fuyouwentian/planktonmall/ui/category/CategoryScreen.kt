@@ -1,13 +1,12 @@
 package com.fuyouwentian.planktonmall.ui.category
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,53 +22,41 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.Category
 import com.fuyouwentian.planktonmall.domain.model.Series
-import com.fuyouwentian.planktonmall.domain.model.UiEvent
 
 
 @Composable
 fun CategoryScreen(
-    modifier: Modifier = Modifier,
     onSeriesClick: (String) -> Unit = {},
     viewModel: CategoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    var selectedIndex by rememberSaveable { mutableStateOf(0) }
-//    val categories = MockCategories.data // mock data
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val categories = uiState.categoryData.data
 
     LaunchedEffect(Unit) {
-        if (categories.isNotEmpty() && selectedIndex >= categories.size) {
-            selectedIndex = 0 // 重置为第一个
-        }
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-
-                else -> {}
-            }
-        }
+        viewModel.fetchData()
     }
+
     // 根据状态展示不同 UI
     when {
         uiState.loading -> {
@@ -80,9 +67,26 @@ fun CategoryScreen(
 
         !uiState.error.isNullOrBlank() -> {
             // 加载失败，显示错误提示和重试按钮
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "${uiState.error}")
-                // 可以加一个重试按钮调用 viewModel.initHandler() 或重新请求 TODO
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(dimensionResource(R.dimen.padding_small)),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = uiState.error ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                TextButton(onClick = viewModel::fetchData) {
+                    Text(
+                        text = "重试",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
 
@@ -156,7 +160,7 @@ fun CategoryMenu(
 @Composable
 fun SeriesArea(
     series: List<Series>,
-    onClickSeries: (String) -> Unit = { seriesId -> Log.i("Series_Click", seriesId) }
+    onClickSeries: (String) -> Unit = {}
 ) {
     // 注意：不要在 LazyColumn 里面套 LazyVerticalGrid，否则会报错，两者选其一即可
     LazyVerticalGrid(
@@ -192,9 +196,3 @@ fun SeriesArea(
         }
     }
 }
-
-/*@Preview(showBackground = true)
-@Composable
-fun CategoryScreenPreview() {
-    CategoryScreen()
-}*/

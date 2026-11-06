@@ -97,7 +97,6 @@ fun HomeScreen(
             )
     ) {
         var searchQuery by rememberSaveable { mutableStateOf("") }
-        val isDataEmpty = uiState.recommendProducts.data.isEmpty()
         Searchbar(
             query = searchQuery,
             onValueChangeEvent = { searchQuery = it },
@@ -105,28 +104,33 @@ fun HomeScreen(
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
         when {
-            uiState.loading && isDataEmpty -> {
+            uiState.loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
 
-            !uiState.exceptionInfo.isNullOrBlank() && isDataEmpty -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(text = uiState.exceptionInfo!!)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { viewModel.loadHomeData() }) {
-                            Text(
-                                text = "重试",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
+            !uiState.exceptionInfo.isNullOrBlank() -> {
+                // 加载失败，显示错误提示和重试按钮
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimensionResource(R.dimen.padding_small)),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = uiState.exceptionInfo ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                    TextButton(onClick = viewModel::loadHomeData) {
+                        Text(
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
                 }
             }

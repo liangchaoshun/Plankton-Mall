@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +39,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.fuyouwentian.planktonmall.R
 
 @Composable
@@ -67,9 +65,8 @@ fun Searchbar(
             .height(height) // 总高度
             .background(color = backgroundColor, shape = backgroundShape)
             .border(width = borderWidth, color = borderColor, shape = borderShape),
-        textStyle = LocalTextStyle.current.copy(
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
             color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 14.sp
         ),
         singleLine = true,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -145,11 +142,11 @@ fun Searchbar(
                         contentColor = Color.White
                     ),
                     // 移除默认 padding
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                    contentPadding = PaddingValues(0.dp)
                 ) {
                     Text(
                         text = "搜索",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         maxLines = 1
                     )
                 }

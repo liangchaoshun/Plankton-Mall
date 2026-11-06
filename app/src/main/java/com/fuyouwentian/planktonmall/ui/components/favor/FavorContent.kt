@@ -122,30 +122,25 @@ fun FavorContent(
 
             !uiState.error.isNullOrBlank() -> {
                 // 加载失败，显示错误提示和重试按钮
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_small)),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
+                    Text(
+                        text = uiState.error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                    TextButton(onClick = viewModel::loadFavorites) {
                         Text(
-                            text = "${uiState.error}",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
                         )
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = viewModel::loadFavorites) {
-                            Text(
-                                text = "重试",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
                     }
                 }
             }
@@ -246,7 +241,7 @@ fun LazyColumnItem(
     onClickProductPicture: (String) -> Unit = {},
 ) {
     val density = LocalDensity.current
-    val actionWidth = 60.dp // 按钮区域的总宽度（例如一个按钮，宽 60dp）
+    val actionWidth = 50.dp // 按钮区域的总宽度（例如一个按钮，宽 50dp）
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
@@ -302,7 +297,7 @@ fun LazyColumnItem(
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(60.dp)
+                    .width(50.dp)
                     .background(Color(0xFFF40E21))
                     .clickable(enabled = isRevealed) { cancelFavorite(favor.goodsId) },
                 contentAlignment = Alignment.Center
@@ -358,9 +353,9 @@ fun LazyColumnItem(
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable(
-                                enabled = !isInvalid && !isCurrentlyRevealed,
-                                onClick = { onClickProductPicture(favor.goodsId) }),
+                            .clickable(enabled = !isInvalid && !isCurrentlyRevealed) {
+                                onClickProductPicture(favor.goodsId)
+                            },
                         contentScale = ContentScale.Crop,
                     )
                     if (isInvalid) {

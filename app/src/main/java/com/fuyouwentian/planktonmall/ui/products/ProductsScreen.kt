@@ -42,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,15 +63,14 @@ fun ProductsScreen(
     viewModel: ProductsViewModel = hiltViewModel()
 ) {
     val isObjectIdStr = Constants.OBJECT_ID_REGEX.matches(q)
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by rememberSaveable { mutableStateOf(if (!isObjectIdStr) q else "") }
 
     // LaunchedEffect 作用：在特定的 Key 变化时，才执行一次副作用（比如网络请求）
     LaunchedEffect(q) {
-        // TODO 能否从路由判断是从哪个页面跳转而来？请求的 api 不对~，以系列id 查询其下的商品，有专用 api，
+        // 1. ⚠ 能否从路由判断是从哪个页面跳转而来？请求的 api 不对~，以系列id 查询其下的商品，有专用 api，
         //  不过和“搜索框”统一使用 goods/list 也好，性能差了一些而已！
-        // 页面初始化，加载列表数据
+        // 2. 页面初始化，加载列表数据
         viewModel.fetchProductsData(PaginationWithQuery(q = searchQuery.ifBlank { q.trim() }))
     }
 
@@ -170,25 +168,25 @@ fun ProductsScreenContent(
 
         !uiState.error.isNullOrBlank() -> {
             // 加载失败，显示错误提示和重试按钮
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(dimensionResource(R.dimen.padding_small)),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = uiState.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                TextButton(onClick = onClickRetry) {
                     Text(
-                        text = uiState.error,
-                        color = MaterialTheme.colorScheme.error,
+                        text = "重试",
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = onClickRetry) {
-                        Text(
-                            text = "重试",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
                 }
             }
         }

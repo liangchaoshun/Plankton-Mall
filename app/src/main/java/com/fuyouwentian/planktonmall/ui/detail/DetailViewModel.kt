@@ -173,7 +173,11 @@ class DetailViewModel @Inject constructor(
             _uiState.update { it.copy(committingOrder = true, isMakeOrderDone = false) }
             viewModelScope.launch {
                 try {
-                    val userId = authManager.getCurrentUserId() ?: return@launch
+                    val userId = authManager.getCurrentUserId()
+                    if (userId == null) {
+                        _uiState.update { it.copy(committingOrder = false) }
+                        return@launch
+                    }
                     val receiverInfo = userRepo.getCurrentReceiverInfo()
                     val params = OrderRecord(
                         id = MongoIdGenerator.generate(),
@@ -195,8 +199,9 @@ class DetailViewModel @Inject constructor(
                         deleted = 0,
                         syncState = SyncRecordState.PENDING_INSERT
                     )
-                    orderRepo.makeOrder(listOf(params))
-                    _uiState.update { it.copy(isMakeOrderDone = true) }
+                    if (orderRepo.makeOrder(listOf(params))) {
+                        _uiState.update { it.copy(isMakeOrderDone = true) }
+                    }
                 } catch (e: Exception) {
                     handleError(e)
                 } finally {

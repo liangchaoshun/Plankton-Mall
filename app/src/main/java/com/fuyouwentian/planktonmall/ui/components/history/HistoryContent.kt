@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.components.history
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -67,30 +66,25 @@ fun HistoryContent(
 
         !uiState.error.isNullOrBlank() -> {
             // 加载失败，显示错误提示和重试按钮
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(dimensionResource(R.dimen.padding_small)),
-                contentAlignment = Alignment.Center
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+                Text(
+                    text = uiState.error ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                TextButton(onClick = viewModel::loadBrowsingHistory) {
                     Text(
-                        text = "${uiState.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "重试",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall,
                     )
-                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                    TextButton(onClick = viewModel::loadBrowsingHistory) {
-                        Text(
-                            text = "重试",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
                 }
             }
         }
@@ -199,7 +193,7 @@ fun RecordCard(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null // 去除波纹
-                        ) { Log.d("HistoryContentCard", "click cover") },
+                        ) {},
                     contentAlignment = Alignment.Center
                 ) {
                     Box(

@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -42,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.di.GlobalEventBusEntryPoint
 import com.fuyouwentian.planktonmall.ui.cart.CartScreen
@@ -118,7 +120,7 @@ fun AppNavHost(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp), // 固定高度
+                            .height(dimensionResource(R.dimen.bottom_navi_height)), // 固定高度
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -149,7 +151,10 @@ fun AppNavHost(
                                 // 选中的背景
                                 Box(
                                     modifier = Modifier
-                                        .size(width = 60.dp, height = 50.dp)
+                                        .size(
+                                            width = 60.dp,
+                                            height = dimensionResource(R.dimen.bottom_navi_height)
+                                        )
                                         .background(
                                             if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
                                                 0.3f
@@ -220,7 +225,6 @@ fun AppNavHost(
             }
             composable(route = Routes.CATEGORY) {
                 CategoryScreen(
-                    modifier = Modifier.fillMaxSize(),
                     onSeriesClick = { seriesId -> navController.navigate2Normal("products/$seriesId") }
                 )
             }

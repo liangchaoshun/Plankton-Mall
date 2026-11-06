@@ -24,7 +24,7 @@ class CartRepositoryImpl @Inject constructor(
     // Room 框架在底层实现时，对于返回 Flow<List<T>> 的查询，
     // 如果数据库表中没有任何数据，它发射（emit）的是一个空的列表 emptyList()，而不是 null
     override fun getRecordsFlow(userId: String?): Flow<List<CartProduct>> {
-        return cartDao.getItemsFlow(userId).map { entities ->
+        return cartDao.getRecordsFlow(userId).map { entities ->
             // 如果为空，entities 就是 emptyList，直接 map 返回空列表即可
             entities.map { it.toDomain() }
         }
@@ -35,12 +35,12 @@ class CartRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncLocalUpdate2Server(userId: String?) {
-        val pendingItems = cartDao.getPendingUpdateItems(userId).map { it.toDomain() }
+        val pendingItems = cartDao.getPendingUpdateRecords(userId).map { it.toDomain() }
         if (pendingItems.isNotEmpty()) {
             safeApiCall { api.cartUpdate(pendingItems) }?.let { bool ->
                 if (bool) {
                     // 成功后，修改同步状态为“已同步”
-                    cartDao.markItems2Synced(pendingItems.map { it.id })
+                    cartDao.markRecords2Synced(pendingItems.map { it.id })
                 }
             }
         }
@@ -56,7 +56,7 @@ class CartRepositoryImpl @Inject constructor(
         )
 
         // 先处理本地数据
-        val existingEntity = cartDao.getItemByProductId(userId = userId, productId = params.id)
+        val existingEntity = cartDao.getRecordByProductId(userId = userId, productId = params.id)
         if (existingEntity != null) {
             // 存在，更新本地数据
             val updatedEntity = existingEntity.copy(
@@ -96,7 +96,7 @@ class CartRepositoryImpl @Inject constructor(
                 response = true
             }
         } catch (e: Exception) {
-            cartDao.deleteItemsByIds(listOf(mongoIdStr)) // 同步到服务器失败，还原
+            cartDao.deleteRecordsByIds(listOf(mongoIdStr)) // 同步到服务器失败，还原
             throw e
         }
         return response
@@ -104,17 +104,16 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun delete(ids: List<String>): Boolean {
         // 先删除本地数据
-        val legacyItems = cartDao.getItemsByIds(ids)
-        cartDao.deleteItemsByIds(ids)
+        val legacyItems = cartDao.getRecordsByIds(ids)
+        cartDao.deleteRecordsByIds(ids)
         // 再同步到服务器
-        var response = false
         try {
-            safeApiCall { api.cartDelete(ids) }?.let { response = it }
+            safeApiCall { api.cartDelete(ids) }?.let { return it }
         } catch (e: Exception) {
             cartDao.upsertMulti(legacyItems) // 同步到服务器失败，还原
             throw e
         }
-        return response
+        return false
     }
 
     override suspend fun updateQuantity(id: String, quantity: Int) {

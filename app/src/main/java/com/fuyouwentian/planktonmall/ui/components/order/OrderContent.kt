@@ -92,32 +92,27 @@ fun OrderContent(
                 }
             }
 
-            !uiState.error.isNullOrBlank() && orderRecords.isEmpty() -> {
+            !uiState.error.isNullOrBlank() -> {
                 // 加载失败，显示错误提示和重试按钮
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_small)),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
+                    Text(
+                        text = uiState.error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                    TextButton(onClick = viewModel::loadData) {
                         Text(
-                            text = "${uiState.error}",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
                         )
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = viewModel::loadData) {
-                            Text(
-                                text = "重试",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
                     }
                 }
             }
@@ -222,8 +217,7 @@ fun LazyColumnItem(
                 modifier = Modifier
                     .size(width = 100.dp, height = 110.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable(
-                        onClick = { onClickProductPicture(order.goodsId) }),
+                    .clickable { onClickProductPicture(order.goodsId) },
                 contentScale = ContentScale.Crop,
             )
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
@@ -247,7 +241,7 @@ fun LazyColumnItem(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+                    Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
                     Column(
                         modifier = Modifier.width(100.dp),
                         horizontalAlignment = Alignment.End
@@ -294,7 +288,7 @@ fun LazyColumnItem(
                                         color = Color(0xFF333333),
                                         style = MaterialTheme.typography.bodySmall,
                                     )
-                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Spacer(modifier = Modifier.width(2.dp))
                                     Text(
                                         text = "￥${order.actualPay}",
                                         color = Color(0xFF333333),

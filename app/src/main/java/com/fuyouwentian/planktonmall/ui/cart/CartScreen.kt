@@ -1,7 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.cart
 
-import android.graphics.Paint
-import android.graphics.Typeface
 import android.widget.Toast
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
@@ -14,9 +12,11 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -63,13 +63,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -154,28 +152,27 @@ fun CartScreen(
                 }
             }
 
-            !uiState.error.isNullOrBlank() && cartRecords.isEmpty() -> {
+            !uiState.error.isNullOrBlank() -> {
                 // 加载失败，显示错误提示和重试按钮
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_small)),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(text = "${uiState.error}")
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = viewModel::fetchCartData) {
-                            Text(
-                                text = "重试",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
+                    Text(
+                        text = uiState.error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                    TextButton(onClick = viewModel::fetchCartData) {
+                        Text(
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
                 }
             }
@@ -190,18 +187,19 @@ fun CartScreen(
                         Text(
                             text = "请先登录，以获取数据",
                             color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodySmall
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                         Button(
-                            onClick = { onNavigate2Login() },
-                            modifier = Modifier.width(150.dp),
+                            onClick = onNavigate2Login,
+                            modifier = Modifier.size(width = 90.dp, height = 35.dp),
                             shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
+                            contentPadding = PaddingValues(0.dp)
                         ) {
                             Text(
                                 text = "去登录",
                                 color = Color.White,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
@@ -323,10 +321,7 @@ fun NumberStepper(
             tint = if (value > 1) Color(0xFF333333) else Color(0xFFCCCCCC), // 手动变灰
             modifier = Modifier
                 .size(dimensionResource(R.dimen.padding_medium))
-                .clickable(
-                    enabled = isValid && value > 1,
-                    onClick = { onChangeQuantity(value - 1) }
-                )
+                .clickable(enabled = isValid && value > 1) { onChangeQuantity(value - 1) }
         )
 
         // 数字显示区
@@ -386,10 +381,7 @@ fun NumberStepper(
             tint = if (value < 999) Color(0xFF333333) else Color(0xFFCCCCCC), // 手动变灰
             modifier = Modifier
                 .size(dimensionResource(R.dimen.padding_medium))
-                .clickable(
-                    enabled = isValid && value < 1000,
-                    onClick = { onChangeQuantity(value + 1) }
-                )
+                .clickable(enabled = value < 1000) { onChangeQuantity(value + 1) }
         )
     }
 }
@@ -409,7 +401,7 @@ fun SwipeableCartItem(
     isSyncFiled: Boolean = false,
 ) {
     val density = LocalDensity.current
-    val actionWidth = 120.dp // 按钮区域的总宽度（例如两个按钮，每个 60dp）
+    val actionWidth = 100.dp // 按钮区域的总宽度（例如两个按钮，每个 50dp）
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
@@ -463,7 +455,7 @@ fun SwipeableCartItem(
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(60.dp)
+                    .width(50.dp)
                     .background(Color(0xFFFFB800))
                     .clickable(enabled = isRevealed) { onCollect(product) },
                 contentAlignment = Alignment.Center
@@ -481,7 +473,7 @@ fun SwipeableCartItem(
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(60.dp)
+                    .width(50.dp)
                     .background(Color(0xFFF40E21))
                     .clickable(enabled = isRevealed) { onDelete(listOf(product.id)) },
                 contentAlignment = Alignment.Center
@@ -520,145 +512,146 @@ fun SwipeableCartItem(
                 )
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
                 .background(Color.White) // 确保放 .offset 之后，否则背景覆盖背景层
-                // TODO 无效或下架的商品蒙版和水印
-                .then(
-                    if (!product.isValid || product.goodsOnSale == 0) {
-                        Modifier.drawWithContent {
-                            // 先绘制原本的内容
-                            drawContent()
-                            // 绘制半透明蒙版
-                            drawRect(color = Color.White.copy(alpha = 0.6f))
-                            // 绘制水印文字
-                            drawIntoCanvas { canvas ->
-                                val paint = Paint().apply {
-                                    color = android.graphics.Color.GRAY
-                                    textSize = 40.dp.toPx()
-                                    isAntiAlias = true
-                                    alpha = 150 // 半透明
-                                    textAlign =
-                                        Paint.Align.CENTER
-                                    typeface =
-                                        Typeface.DEFAULT_BOLD
-                                }
-                                val centerX = size.width / 2
-                                val centerY = size.height / 2
-                                // 旋转画布绘制倾斜水印
-                                canvas.nativeCanvas.save()
-                                canvas.nativeCanvas.rotate(
-                                    -30f,
-                                    centerX,
-                                    centerY
-                                )
-                                canvas.nativeCanvas.drawText(
-                                    if (!product.isValid) "无效" else "已下架",
-                                    centerX,
-                                    centerY,
-                                    paint
-                                )
-                                canvas.nativeCanvas.restore()
-                            }
-                        }
-                    } else Modifier
-                ),
         ) {
-            Column(
-                modifier = Modifier.fillMaxHeight(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Checkbox(
-                    checked = product.isValid && product.checked,
-                    enabled = product.isValid && !isCurrentlyRevealed && product.goodsStock > 0,
-                    onCheckedChange = {
-                        onToggleSelect(
-                            product.id,
-                            it
-                        )
-                    },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = Color.Gray,
-                        checkmarkColor = Color.White
-                    )
-                )
-                // 若该商品（checked、quantity）同步失败，则显示一个刷新的 icon
-                // 点击该 icon，会同步所有的待同步项！
-                if (isSyncFiled) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    IconButton(onClick = onSyncClick) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "同步",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(dimensionResource(R.dimen.padding_medium))
-                        )
-                    }
-                }
-            }
-            AsyncImage(
-                model = product.goodsIcon,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(width = 100.dp, height = 120.dp) // 该大小可撑开父级（Row）高度：120dp + 上下 padding
-                    .padding(
-                        horizontal = 0.dp,
-                        vertical = dimensionResource(R.dimen.padding_small)
-                    )
-                    .dropShadow(
-                        shape = RectangleShape, // RoundedCornerShape 已验证不可用
-                        shadow = Shadow(
-                            radius = 8.dp,
-                            offset = DpOffset(x = 0.dp, y = 3.dp),
-                            color = Color.Black.copy(alpha = 0.3f)
-                        )
-                    )
-                    .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
-                    .clickable(enabled = product.isValid && !isCurrentlyRevealed) {
-                        onProductClick(product.goodsId)
-                    },
-                contentScale = ContentScale.Crop
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .heightIn(min = 120.dp) // 设置最小高度，否则撑不开高度
-                    .padding(dimensionResource(R.dimen.padding_small))
-            ) {
-                Text(
-                    text = product.goodsNameZh,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.weight(1f))
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "¥${product.goodsPrice}",
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    if (product.goodsStock < 1) {
-                        Text(
-                            text = "售罄",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    } else {
-                        NumberStepper(
-                            value = product.quantity,
-                            isValid = product.isValid && !isCurrentlyRevealed,
-                            onChangeQuantity = { value ->
-                                onRevealedChange(false)
-                                onQuantityChange(
+                    Column(
+                        modifier = Modifier.fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Checkbox(
+                            checked = product.isValid && product.checked,
+                            enabled = product.isValid && !isCurrentlyRevealed && product.goodsStock > 0,
+                            onCheckedChange = {
+                                onToggleSelect(
                                     product.id,
-                                    value
+                                    it
+                                )
+                            },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = Color.Gray,
+                                checkmarkColor = Color.White
+                            )
+                        )
+                        // 若该商品（checked、quantity）同步失败，则显示一个刷新的 icon
+                        // 点击该 icon，会同步所有的待同步项！
+                        if (isSyncFiled) {
+                            Spacer(modifier = Modifier.weight(1f))
+                            IconButton(onClick = onSyncClick) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "同步",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(dimensionResource(R.dimen.padding_medium))
                                 )
                             }
+                        }
+                    }
+                    AsyncImage(
+                        model = product.goodsIcon,
+                        contentDescription = null,
+                        modifier = Modifier
+                            // 该大小可撑开父级（Row）高度：110dp + 上下 padding
+                            .size(
+                                width = 100.dp,
+                                height = 110.dp
+                            )
+                            .padding(
+                                horizontal = 0.dp,
+                                vertical = dimensionResource(R.dimen.padding_small)
+                            )
+                            .dropShadow(
+                                shape = RectangleShape, // RoundedCornerShape 已验证不可用
+                                shadow = Shadow(
+                                    radius = 8.dp,
+                                    offset = DpOffset(x = 0.dp, y = 3.dp),
+                                    color = Color.Black.copy(alpha = 0.3f)
+                                )
+                            )
+                            .clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small)))
+                            .clickable(enabled = product.isValid && !isCurrentlyRevealed) {
+                                onProductClick(product.goodsId)
+                            },
+                        contentScale = ContentScale.Crop
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .heightIn(min = 110.dp) // 设置最小高度，否则撑不开高度
+                            .padding(dimensionResource(R.dimen.padding_small))
+                    ) {
+                        Text(
+                            text = product.goodsNameZh,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "¥${product.goodsPrice}",
+                                color = Color.Red,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (product.goodsStock < 1) {
+                                Text(
+                                    text = "售罄",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            } else {
+                                NumberStepper(
+                                    value = product.quantity,
+                                    isValid = product.isValid && !isCurrentlyRevealed,
+                                    onChangeQuantity = { value ->
+                                        onRevealedChange(false)
+                                        onQuantityChange(
+                                            product.id,
+                                            value
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 无效或下架的商品蒙版和水印
+                if (!product.isValid || product.goodsOnSale == 0) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.White.copy(alpha = 0.6f)) // 半透明底色
+                            // .pointerInput(Unit) { detectTapGestures(onTap = {}) }
+                            // 为啥不直接设置 enabled = false ？ >> https://chat.deepseek.com/share/1qs26af7zg4rtnx899
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null // 去除波纹
+                            ) {},
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // 水印文字
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (!product.isValid) "无效" else "已下架",
+                                color = Color.Gray.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.rotate(-30f) // 文字旋转
+                            )
+                        }
                     }
                 }
             }
@@ -697,7 +690,7 @@ fun SettleColumn(
             modifier = Modifier
                 .padding(
                     start = 0.dp,
-                    end = dimensionResource(R.dimen.padding_medium),
+                    end = dimensionResource(R.dimen.padding_small),
                     top = 2.dp,
                     bottom = 2.dp
                 ),
@@ -722,7 +715,7 @@ fun SettleColumn(
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.Red
             )
-            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
             Button(
                 modifier = Modifier.width(100.dp),
                 enabled = !committing,
@@ -738,21 +731,22 @@ fun SettleColumn(
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF40E21)
+                    containerColor = Color(0xFFF40E21),
+                    contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 if (committing) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
-                        color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
                     Text(
                         text = "去结算",
-                        fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }

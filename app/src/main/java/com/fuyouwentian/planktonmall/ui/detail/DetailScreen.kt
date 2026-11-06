@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.detail
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -110,7 +108,6 @@ fun DetailContent(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-
         when {
 
             uiState.loading -> {
@@ -124,38 +121,37 @@ fun DetailContent(
                 }
             }
 
-            !uiState.error.isNullOrBlank() && uiState.product?.descUrl?.isEmpty() == true -> {
-                Box(
+            !uiState.error.isNullOrBlank() -> {
+                // 加载失败，显示错误提示和重试按钮
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(dimensionResource(R.dimen.padding_small)),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
+                    Text(
+                        text = uiState.error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
+                    TextButton(onClick = { viewModel.fetchProductDetail(id) }) {
                         Text(
-                            text = uiState.error!!,
-                            color = MaterialTheme.colorScheme.error,
+                            text = "重试",
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodySmall,
                         )
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        TextButton(onClick = { viewModel.fetchProductDetail(id) }) {
-                            Text(
-                                text = "重试",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
                     }
                 }
             }
 
             uiState.product?.descUrl?.isNotEmpty() == true -> {
+                val barBaseHeight = 51.dp // 底部栏的基础高度（8 + 35 + 8 = 51dp）
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    // 底部留出空间，防止内容被底部悬浮栏遮挡
-                    contentPadding = PaddingValues(bottom = 42.dp)
+                    // 防止滚动到最底部时，内容被底部悬浮栏遮挡
+                    contentPadding = PaddingValues(bottom = barBaseHeight)
                 ) {
                     // 轮播图
                     item { CarouselSection(imageUrls = uiState.product?.bannerUrl ?: emptyList()) }
@@ -177,7 +173,9 @@ fun DetailContent(
                 BottomActionBar(
                     product = uiState.product,
                     committing = uiState.committingOrder,
-                    modifier = Modifier.align(Alignment.BottomCenter),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomStart),
                     onFavorIconClick = {
                         uiState.product?.let {
                             viewModel.toggleFavorites()
@@ -202,7 +200,7 @@ fun DetailContent(
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null // 去除波纹
-                                ) { Log.d("Detail", "click cover") },
+                                ) {},
                             contentAlignment = Alignment.Center
                         ) {
                             Box(
@@ -363,14 +361,12 @@ fun BottomActionBar(
     makeOrder: () -> Unit = {}
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         color = Color(0xFFF0F8FF),
-        shadowElevation = 8.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -416,8 +412,8 @@ fun BottomActionBar(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
-                    .size(width = 90.dp, height = 38.dp),
-                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                    .size(width = 90.dp, height = 35.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
                     text = "加入购物车",
@@ -425,14 +421,14 @@ fun BottomActionBar(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
             Button(
                 enabled = product?.isInvalid == false && product.stock != 0,
                 onClick = makeOrder,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.size(width = 90.dp, height = 38.dp),
-                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                modifier = Modifier.size(width = 90.dp, height = 35.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 if (committing) {
                     CircularProgressIndicator(

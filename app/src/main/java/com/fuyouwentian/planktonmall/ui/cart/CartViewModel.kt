@@ -220,7 +220,6 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    // TODO 结算成功后，从购物车中删除
     fun makeOrder() {
         val records =
             cartRecords.value.filter { it.isValid && it.goodsStock > 0 && it.goodsOnSale == 1 && it.checked }
@@ -228,39 +227,46 @@ class CartViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = authManager.getCurrentUserId()
             if (userId == null) {
-                _uiState.update { it.copy(committingOrder = false, isMakeOrderDone = false) }
+                _uiState.update { it.copy(committingOrder = false) }
                 return@launch
             }
             try {
                 val receiverInfo = userRepo.getCurrentReceiverInfo()
-                val params = records.map { record ->
+                val ids = mutableListOf<String>()
+                val params = mutableListOf<OrderRecord>()
+                records.forEach { record ->
                     val price = record.goodsPrice.toBigDecimalOrNull() ?: BigDecimal.ZERO
                     val actualPay = (price * record.quantity.toBigDecimal())
                         .setScale(2, RoundingMode.HALF_UP)
                         .toPlainString()
-                    OrderRecord(
-                        id = MongoIdGenerator.generate(),
-                        userId = userId,
-                        goodsId = record.goodsId,
-                        goodsNameZh = record.goodsNameZh,
-                        goodsNameEn = record.goodsNameEn,
-                        goodsIcon = record.goodsIcon,
-                        goodsPrice = record.goodsPrice,
-                        quantity = record.quantity,
-                        actualPay = actualPay,
-                        receiverName = receiverInfo.name,
-                        receiverPhone = receiverInfo.phone,
-                        receiverAddress = receiverInfo.address,
-                        orderStatus = 1, // 1：待付款，2：待发货，3：待收货，4：已完成，5：已取消，6：已关闭
-                        paymentStatus = 0, // 0：未支付，1：已支付，2：部分退款，3：全额退款
-                        afterSalesStatus = 0, // 0：无售后，1：退款/退货中，2：售后完成
-                        paymentTime = "",
-                        deleted = 0,
-                        syncState = SyncRecordState.PENDING_INSERT
+                    ids.add(record.id)
+                    params.add(
+                        OrderRecord(
+                            id = MongoIdGenerator.generate(), // 订单编号，不是购物车编号
+                            userId = userId,
+                            goodsId = record.goodsId,
+                            goodsNameZh = record.goodsNameZh,
+                            goodsNameEn = record.goodsNameEn,
+                            goodsIcon = record.goodsIcon,
+                            goodsPrice = record.goodsPrice,
+                            quantity = record.quantity,
+                            actualPay = actualPay,
+                            receiverName = receiverInfo.name,
+                            receiverPhone = receiverInfo.phone,
+                            receiverAddress = receiverInfo.address,
+                            orderStatus = 1, // 1：待付款，2：待发货，3：待收货，4：已完成，5：已取消，6：已关闭
+                            paymentStatus = 0, // 0：未支付，1：已支付，2：部分退款，3：全额退款
+                            afterSalesStatus = 0, // 0：无售后，1：退款/退货中，2：售后完成
+                            paymentTime = "",
+                            deleted = 0,
+                            syncState = SyncRecordState.PENDING_INSERT
+                        )
                     )
                 }
-                orderRepo.makeOrder(params)
-                _uiState.update { it.copy(isMakeOrderDone = true) }
+                if (orderRepo.makeOrder(params)) {
+                    cartRepo.delete(ids)
+                    _uiState.update { it.copy(isMakeOrderDone = true) }
+                }
             } catch (e: Exception) {
                 handleError(e)
             } finally {
