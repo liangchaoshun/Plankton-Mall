@@ -2,6 +2,8 @@ package com.fuyouwentian.planktonmall.ui.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fuyouwentian.planktonmall.common.Constants.ACCOUNT_REGEX
+import com.fuyouwentian.planktonmall.common.Constants.PASSWORD_REGEX
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
 import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
 import com.fuyouwentian.planktonmall.core.event.SystemEvent
@@ -22,19 +24,36 @@ class RegisterViewModel @Inject constructor(
     private val eventBus: GlobalEventBus,
     private val errorHandler: ErrorHandler,
 ) : ViewModel() {
-    // UI 状态
     private val _uiState = MutableStateFlow(RegisterUiState(committing = false))
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     fun onAccountChange(acc: String) {
-        _uiState.update { it.copy(account = acc) }
+        // 如果符合正则（或者为空，允许用户删除）
+        _uiState.update {
+            it.copy(
+                account = acc,
+                isAccountFmtError = acc.isNotEmpty() && !ACCOUNT_REGEX.matches(acc)
+            )
+        }
     }
 
     fun onPasswordChange(password: String) {
-        _uiState.update { it.copy(password = password) }
+        _uiState.update {
+            it.copy(
+                password = password,
+                isPasswordFmtError = password.isNotEmpty() && !PASSWORD_REGEX.matches(
+                    password
+                )
+            )
+        }
     }
 
     fun register() {
+        // 格式校验
+        if (_uiState.value.isAccountFmtError || _uiState.value.isPasswordFmtError) {
+            viewModelScope.launch { eventBus.postEvent(SystemEvent.ShowToast("未通过格式校验")) }
+            return
+        }
         // 非空校验
         if (_uiState.value.account.isBlank()) {
             viewModelScope.launch { eventBus.postEvent(SystemEvent.ShowToast("请输入账号")) }
@@ -44,6 +63,7 @@ class RegisterViewModel @Inject constructor(
             viewModelScope.launch { eventBus.postEvent(SystemEvent.ShowToast("请输入密码")) }
             return
         }
+
         viewModelScope.launch {
             _uiState.update { it.copy(committing = true, error = null) }
             try {
@@ -52,11 +72,15 @@ class RegisterViewModel @Inject constructor(
                     password = _uiState.value.password,
                 )
                 val isOk = userRepo.register(param)
-                if (isOk == true) eventBus.postEvent(SystemEvent.RegisterSuccess)
+                if (isOk == true) {
+                    eventBus.postEvent(SystemEvent.ShowToast("注册成功，即将跳转至登录页"))
+                    eventBus.postEvent(SystemEvent.RegisterSuccess)
+                }
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(committing = false) }
                 handleError(e)
+            } finally {
+                _uiState.update { it.copy(committing = false) }
             }
         }
     }

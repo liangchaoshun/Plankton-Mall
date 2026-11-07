@@ -48,7 +48,6 @@ class CartViewModel @Inject constructor(
     private val errorHandler: ErrorHandler,
     private val authManager: AuthManager
 ) : ViewModel() {
-    // UI 状态
     private val _uiState = MutableStateFlow(CartUiState(loading = true))
     val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
 

@@ -20,7 +20,6 @@ class ProductsViewModel @Inject constructor(
     private val productRepo: ProductRepository,
     private val errorHandler: ErrorHandler,
 ) : ViewModel() {
-    // UI 状态
     private val _uiState = MutableStateFlow(ProductsUiState(loading = true))
     val uiState: StateFlow<ProductsUiState> = _uiState.asStateFlow()
 

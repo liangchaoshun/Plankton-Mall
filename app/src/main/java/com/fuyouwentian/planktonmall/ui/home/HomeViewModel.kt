@@ -32,7 +32,6 @@ class HomeViewModel @Inject constructor(
     private val eventBus: GlobalEventBus,
     private val errorHandler: ErrorHandler
 ) : ViewModel() {
-    // UI 状态
     private val _uiState = MutableStateFlow(HomeUiState(loading = true))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 

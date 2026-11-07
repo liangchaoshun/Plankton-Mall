@@ -119,7 +119,6 @@ fun ProfileScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
                         Button(
                             onClick = onNavigate2Login,
                             modifier = Modifier.size(width = 90.dp, height = 35.dp),

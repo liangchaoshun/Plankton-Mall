@@ -15,12 +15,17 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -94,11 +99,14 @@ fun AppNavHost(
                      * 4. 排队机制：如果连续发了 3 个 Toast 事件，Snackbar 会依次显示，不会像系统 Toast 那样重叠在一起看不清。
                      */
                     // Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                    snackbarHostState.showSnackbar(event.message)
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Short
+                    )
                 }
 
                 is SystemEvent.LoginSuccess -> navController.navigate2HomeClearAll()
-                is SystemEvent.RegisterSuccess -> navController.navigate2HomeClearAll()
+                is SystemEvent.RegisterSuccess -> navController.navigate2Login()
                 is SystemEvent.Loggedout -> navController.navigate2HomeClearAll() // 主动退出
                 is SystemEvent.ForceLogout -> navController.navigate2Login() // 强制踢出到登录页
                 else -> {}
@@ -106,187 +114,217 @@ fun AppNavHost(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (showBottomBar) {
-                // 自定义底部导航栏布局
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface) // 底部背景色
-                        .navigationBarsPadding() // 适配真机三大金刚键/手势条
-                ) {
-                    Row(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            bottomBar = {
+                if (showBottomBar) {
+                    // 自定义底部导航栏布局
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(dimensionResource(R.dimen.bottom_navi_height)), // 固定高度
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
+                            .background(MaterialTheme.colorScheme.surface) // 底部背景色
+                            .navigationBarsPadding() // 适配真机三大金刚键/手势条
                     ) {
-                        NAVI_DEST.forEach { dest ->
-                            val route = dest.route
-                            val selected = currentRoute == route
-                            val iconVector =
-                                if (selected) dest.selectedIcon else dest.unselectedIcon
-                            val destColor =
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(dimensionResource(R.dimen.bottom_navi_height)), // 固定高度
+                            horizontalArrangement = Arrangement.SpaceAround,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            NAVI_DEST.forEach { dest ->
+                                val route = dest.route
+                                val selected = currentRoute == route
+                                val iconVector =
+                                    if (selected) dest.selectedIcon else dest.unselectedIcon
+                                val destColor =
+                                    if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
 
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null // 去掉水波纹
-                                    ) {
-                                        if (currentRoute != route) {
-                                            navController.navigate2Tab(route)
-                                        } else {
-                                            // 可实现滚动到当前页面最顶端
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // 选中的背景
                                 Box(
                                     modifier = Modifier
-                                        .size(
-                                            width = 60.dp,
-                                            height = dimensionResource(R.dimen.bottom_navi_height)
-                                        )
-                                        .background(
-                                            if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
-                                                0.3f
-                                            )
-                                            else Color.Transparent
-                                        )
-                                )
-
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null // 去掉水波纹
+                                        ) {
+                                            if (currentRoute != route) {
+                                                navController.navigate2Tab(route)
+                                            } else {
+                                                // 可实现滚动到当前页面最顶端
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = iconVector,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                            tint = destColor
-                                        )
-                                        // 购物车徽章
-                                        if (dest.route == Routes.CART && cartTotalQuantity > 0) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .offset(x = 12.dp, y = (-8).dp)
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(Color.Red),
-                                            ) {
-                                                Text(
-                                                    text = if (cartTotalQuantity > 99) "99+" else cartTotalQuantity.toString(),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Color.White,
-                                                    modifier = Modifier.padding(
-                                                        horizontal = 4.dp,
-                                                        vertical = 0.dp
-                                                    )
+                                    // 选中的背景
+                                    Box(
+                                        modifier = Modifier
+                                            .size(
+                                                width = 60.dp,
+                                                height = dimensionResource(R.dimen.bottom_navi_height)
+                                            )
+                                            .background(
+                                                if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
+                                                    0.3f
                                                 )
+                                                else Color.Transparent
+                                            )
+                                    )
+
+                                    Column(
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = iconVector,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                                tint = destColor
+                                            )
+                                            // 购物车徽章
+                                            if (dest.route == Routes.CART && cartTotalQuantity > 0) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .offset(x = 12.dp, y = (-8).dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(Color.Red),
+                                                ) {
+                                                    Text(
+                                                        text = if (cartTotalQuantity > 99) "99+" else cartTotalQuantity.toString(),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color.White,
+                                                        modifier = Modifier.padding(
+                                                            horizontal = 4.dp,
+                                                            vertical = 0.dp
+                                                        )
+                                                    )
+                                                }
                                             }
                                         }
+                                        Text(
+                                            text = stringResource(dest.iconTextId),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = destColor
+                                        )
                                     }
-                                    Text(
-                                        text = stringResource(dest.iconTextId),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = destColor
-                                    )
                                 }
                             }
                         }
                     }
                 }
             }
+        )
+        { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = Routes.HOME, // ⚠✨🔥
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                composable(route = Routes.HOME) {
+                    HomeScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
+                        onSearch = { qs ->
+                            if (qs.isNotBlank()) navController.navigate2Normal("products/$qs")
+                        }
+                    )
+                }
+                composable(route = Routes.CATEGORY) {
+                    CategoryScreen(
+                        onSeriesClick = { seriesId -> navController.navigate2Normal("products/$seriesId") }
+                    )
+                }
+                composable(route = Routes.CART) {
+                    CartScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
+                        afterClickSettleBtn = { navController.navigate2Tab(Routes.PROFILE) },
+                        onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
+                        onNavigate2Pickup = { navController.navigate2Tab(Routes.HOME) }
+                    )
+                }
+                composable(route = Routes.PROFILE) {
+                    ProfileScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
+                        onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
+                    )
+                }
+                composable(route = Routes.LOGIN) {
+                    LoginScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onNavigate2Register = { navController.navigate2Normal(Routes.REGISTER) },
+                        onNavigate2Home = {
+                            /**
+                             * 401 保存跳转登录前的路由，登录后重新跳转到保存的路由，存在隐患
+                             * 因保存的路由对应页面的获取数据接口，可能对新登录的账号无权限，又返回 401，陷入无限死循环
+                             * 所以此处跳转固定的路由
+                             */
+                            navController.navigate2HomeClearAll()
+                        }
+                    )
+                }
+                composable(route = Routes.REGISTER) {
+                    RegisterScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onNavigateToLogin = { navController.navigate2Normal(Routes.LOGIN) },
+                    )
+                }
+                composable(
+                    route = Routes.PRODUCTS,
+                    arguments = listOf(navArgument("q") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val q = backStackEntry.arguments?.getString("q") ?: ""
+                    ProductsScreen(
+                        q = q,
+                        modifier = Modifier.fillMaxSize(),
+                        onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+                composable(
+                    route = Routes.DETAIL,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id") ?: ""
+                    DetailScreen(
+                        id = id,
+                        onBackClick = { navController.popBackStack() },
+                        onCartIconClick = { navController.navigate2Tab(Routes.CART) },
+                        afterBuyNowClick = { navController.navigate2Tab(Routes.PROFILE) },
+                    )
+                }
+            }
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HOME, // ⚠✨🔥
+        SnackbarHost(
+            hostState = snackbarHostState,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            composable(route = Routes.HOME) {
-                HomeScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
-                    onSearch = { qs ->
-                        if (qs.isNotBlank()) navController.navigate2Normal("products/$qs")
-                    }
-                )
-            }
-            composable(route = Routes.CATEGORY) {
-                CategoryScreen(
-                    onSeriesClick = { seriesId -> navController.navigate2Normal("products/$seriesId") }
-                )
-            }
-            composable(route = Routes.CART) {
-                CartScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
-                    afterClickSettleBtn = { navController.navigate2Tab(Routes.PROFILE) },
-                    onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
-                    onNavigate2Pickup = { navController.navigate2Tab(Routes.HOME) }
-                )
-            }
-            composable(route = Routes.PROFILE) {
-                ProfileScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    onNavigate2Login = { navController.navigate2Normal(Routes.LOGIN) },
-                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
-                )
-            }
-            composable(route = Routes.LOGIN) {
-                LoginScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    onNavigate2Register = { navController.navigate2Normal(Routes.REGISTER) },
-                    onNavigate2Home = {
-                        /**
-                         * 401 保存跳转登录前的路由，登录后重新跳转到保存的路由，存在隐患
-                         * 因保存的路由对应页面的获取数据接口，可能对新登录的账号无权限，又返回 401，陷入无限死循环
-                         * 所以此处跳转固定的路由
-                         */
-                        navController.navigate2HomeClearAll()
-                    }
-                )
-            }
-            composable(route = Routes.REGISTER) {
-                RegisterScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    onNavigateToLogin = { navController.navigate2Normal(Routes.LOGIN) },
-                )
-            }
-            composable(
-                route = Routes.PRODUCTS,
-                arguments = listOf(navArgument("q") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val q = backStackEntry.arguments?.getString("q") ?: ""
-                ProductsScreen(
-                    q = q,
-                    modifier = Modifier.fillMaxSize(),
-                    onProductClick = { productId -> navController.navigate2Normal("detail/${productId}") },
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-            composable(
-                route = Routes.DETAIL,
-                arguments = listOf(navArgument("id") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("id") ?: ""
-                DetailScreen(
-                    id = id,
-                    onBackClick = { navController.popBackStack() },
-                    onCartIconClick = { navController.navigate2Tab(Routes.CART) },
-                    afterBuyNowClick = { navController.navigate2Tab(Routes.PROFILE) },
-                )
+                .align(Alignment.Center) // 若想要吸顶，则改成 TopCenter
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp) // 控制提示框离屏幕左右两边的距离
+        ) { data ->
+            Surface(
+                color = Color.Black.copy(0.8f),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.wrapContentWidth() // 自适应内容宽度
+            ) {
+                // 自定义文字
+                Row(
+                    modifier = Modifier
+                        .widthIn(min = 50.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = data.visuals.message,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
             }
         }
     }

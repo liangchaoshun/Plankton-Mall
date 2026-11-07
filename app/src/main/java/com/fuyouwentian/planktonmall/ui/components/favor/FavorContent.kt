@@ -245,7 +245,7 @@ fun LazyColumnItem(
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
-    val dragState = remember(favor.goodsId) {
+    val dragState = remember(favor.id) {
         AnchoredDraggableState(initialValue = DragValue.Settled)
     }
 

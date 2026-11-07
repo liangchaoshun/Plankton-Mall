@@ -18,7 +18,6 @@ class CategoryViewModel @Inject constructor(
     private val categoryRepo: CategoryRepository,
     private val errorHandler: ErrorHandler,
 ) : ViewModel() {
-    // UI 状态
     private val _uiState = MutableStateFlow(CategoryUiState(loading = true))
     val uiState: StateFlow<CategoryUiState> = _uiState.asStateFlow()
 

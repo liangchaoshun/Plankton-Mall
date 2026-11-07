@@ -44,7 +44,6 @@ class DetailViewModel @Inject constructor(
     private val errorHandler: ErrorHandler,
     private val authManager: AuthManager
 ) : ViewModel() {
-    // UI 状态
     private val _uiState = MutableStateFlow(
         DetailUiState(
             loading = true,

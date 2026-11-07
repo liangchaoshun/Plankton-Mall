@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -22,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +32,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
@@ -87,8 +90,6 @@ fun HomeScreen(
 
     Column(
         modifier = modifier
-            .background(Color(0xFFF5F6FA))
-            //.background(Color.Cyan)
             .padding(
                 start = dimensionResource(R.dimen.padding_small),
                 end = dimensionResource(R.dimen.padding_small),
@@ -136,6 +137,29 @@ fun HomeScreen(
             }
 
             else -> {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFFFF3E0),
+                    tonalElevation = 2.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "notice",
+                            tint = Color(0xFFFF6B00),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            text = "本应用所使用的商品信息，来源于网络，仅用于学习",
+                            color = Color(0xFFFF6B00),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
                 // 实验性 API
                 PullToRefreshBox(
                     isRefreshing = uiState.isRefreshing,
@@ -286,6 +310,7 @@ fun HomeContentGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+        modifier = Modifier.background(Color(0xFFF5F6FA))
     ) {
         // 轮播图
         if (uiState.carouselData.isNotEmpty()) {

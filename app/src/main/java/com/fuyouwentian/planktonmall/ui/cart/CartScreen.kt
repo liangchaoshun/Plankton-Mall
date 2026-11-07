@@ -12,7 +12,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -140,10 +139,7 @@ fun CartScreen(
         if (uiState.isMakeOrderDone) afterClickSettleBtn()
     }
 
-    Surface(
-        modifier = modifier,
-        color = if (cartRecords.isEmpty()) Color.White else Color(0xFFF5F6FA) // background
-    ) {
+    Surface(modifier = modifier) {
         // 根据状态展示不同 UI
         when {
             uiState.loading -> {
@@ -243,7 +239,11 @@ fun CartScreen(
             }
 
             else -> {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF5F6FA))
+                ) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -405,7 +405,7 @@ fun SwipeableCartItem(
     val actionWidthPx = with(density) { actionWidth.toPx() }
 
     // 创建 AnchoredDraggableState
-    val dragState = remember(product.goodsId) {
+    val dragState = remember(product.id) {
         AnchoredDraggableState(initialValue = DragValue.Settled)
     }
 
@@ -625,18 +625,18 @@ fun SwipeableCartItem(
                     }
                 }
 
-                // 无效或下架的商品蒙版和水印
+                // 蒙版和水印：无效或下架的商品
                 if (!product.isValid || product.goodsOnSale == 0) {
                     Box(
                         modifier = Modifier
                             .matchParentSize()
                             .background(Color.White.copy(alpha = 0.6f)) // 半透明底色
-                            // .pointerInput(Unit) { detectTapGestures(onTap = {}) }
-                            // 为啥不直接设置 enabled = false ？ >> https://chat.deepseek.com/share/1qs26af7zg4rtnx899
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null // 去除波纹
-                            ) {},
+                            .pointerInput(Unit) { detectTapGestures(onTap = {}) }
+                        /*// 为啥不直接设置 enabled = false ？ >> https://chat.deepseek.com/share/1qs26af7zg4rtnx899
+                        clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // 去除波纹
+                        ) {}*/,
                         contentAlignment = Alignment.Center
                     ) {
                         // 水印文字

@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,8 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -48,7 +49,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.fuyouwentian.planktonmall.R
 
@@ -98,7 +98,21 @@ fun RegisterScreen(
                 placeholder = "账号",
                 doRegister = viewModel::register
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 24.dp)
+                    .padding(top = 4.dp)
+            ) {
+                if (uiState.isAccountFmtError) {
+                    Text(
+                        text = "字母开头，只能包含字母和数字",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
             // 密码
             var passwordVisible by remember { mutableStateOf(false) }
             RegisterTextField(
@@ -110,13 +124,27 @@ fun RegisterScreen(
                 isPasswordVisible = passwordVisible,
                 onVisibilityChange = { passwordVisible = !passwordVisible }
             )
-            Spacer(modifier = Modifier.height(48.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 24.dp)
+                    .padding(top = 4.dp)
+            ) {
+                if (uiState.isPasswordFmtError) {
+                    Text(
+                        text = "字母开头，只能包含字母和数字和符号!@#$%^&*./-_",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(28.dp))
             // 注册按钮
             Button(
                 onClick = viewModel::register,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(45.dp),
                 shape = RoundedCornerShape(dimensionResource(R.dimen.padding_small)),
                 enabled = !uiState.committing
             ) {
@@ -145,8 +173,8 @@ fun RegisterScreen(
             ) {
                 Text(
                     text = "已有账号？",
-                    fontSize = 14.sp,
-                    color = Color(0xFF666666)
+                    color = Color(0xFF666666),
+                    style = MaterialTheme.typography.labelSmall
                 )
                 TextButton(
                     onClick = onNavigateToLogin,
@@ -155,8 +183,8 @@ fun RegisterScreen(
                 ) {
                     Text(
                         text = "去登录",
-                        fontSize = 14.sp,
                         color = Color(0xFF5E5CE6),
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -175,51 +203,54 @@ fun RegisterTextField(
     isPasswordVisible: Boolean = false,
     onVisibilityChange: (() -> Unit)? = null,
 ) {
-    TextField(
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp)),
-        placeholder = {
-            Text(text = placeholder, color = Color(0xFFAAAAAA))
-        },
-        colors = TextFieldDefaults.colors(
-            // 背景色（浅灰）
-            focusedContainerColor = Color(0xFFF5F7FA),
-            unfocusedContainerColor = Color(0xFFF5F7FA),
-            disabledContainerColor = Color(0xFFF5F7FA),
-            // 底部指示线
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            // 光标颜色
-            cursorColor = Color(0xFF5E5CE6),
-            // 文字颜色
-            focusedTextColor = Color(0xFF333333),
-            unfocusedTextColor = Color(0xFF333333),
-        ),
-        shape = RoundedCornerShape(8.dp),
+            .height(44.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFF5F7FA))
+            .padding(horizontal = 12.dp),
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFF333333)),
         singleLine = true,
+        cursorBrush = SolidColor(Color(0xFF5E5CE6)),
         visualTransformation = if (isPassword && !isPasswordVisible)
             PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(
             keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text,
             imeAction = ImeAction.Done
         ),
-        keyboardActions = KeyboardActions(
-            onDone = { doRegister() }
-        ),
-        trailingIcon = if (isPassword) {
-            {
-                IconButton(onClick = { onVisibilityChange?.invoke() }) {
-                    Icon(
-                        imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                        contentDescription = "Toggle Password Visibility",
-                        tint = Color(0xFF999999)
-                    )
+        keyboardActions = KeyboardActions(onDone = { doRegister() }),
+        decorationBox = { innerTextField ->
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            color = Color(0xFFAAAAAA),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                    innerTextField()
+                }
+                if (isPassword) {
+                    IconButton(
+                        modifier = Modifier.size(28.dp),
+                        onClick = { onVisibilityChange?.invoke() }
+                    ) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = "eye",
+                            tint = Color(0xFF999999),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
-        } else null,
+        }
     )
 }
