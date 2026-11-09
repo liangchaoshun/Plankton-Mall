@@ -1,6 +1,5 @@
 package com.fuyouwentian.planktonmall.ui.login
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fuyouwentian.planktonmall.common.Constants.ACCOUNT_REGEX
@@ -78,7 +77,7 @@ class LoginViewModel @Inject constructor(
                 )
                 val response = userRepo.login(param)
                 response?.let {
-                    eventBus.postEvent(SystemEvent.ShowToast("注册成功，即将跳转至主页"))
+                    eventBus.postEvent(SystemEvent.ShowToast("登录成功，即将跳转主页"))
                     eventBus.postEvent(SystemEvent.LoginSuccess)
                     _uiState.update { it.copy(error = null) }
                 }

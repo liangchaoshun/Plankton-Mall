@@ -29,6 +29,11 @@ class AppNavHostViewModel @Inject constructor(
                 flowOf(0)
             }
         }
+        /**
+         * stateIn 已经自动包含了去重功能，Kotlin 协程中 StateFlow 在设计上已经对连续相同的值进行去重，
+         * 其行为等价于已经在内部调用了 distinctUntilChanged()
+         * 所以在 flatMapLatest 之前可以不用加 distinctUntilChanged
+         */
         .stateIn(
             scope = viewModelScope,
             // 屏幕隐藏 5 秒后停止收集，节省资源

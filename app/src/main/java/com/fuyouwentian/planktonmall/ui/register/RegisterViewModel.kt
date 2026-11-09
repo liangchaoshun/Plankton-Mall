@@ -73,7 +73,7 @@ class RegisterViewModel @Inject constructor(
                 )
                 val isOk = userRepo.register(param)
                 if (isOk == true) {
-                    eventBus.postEvent(SystemEvent.ShowToast("注册成功，即将跳转至登录页"))
+                    eventBus.postEvent(SystemEvent.ShowToast("注册成功，即将跳转登录页"))
                     eventBus.postEvent(SystemEvent.RegisterSuccess)
                 }
                 _uiState.update { it.copy(error = null) }
