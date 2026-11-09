@@ -114,9 +114,9 @@ fun HistoryContent(
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
             ) {
-                uiState.histories.forEach { (key, records) ->
+                uiState.histories.forEach { (k, records) ->
                     item(
-                        key = "header_$key",
+                        key = "header_$k",
                         span = { GridItemSpan(maxLineSpan) }
                     ) {
                         Box(
@@ -125,7 +125,7 @@ fun HistoryContent(
                                 .padding(top = dimensionResource(R.dimen.padding_medium))
                         ) {
                             Text(
-                                text = if (key == today) "今天" else key,
+                                text = if (k == today) "今天" else k,
                                 color = Color(0xFF333333),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
@@ -135,7 +135,7 @@ fun HistoryContent(
 
                     items(
                         items = records,
-                        key = { record -> "${key}_${record.goodsId}" }
+                        key = { record -> "${k}_${record.userId}_${record.goodsId}" }
                     ) { record ->
                         RecordCard(
                             record = record,

@@ -185,12 +185,10 @@ fun CarouselSection(
     carouselData: List<ProductLite>,
     onClickProduct: (String) -> Unit = {}
 ) {
-    val carouselHeight = 150.dp
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(carouselHeight + 15.dp), // 🌟 内容高度 + 上下 padding
+            .height(dimensionResource(R.dimen.home_carousel_height) + 15.dp), // 🌟 内容高度 + 上下 padding
         contentAlignment = Alignment.Center
     ) {
         HorizontalMultiBrowseCarousel(
@@ -206,7 +204,7 @@ fun CarouselSection(
                 model = item.cover,
                 contentDescription = item.nameZh,
                 modifier = Modifier
-                    .height(carouselHeight)
+                    .height(dimensionResource(R.dimen.home_carousel_height))
                     .clip(MaterialTheme.shapes.large)
                     .clickable { onClickProduct(item.id) },
                 contentScale = ContentScale.Crop

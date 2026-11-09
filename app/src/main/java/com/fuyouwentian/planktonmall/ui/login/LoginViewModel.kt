@@ -77,7 +77,6 @@ class LoginViewModel @Inject constructor(
                 )
                 val response = userRepo.login(param)
                 response?.let {
-                    eventBus.postEvent(SystemEvent.ShowToast("登录成功，即将跳转主页"))
                     eventBus.postEvent(SystemEvent.LoginSuccess)
                     _uiState.update { it.copy(error = null) }
                 }

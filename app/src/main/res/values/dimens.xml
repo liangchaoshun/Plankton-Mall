@@ -3,4 +3,5 @@
     <dimen name="padding_small">8dp</dimen>
     <dimen name="padding_medium">16dp</dimen>
     <dimen name="bottom_navi_height">50dp</dimen>
+    <dimen name="home_carousel_height">150dp</dimen>
 </resources>

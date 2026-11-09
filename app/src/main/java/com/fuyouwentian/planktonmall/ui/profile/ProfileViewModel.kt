@@ -51,7 +51,7 @@ class ProfileViewModel @Inject constructor(
                     return@launch
                 }
                 _uiState.update { it.copy(loading = isInit) }
-                userRepo.getCurrentLocalProfile()?.let { profile ->
+                userRepo.getCurrentRemoteProfile()?.let { profile ->
                     _uiState.update { it.copy(profile = profile) }
                 }
             } catch (e: Exception) {
