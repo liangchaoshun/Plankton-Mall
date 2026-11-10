@@ -65,3 +65,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 # kotlinx.serialization 编译插件（用于编译期生成序列化代码）
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-serialization-plugin" }
+androidx-room = { id = "androidx.room", version.ref = "room" }

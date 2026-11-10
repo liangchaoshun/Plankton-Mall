@@ -23,7 +23,11 @@ import com.fuyouwentian.planktonmall.data.local.profile.ProfileEntity
         OrderEntity::class,
     ],
     version = 16,
-    exportSchema = false,
+    // 数据库版本升级迁移说明 >> https://chat.deepseek.com/share/g8vf6hsbmolwuxwviy
+    /*autoMigrations = [
+        AutoMigration(from = 15, to = 16) // 自动迁移
+    ],*/
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cartDao(): CartDao

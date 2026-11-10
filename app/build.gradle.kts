@@ -4,6 +4,12 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.androidx.room)
+}
+
+room {
+    // 设置导出“数据库模式”路径
+    schemaDirectory("$projectDir/schemas")
 }
 
 android {
@@ -16,8 +22,9 @@ android {
         applicationId = "com.fuyouwentian.planktonmall"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        // 🔥设置 app 版本号 >> https://chat.deepseek.com/share/yirr0ezizh4jqamy0q
+        versionCode = 1 // 内部版本号，整数，不显示给用户，用于判断更新，新版发布时，数字必须比上一个版本大
+        versionName = "1.0.0" // 版本名称，字符串，用户能查看到的版本号（如："1.0.0" 、"2.1.5-beta" 等）
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
