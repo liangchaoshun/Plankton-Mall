@@ -115,9 +115,7 @@ class OrderRepositoryImpl @Inject constructor(
     override suspend fun getRemoteRecords(params: PaginationWithQuery): PaginationWithTotal {
         val response = safeApiCall { apiService.orderList(params) }
         response?.let {
-            val list =
-                it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
-            if (list.isEmpty() && it.pageIndex == 1) {
+            if (it.total < 1) {
                 val userId = dataStore.data
                     .catch { e ->
                         // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
@@ -125,8 +123,11 @@ class OrderRepositoryImpl @Inject constructor(
                     }
                     .first()[PrefsKeys.USER_ID]
                 userId?.let { orderDao.deleteRecordsByUser(userId) }
+            } else {
+                val list =
+                    it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
+                orderDao.upsertMulti(list)
             }
-            orderDao.upsertMulti(list)
             delay(200.milliseconds) // 让 orderDao getRecordsFlow 先发送信号
             return PaginationWithTotal(
                 total = it.total,

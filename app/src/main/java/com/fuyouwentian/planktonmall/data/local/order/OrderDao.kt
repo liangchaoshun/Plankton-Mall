@@ -31,6 +31,7 @@ interface OrderDao {
     @Query("SELECT * FROM orders WHERE id IN (:ids) ")
     suspend fun getRecordsById(ids: List<String>): List<OrderEntity>
 
+    // 删除某用户的所有记录
     @Query("SELECT * FROM orders WHERE userId = :userId")
     suspend fun getRecordsByUser(userId: String): List<OrderEntity>
 

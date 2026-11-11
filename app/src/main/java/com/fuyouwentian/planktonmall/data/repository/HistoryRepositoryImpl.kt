@@ -14,7 +14,7 @@ class HistoryRepositoryImpl @Inject constructor(
     private val historyDao: HistoryDao,
 ) : HistoryRepository {
     override suspend fun upsert(record: HistoryRecord) {
-        val list = historyDao.getItemsByGoodsIds(listOf(record.goodsId))
+        val list = historyDao.getRecordsByGoodsIds(listOf(record.goodsId))
         // 更新相同商品（不同用户、日期）的一些字段
         val pruneLegacyList = list.map {
             it.copy(
@@ -32,32 +32,32 @@ class HistoryRepositoryImpl @Inject constructor(
         historyDao.upsertMulti(pendingList)
     }
 
-    override suspend fun upsertMulti(items: List<HistoryEntity>) {
-        historyDao.upsertMulti(items)
+    override suspend fun upsertMulti(records: List<HistoryEntity>) {
+        historyDao.upsertMulti(records)
     }
 
-    override suspend fun getItems(id: String): List<HistoryRecord> {
-        return historyDao.getItems(id).map { it.toDomain() }
+    override suspend fun getRecords(id: String): List<HistoryRecord> {
+        return historyDao.getRecords(id).map { it.toDomain() }
     }
 
-    override suspend fun deleteItems(userId: String) {
-        historyDao.deleteItems(userId)
+    override suspend fun deleteRecordsByUser(userId: String) {
+        historyDao.deleteRecordsByUser(userId)
     }
 
-    override suspend fun deleteItemByIndices(
+    override suspend fun deleteRecordByIndices(
         userId: String,
         goodsId: String,
         createDate: String
     ) {
-        historyDao.deleteItemByIndices(
+        historyDao.deleteRecordByIndices(
             userId = userId,
             goodsId = goodsId,
             createDate = createDate
         )
     }
 
-    override suspend fun deleteItemsByDate(userId: String, createDate: String) {
-        historyDao.deleteItemsByDate(userId = userId, createDate = createDate)
+    override suspend fun deleteRecordsByDate(userId: String, createDate: String) {
+        historyDao.deleteRecordsByDate(userId = userId, createDate = createDate)
     }
 
     override suspend fun isExistByUGId(

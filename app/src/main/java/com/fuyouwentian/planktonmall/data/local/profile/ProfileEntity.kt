@@ -9,7 +9,7 @@ import com.fuyouwentian.planktonmall.domain.model.ReceiverInfoConverter
 @Entity(tableName = "profile")
 data class ProfileEntity(
     @PrimaryKey
-    val id: String,
+    val id: String, // 此 id 即为 用户ID，userId、user_id
     val account: String,
     val password: String? = "",
     val nickname: String? = "",

@@ -204,7 +204,12 @@ fun CartScreen(
 
             cartRecords.isEmpty() -> {
                 // 请求成功但没有数据
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth(0.8f),

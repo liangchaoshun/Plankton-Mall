@@ -91,9 +91,7 @@ class FavorRepositoryImpl @Inject constructor(
     override suspend fun getRemoteRecords(params: PaginationParameter): PaginationWithTotal {
         val response = safeApiCall { apiService.favorList(params) }
         response?.let {
-            val list =
-                it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
-            if (list.isEmpty() && it.pageIndex == 1) {
+            if (it.total < 1) {
                 val userId = dataStore.data
                     .catch { e ->
                         // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
@@ -101,8 +99,11 @@ class FavorRepositoryImpl @Inject constructor(
                     }
                     .first()[PrefsKeys.USER_ID]
                 userId?.let { favorDao.deleteRecordsByUser(userId) }
+            } else {
+                val list =
+                    it.data.map { item -> item.toEntity().copy(syncState = SyncRecordState.SYNCED) }
+                favorDao.upsertMulti(list)
             }
-            favorDao.upsertMulti(list)
             delay(200.milliseconds) // 让 favorDao getRecordsFlow 先发送信号
             return PaginationWithTotal(
                 total = it.total,

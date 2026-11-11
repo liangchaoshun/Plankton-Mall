@@ -1,9 +1,8 @@
 package com.fuyouwentian.planktonmall.data.local.profile
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 
 @Dao
 interface ProfileDao {
@@ -12,7 +11,7 @@ interface ProfileDao {
     @Query("SELECT * FROM profile WHERE id = :id")
     suspend fun getProfile(id: String): ProfileEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertProfile(item: ProfileEntity)
 
     // 清空整张数据表（慎用）

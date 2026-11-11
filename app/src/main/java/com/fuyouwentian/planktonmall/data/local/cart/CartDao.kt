@@ -1,10 +1,9 @@
 package com.fuyouwentian.planktonmall.data.local.cart
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import kotlinx.coroutines.flow.Flow
 
@@ -35,15 +34,18 @@ interface CartDao {
     @Query("SELECT * FROM cart WHERE userId = :userId AND goodsId = :productId")
     suspend fun getRecordByProductId(userId: String, productId: String): CartEntity?
 
-    // REPLACE 策略，若主键相同（同一个商品），则会覆盖旧数据
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(record: CartEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertMulti(records: List<CartEntity>)
 
     @Query("DELETE FROM cart WHERE id IN (:ids)")
     suspend fun deleteRecordsByIds(ids: List<String>)
+
+    // 删除某用户的所有记录
+    @Query("DELETE FROM cart WHERE userId = :userId")
+    suspend fun deleteRecordsByUser(userId: String)
 
     @Query("UPDATE cart SET syncState = 'SYNCED' WHERE id IN (:ids)")
     suspend fun markRecords2Synced(ids: List<String>)

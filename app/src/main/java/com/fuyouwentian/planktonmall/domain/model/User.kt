@@ -34,7 +34,7 @@ data class ReceiverInfo(
 @Serializable
 data class UserProfile(
     @SerialName("_id")
-    val id: String,
+    val id: String, // 此 id 即为 用户ID，userId、user_id
     val account: String,
     val password: String,
     val nickname: String? = "",

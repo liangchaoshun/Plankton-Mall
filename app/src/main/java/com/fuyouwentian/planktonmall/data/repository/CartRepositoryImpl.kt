@@ -1,5 +1,9 @@
 package com.fuyouwentian.planktonmall.data.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import com.fuyouwentian.planktonmall.data.local.PrefsKeys
 import com.fuyouwentian.planktonmall.data.local.SyncRecordState
 import com.fuyouwentian.planktonmall.data.local.cart.CartDao
 import com.fuyouwentian.planktonmall.data.local.cart.toDomain
@@ -12,7 +16,10 @@ import com.fuyouwentian.planktonmall.domain.model.CartProduct
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.util.MongoIdGenerator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +27,7 @@ import javax.inject.Singleton
 class CartRepositoryImpl @Inject constructor(
     private val api: ApiService, // Hilt 会自动提供
     private val cartDao: CartDao,
+    private val dataStore: DataStore<Preferences>
 ) : CartRepository {
     // Room 框架在底层实现时，对于返回 Flow<List<T>> 的查询，
     // 如果数据库表中没有任何数据，它发射（emit）的是一个空的列表 emptyList()，而不是 null
@@ -127,6 +135,18 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun fetchData() {
         val remoteData = safeApiCall { api.cartList() }
-        remoteData?.let { if (remoteData.total > 0) cartDao.syncRemoteData2Room(remoteData.data) }
+        remoteData?.let {
+            if (remoteData.total > 0) {
+                cartDao.syncRemoteData2Room(remoteData.data)
+            } else {
+                val userId = dataStore.data
+                    .catch { e ->
+                        // DataStore 读取时若发生 IO 异常（如文件损坏），则 emit 一个 emptyPreferences() 给下游，避免崩溃
+                        if (e is IOException) emit(emptyPreferences()) else throw e
+                    }
+                    .first()[PrefsKeys.USER_ID]
+                userId?.let { cartDao.deleteRecordsByUser(userId) }
+            }
+        }
     }
 }

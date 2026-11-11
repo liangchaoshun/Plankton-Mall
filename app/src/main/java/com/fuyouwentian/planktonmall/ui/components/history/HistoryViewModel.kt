@@ -36,8 +36,8 @@ class HistoryContentViewModel @Inject constructor(
     fun loadBrowsingHistory() {
         viewModelScope.launch {
             try {
-                val userId = authManager.getCurrentUserId() ?: return@launch
-                val recordsMap = historyRepo.getItems(userId)
+                val userId = authManager.getCurrentUserId(false) ?: return@launch
+                val recordsMap = historyRepo.getRecords(userId)
                     .groupBy { it.createDate }
                     .mapValues { (_, records) ->
                         // 列表中，按 createTimeMillis 字段倒序
