@@ -305,7 +305,7 @@ fun ProfileHeader(
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
-                        text = "刷新",
+                        text = "刷新个人信息",
                         color = Color(0xFF666666),
                         style = MaterialTheme.typography.labelMedium
                     )
