@@ -3,10 +3,13 @@
 .gradle/
 build/
 app/build/
+app/release/
+app/debug/
 captures/
 .externalNativeBuild
 .cxx
 local.properties
+*.apk
 
 # IDE 配置（每个人的 IDE 偏好不同，不建议共享）
 .idea/
