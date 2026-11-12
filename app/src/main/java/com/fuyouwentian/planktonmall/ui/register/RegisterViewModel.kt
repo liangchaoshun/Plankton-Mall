@@ -7,6 +7,7 @@ import com.fuyouwentian.planktonmall.common.Constants.PASSWORD_REGEX
 import com.fuyouwentian.planktonmall.core.error.ErrorHandler
 import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
 import com.fuyouwentian.planktonmall.core.event.SystemEvent
+import com.fuyouwentian.planktonmall.domain.model.LoginRequest
 import com.fuyouwentian.planktonmall.domain.model.RegisterRequest
 import com.fuyouwentian.planktonmall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,17 +50,19 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun register() {
+        val account = _uiState.value.account
+        val password = _uiState.value.password
         // 格式校验
         if (_uiState.value.isAccountFmtError || _uiState.value.isPasswordFmtError) {
             viewModelScope.launch { eventBus.postEvent(SystemEvent.ShowToast("未通过格式校验")) }
             return
         }
         // 非空校验
-        if (_uiState.value.account.isBlank()) {
+        if (account.isBlank()) {
             viewModelScope.launch { eventBus.postEvent(SystemEvent.ShowToast("请输入账号")) }
             return
         }
-        if (_uiState.value.password.isBlank()) {
+        if (password.isBlank()) {
             viewModelScope.launch { eventBus.postEvent(SystemEvent.ShowToast("请输入密码")) }
             return
         }
@@ -67,14 +70,21 @@ class RegisterViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(committing = true, error = null) }
             try {
-                val param = RegisterRequest(
-                    account = _uiState.value.account,
-                    password = _uiState.value.password,
+                val params = RegisterRequest(
+                    account = account,
+                    password = password,
                 )
-                val isOk = userRepo.register(param)
+                val isOk = userRepo.register(params)
                 if (isOk == true) {
-                    eventBus.postEvent(SystemEvent.ShowToast("注册成功，即将跳转登录页"))
-                    eventBus.postEvent(SystemEvent.RegisterSuccess)
+                    eventBus.postEvent(SystemEvent.ShowToast("注册成功，即将为您自动登录"))
+                    val loginParams = LoginRequest(
+                        account = account,
+                        password = password,
+                    )
+                    val loginResponse = userRepo.login(loginParams)
+                    loginResponse?.let {
+                        eventBus.postEvent(SystemEvent.LoginSuccess)
+                    }
                 }
                 _uiState.update { it.copy(error = null) }
             } catch (e: Exception) {

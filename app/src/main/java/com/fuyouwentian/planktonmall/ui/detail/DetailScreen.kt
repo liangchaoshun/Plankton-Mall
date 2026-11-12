@@ -407,7 +407,7 @@ fun BottomActionBar(
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
-                enabled = product?.isInvalid == false && product.stock != 0,
+                enabled = product?.isInvalid == false, // 售罄也可以加入购物车
                 onClick = onClickAdd2Cart,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                 shape = RoundedCornerShape(8.dp),

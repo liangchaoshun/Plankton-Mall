@@ -106,7 +106,6 @@ fun AppNavHost(
                 }
 
                 is SystemEvent.LoginSuccess -> navController.navigate2HomeClearAll()
-                is SystemEvent.RegisterSuccess -> navController.navigate2Login()
                 is SystemEvent.Loggedout -> navController.navigate2HomeClearAll() // 主动退出
                 is SystemEvent.ForceLogout -> navController.navigate2Login() // 强制踢出到登录页
                 else -> {}

@@ -56,11 +56,15 @@ class CartRepositoryImpl @Inject constructor(
 
     // 参数是商品的参数
     override suspend fun upsert(userId: String, params: Add2CartProductParams): Boolean {
-        // Log.d("CartRepositoryImpl ", "insert params: $params")
+        // Log.d("[CartRepositoryImpl.upsert]", "insert params: $params")
+
+        val isChecked = params.stock > 0 // 若未售罄，则勾选上
         val mongoIdStr = MongoIdGenerator.generate()
+
         var add2CartRequest = Add2CartRequest(
             id = mongoIdStr,
-            goodsId = params.id
+            goodsId = params.id,
+            checked = isChecked
         )
 
         // 先处理本地数据
@@ -69,13 +73,14 @@ class CartRepositoryImpl @Inject constructor(
             // 存在，更新本地数据
             val updatedEntity = existingEntity.copy(
                 quantity = existingEntity.quantity + 1,
-                checked = true, // 勾选上
+                checked = isChecked,
                 syncState = SyncRecordState.PENDING_UPDATE
             )
             cartDao.upsert(updatedEntity)
             add2CartRequest = Add2CartRequest(
                 id = updatedEntity.id,
-                goodsId = updatedEntity.goodsId
+                goodsId = updatedEntity.goodsId,
+                checked = isChecked
             )
         } else {
             // 不存在，插入一条新的到本地数据
@@ -86,7 +91,7 @@ class CartRepositoryImpl @Inject constructor(
                 goodsPrice = params.price,
                 quantity = 1,
                 isValid = true,
-                checked = true,
+                checked = isChecked,
                 goodsStock = params.stock,
                 goodsOnSale = params.onSale,
                 goodsNameZh = params.nameZh,

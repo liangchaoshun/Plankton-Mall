@@ -120,6 +120,7 @@ data class Add2CartRequest(
     val id: String,
     @SerialName("goods_id")
     val goodsId: String,
+    val checked: Boolean
 )
 
 @Serializable

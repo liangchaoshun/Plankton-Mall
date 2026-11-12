@@ -9,6 +9,7 @@ data class LoginRequest(
     val account: String,
     val password: String,
 )
+
 @Serializable
 data class LoginResponse(
     @SerialName("user_info")
@@ -20,8 +21,8 @@ data class LoginResponse(
 data class RegisterRequest(
     val account: String,
     val password: String,
-    val nickname: String? = null,
-    val avatar: String? = null
+    val nickname: String? = "",
+    val avatar: String? = ""
 )
 
 @Serializable
