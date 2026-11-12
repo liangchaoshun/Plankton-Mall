@@ -251,7 +251,7 @@ fun CartScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(1f) // 占满剩余空间
                             .fillMaxWidth()
                             // 监听点击事件，清除滑出状态
                             .pointerInput(Unit) {
@@ -263,7 +263,9 @@ fun CartScreen(
                         LazyColumn(
                             state = lazyColumnState,
                             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                            modifier = modifier.fillMaxSize()
+                            modifier = modifier
+                                .fillMaxSize()
+                                .padding(top = dimensionResource(R.dimen.padding_small))
                         ) {
                             items(sortedCartRecords, key = { it.id }) { product ->
                                 SwipeableCartItem(
@@ -433,7 +435,7 @@ fun SwipeableCartItem(
         }
     }
 
-    // // 内部滑动结束后，通知外部
+    // 内部滑动结束后，通知外部
     LaunchedEffect(dragState.currentValue) {
         if (!dragState.isAnimationRunning) {
             val revealed = dragState.currentValue == DragValue.Revealed

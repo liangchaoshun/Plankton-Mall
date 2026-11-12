@@ -7,6 +7,7 @@ import com.fuyouwentian.planktonmall.core.event.GlobalEventBus
 import com.fuyouwentian.planktonmall.core.event.SystemEvent
 import com.fuyouwentian.planktonmall.domain.model.Add2CartProductParams
 import com.fuyouwentian.planktonmall.domain.model.PaginationParameter
+import com.fuyouwentian.planktonmall.domain.model.PaginationWithTotal
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.domain.repository.CartRepository
 import com.fuyouwentian.planktonmall.domain.repository.ProductRepository
@@ -38,23 +39,30 @@ class HomeViewModel @Inject constructor(
     private var currentJob: Job? = null
 
     // 保存最后一次请求参数，供 loadMore 使用
-    private var lastPageParams: PaginationParameter = PaginationParameter()
+    private var lastPageParams: PaginationWithTotal = PaginationWithTotal()
 
     // 请求版本号：刷新/搜索时自增，loadMore 返回时校验
     private var requestId = 0
     private val loadMoreMutex = Mutex()
 
+    private var hasLoadedOnce = false
+
+    private val _updateTimestamp = MutableStateFlow(0L)
+    val updateTimestamp = _updateTimestamp.asStateFlow()
+
     // 初始化加载/下拉刷新页面
     fun loadHomeData(isRefresh: Boolean = false) {
+        if (!isRefresh && hasLoadedOnce) return
+        hasLoadedOnce = true
         val id = ++requestId
         currentJob?.cancel() // 重置
-        lastPageParams = PaginationParameter() // 重置
+        lastPageParams = PaginationWithTotal() // 重置
         currentJob = viewModelScope.launch {
             _uiState.update {
                 // 下拉刷新，不清空数据，也不显示全屏 loading
                 it.copy(
                     carouselData = if (isRefresh) it.carouselData else emptyList(),
-                    recommendProducts = if (isRefresh) it.recommendProducts else productsDataDefault,
+                    recommendProducts = if (isRefresh) it.recommendProducts else emptyList(),
                     loading = !isRefresh,
                     loadingMore = false,
                     hasMore = true,
@@ -70,16 +78,26 @@ class HomeViewModel @Inject constructor(
 
                 // await() 会挂起当前协程，直到对应的 async 任务完成
                 val carouselData = carouselDeferred.await()
-                val recommendData = recommendDeferred.await()
+                val recommendResult = recommendDeferred.await()
 
                 if (id != requestId) return@launch // 避免上一次请求回来的（过期）数据，丢弃
                 _uiState.update {
                     it.copy(
                         carouselData = carouselData ?: emptyList(),
-                        recommendProducts = recommendData ?: productsDataDefault,
+                        recommendProducts = recommendResult?.data ?: emptyList(),
                         exceptionInfo = null,
+                        hasMore = if (recommendResult != null) recommendResult.data.size < recommendResult.total else false
                     )
                 }
+                _updateTimestamp.value = System.currentTimeMillis() // 🌟
+                /*Log.d(
+                    "[loadHomeData]",
+                    "hasMore: ${_uiState.value.hasMore}," +
+                            "recommendProducts.size: ${_uiState.value.recommendProducts.size}, " +
+                            "total: ${recommendResult?.total}, " +
+                            "pageIndex: ${recommendResult?.pageIndex}, " +
+                            "pageSize: ${recommendResult?.pageSize}, "
+                )*/
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)
             } finally {
@@ -102,24 +120,33 @@ class HomeViewModel @Inject constructor(
             val id = requestId // 捕获当前版本
             try {
                 _uiState.update { it.copy(loadingMore = true, exceptionInfo = null) }
-                val latest = _uiState.value
-                val nextPage = latest.recommendProducts.pageIndex + 1
-                val pageParams = lastPageParams.copy(pageIndex = nextPage)
-                val newData = productRepo.getRecommendProducts(pageParams)
+                val requestParams = PaginationParameter(
+                    pageIndex = lastPageParams.pageIndex + 1,
+                    pageSize = lastPageParams.pageSize
+                )
+                val newData = productRepo.getRecommendProducts(requestParams)
                 if (id != requestId) return@launch // 期间刷新过，丢弃
-                newData?.let {
+                newData?.let { pageData ->
                     _uiState.update { state ->
-                        val mergedList = state.recommendProducts.data + newData.data
+                        val mergedList = state.recommendProducts + pageData.data
                         state.copy(
-                            recommendProducts = state.recommendProducts.copy(
-                                data = mergedList,
-                                total = newData.total,
-                                pageIndex = newData.pageIndex,
-                                pageSize = newData.pageSize
-                            ),
-                            hasMore = mergedList.size < newData.total
+                            recommendProducts = mergedList,
+                            hasMore = mergedList.size < pageData.total
                         )
                     }
+                    lastPageParams = PaginationWithTotal(
+                        total = pageData.total,
+                        pageIndex = pageData.pageIndex,
+                        pageSize = pageData.pageSize
+                    )
+                    /*Log.d(
+                        "[loadMore]",
+                        "hasMore: ${_uiState.value.hasMore}," +
+                                "recommendProducts.size: ${_uiState.value.recommendProducts.size}, " +
+                                "total: ${pageData.total}, " +
+                                "pageIndex: ${pageData.pageIndex}, " +
+                                "pageSize: ${pageData.pageSize}, "
+                    )*/
                 }
             } catch (e: Exception) {
                 if (id == requestId) handleError(e)

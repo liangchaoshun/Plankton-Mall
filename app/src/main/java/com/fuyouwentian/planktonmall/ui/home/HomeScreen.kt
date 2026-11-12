@@ -41,10 +41,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -63,8 +62,10 @@ import coil3.compose.AsyncImage
 import com.fuyouwentian.planktonmall.R
 import com.fuyouwentian.planktonmall.domain.model.ProductLite
 import com.fuyouwentian.planktonmall.ui.components.widgets.Searchbar
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,8 +80,7 @@ fun HomeScreen(
     // collectAsState: app 位于前台/后台都收集
     // collectAsStateWithLifecycle: app 位于后台自动停止收集，省电
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // 定义下拉刷新状态
+    val timestamp by viewModel.updateTimestamp.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState() // 实验性 API
 
     // 初始化
@@ -160,19 +160,20 @@ fun HomeScreen(
                         )
                     }
                 }
-                // 实验性 API
                 PullToRefreshBox(
                     isRefreshing = uiState.isRefreshing,
                     onRefresh = { viewModel.loadHomeData(isRefresh = true) },
                     state = pullToRefreshState,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    HomeContentGrid(
-                        uiState = uiState,
-                        onLoadMore = viewModel::loadMore,
-                        onClickProduct = onProductClick,
-                        onClickAdd2Cart = viewModel::add2Cart
-                    )
+                    key(timestamp) {
+                        HomeContentGrid(
+                            uiState = uiState,
+                            onLoadMore = viewModel::loadMore,
+                            onClickProduct = onProductClick,
+                            onClickAdd2Cart = viewModel::add2Cart
+                        )
+                    }
                 }
             }
         }
@@ -276,6 +277,7 @@ fun ProductCard(
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 fun HomeContentGrid(
     uiState: HomeUiState,
@@ -284,34 +286,54 @@ fun HomeContentGrid(
     onClickAdd2Cart: (ProductLite) -> Unit = {}
 ) {
     val gridState = rememberLazyGridState()
-    // 触底加载更多
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val last = gridState.layoutInfo.visibleItemsInfo.lastOrNull()
-                ?: return@derivedStateOf false
-            val total = gridState.layoutInfo.totalItemsCount
-            total > 0 && last.index >= total - 3
+
+    // 用 snapshotFlow 稳定监听网格的滚动状态
+    // 可以抽离成一个扩展 >> https://chat.deepseek.com/share/eaujnyhujc1mqls8d7
+    LaunchedEffect(
+        gridState,
+        uiState.recommendProducts.size,
+        uiState.loadingMore,
+        uiState.hasMore
+    ) {
+        snapshotFlow {
+            val layoutInfo = gridState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+            // 判断是否快滑到底部（倒数第 4 个） >> https://chat.deepseek.com/share/m7mgjry5ezc83nino1
+            // 触底加载的阈值：lastVisibleItem != null && lastVisibleItem.index >= totalItems - 4
+
+            /* 动态计算列数，设置触底加载的阈值 */
+            // 当前显示的列数
+            val currentColumnCount = layoutInfo.maxSpan.coerceAtLeast(1)
+            val pageSize = 10 // 分页大小：先固定，Compose UI 不宜从 viewModel 取成员变量
+            // 计算动态阈值：提前 2 行，但不能超过 pageSize 的 80%
+            val threshold = (currentColumnCount * 2).coerceIn(2, (pageSize * 0.8).toInt())
+
+            lastVisibleItem != null && lastVisibleItem.index >= totalItems - threshold
         }
-    }
-
-    LaunchedEffect(gridState) {
-        snapshotFlow { shouldLoadMore }
             .distinctUntilChanged()
-            .filter { it }
-            .collect { onLoadMore() }
+            // 加个 200ms 防抖，防止快速滑动时误触
+            .debounce(200.milliseconds)
+            .collect { isNearEnd ->
+                // 符合条件：靠近底部 + 还有更多数据 + 没在加载更多 + 没在下拉刷新 + 没在首屏加载
+                if (isNearEnd && uiState.hasMore && !uiState.loadingMore && !uiState.isRefreshing && !uiState.loading) {
+                    onLoadMore()
+                }
+            }
     }
 
-    // LazyVerticalGrid 设计哲学是：一个可以按顺序添加无数块（item）的容器。
-    // item 是顺序的、平级的、不互斥
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Fixed(2),
+        // 设置每个卡片的最小宽度，比如 160.dp 或 180.dp
+        columns = GridCells.Adaptive(minSize = 160.dp),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-        modifier = Modifier.background(Color(0xFFF5F6FA))
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F6FA))
     ) {
         // 轮播图
-        if (uiState.carouselData.isNotEmpty()) {
+        if (uiState.carouselData.isNotEmpty() && !uiState.isRefreshing) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 CarouselSection(
                     carouselData = uiState.carouselData,
@@ -321,13 +343,12 @@ fun HomeContentGrid(
         }
 
         // 商品列表
-        if (uiState.recommendProducts.data.isEmpty()) {
-            // 如果商品为空，占据一整行显示提示
+        if (uiState.recommendProducts.isEmpty() && !uiState.loading && !uiState.isRefreshing) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp), // 固定高度，避免下拉刷新时布局抖动
+                        .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -339,7 +360,7 @@ fun HomeContentGrid(
             }
         } else {
             items(
-                items = uiState.recommendProducts.data,
+                items = uiState.recommendProducts,
                 key = { product -> product.id }
             ) { product ->
                 ProductCard(product, onProductClick = onClickProduct, onAdd2Cart = onClickAdd2Cart)
@@ -350,22 +371,23 @@ fun HomeContentGrid(
         if (uiState.loadingMore) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "loading_more") {
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        Modifier.height(24.dp),
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                 }
             }
         }
 
-        // 到底了（放在最外层）
-        if (!uiState.hasMore && uiState.recommendProducts.data.isNotEmpty()) {
+        // 到底了
+        if (!uiState.hasMore && uiState.recommendProducts.isNotEmpty()) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "no_more") {
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

@@ -214,8 +214,7 @@ fun AppNavHost(
                     }
                 }
             }
-        )
-        { innerPadding ->
+        ) { innerPadding ->
             NavHost(
                 navController = navController,
                 startDestination = Routes.HOME, // ⚠✨🔥

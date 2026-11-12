@@ -65,13 +65,12 @@ val NAVI_ROUTES = NAVI_DEST.map { it.route }
 fun NavHostController.navigate2Tab(route: String) {
     navigate(route) {
         // 把栈一直弹到 HOME，并保存状态（为了 Tab 切换时的状态恢复）
-        // 前提是：NavHost.startDestination 必须是 Routes.HOME
-        popUpTo(Routes.HOME) { saveState = true } // 弹栈时保存 UI 状态（滚动位置、输入内容等）
+        popUpTo(graph.findStartDestination().id) { saveState = true } // 弹栈时保存 UI 状态（滚动位置、输入内容等）
         launchSingleTop = true // 避免重复压栈
-        // 若为 true，则编程跳转到普通页面，又跳到以及页面，
+        // 若为 true，则编程跳转到普通页面，又跳到一级页面，
         // 再手动点击底部导航栏跳到其他一级页面时，会显示那个普通页面而非一级页面，
-        // false 可以避免这种情况
-        restoreState = false // 恢复目标状态
+        // restoreState = false 可以避免这种情况
+        restoreState = true // 恢复目标状态
     }
 }
 
