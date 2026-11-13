@@ -100,7 +100,10 @@ fun DetailContent(
     }
 
     LaunchedEffect(uiState.isMakeOrderDone) {
-        if (uiState.isMakeOrderDone) afterBuyNowClick()
+        if (uiState.isMakeOrderDone) {
+            afterBuyNowClick()
+            viewModel.resetMakeOrderDoneState()
+        }
     }
 
     Box(

@@ -274,6 +274,10 @@ class CartViewModel @Inject constructor(
         }
     }
 
+    fun resetMakeOrderDoneState() {
+        _uiState.update { it.copy(isMakeOrderDone = false) }
+    }
+
     private suspend fun handleError(e: Exception) {
         val message = errorHandler.handle(e)
         _uiState.update { it.copy(error = message) }

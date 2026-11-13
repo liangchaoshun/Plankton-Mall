@@ -98,7 +98,8 @@ fun AppNavHost(
                      * 3. 它的 UI 完全自定义（可以通过 MaterialTheme 统一控制样式），比系统原生的黑白 Toast 好看得多；
                      * 4. 排队机制：如果连续发了 3 个 Toast 事件，Snackbar 会依次显示，不会像系统 Toast 那样重叠在一起看不清。
                      */
-                    // Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    // ⛔ Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    // ✅
                     snackbarHostState.showSnackbar(
                         message = event.message,
                         duration = SnackbarDuration.Short
@@ -108,7 +109,6 @@ fun AppNavHost(
                 is SystemEvent.LoginSuccess -> navController.navigate2HomeClearAll()
                 is SystemEvent.Loggedout -> navController.navigate2HomeClearAll() // 主动退出
                 is SystemEvent.ForceLogout -> navController.navigate2Login() // 强制踢出到登录页
-                else -> {}
             }
         }
     }
@@ -216,7 +216,7 @@ fun AppNavHost(
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = Routes.HOME, // ⚠✨🔥
+                startDestination = Routes.HOME, // ⚠✨🔥 指定整个导航图（NavGraph）的起点 HOME
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -291,8 +291,8 @@ fun AppNavHost(
                     DetailScreen(
                         id = id,
                         onBackClick = { navController.popBackStack() },
-                        onCartIconClick = { navController.navigate2Tab(Routes.CART) },
-                        afterBuyNowClick = { navController.navigate2Tab(Routes.PROFILE) },
+                        onCartIconClick = { navController.navigateFromNormal2Tab(Routes.CART) },
+                        afterBuyNowClick = { navController.navigateFromNormal2Tab(Routes.PROFILE) },
                     )
                 }
             }

@@ -23,8 +23,8 @@ android {
         minSdk = 26
         targetSdk = 37
         // 🔥设置 app 版本号 >> https://chat.deepseek.com/share/yirr0ezizh4jqamy0q
-        versionCode = 1 // 内部版本号，整数，不显示给用户，用于判断更新，新版发布时，数字必须比上一个版本大
-        versionName = "1.0.0" // 版本名称，字符串，用户能查看到的版本号（如："1.0.0" 、"2.1.5-beta" 等）
+        versionCode = 2 // ⚠✨🔥 内部版本号，整数，不显示给用户，用于判断更新，新版发布时，数字必须比上一个版本大
+        versionName = "1.0.1" // 版本名称，字符串，用户能查看到的版本号（如："1.0.0" 、"2.1.5-beta" 等）
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

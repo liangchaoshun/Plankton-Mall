@@ -136,7 +136,10 @@ fun CartScreen(
     }
 
     LaunchedEffect(uiState.isMakeOrderDone) {
-        if (uiState.isMakeOrderDone) afterClickSettleBtn()
+        if (uiState.isMakeOrderDone) {
+            afterClickSettleBtn()
+            viewModel.resetMakeOrderDoneState()
+        }
     }
 
     Surface(modifier = modifier) {
