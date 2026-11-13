@@ -166,6 +166,9 @@ fun HomeScreen(
                     state = pullToRefreshState,
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // key 修复 bug：
+                    // 当加载完所有数据（比如，5页）并渲染在界面上，然后下拉刷新，该操作会请求服务器返回第一页数据并更新 uiState，
+                    // uiState 中的数据虽然更新了，但 UI 界面上还显示所有数据
                     key(timestamp) {
                         HomeContentGrid(
                             uiState = uiState,
